@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="120" viewBox="0 0 540 120" role="img" aria-label="SIS Group Enterprises">
+  <rect width="540" height="120" fill="transparent"/>
+  <g transform="translate(16,18)">
+    <!-- Left: SIS mark -->
+    <text x="0" y="58" font-family="Arial Black, Arial, sans-serif" font-size="84" font-weight="900" fill="#bdbdbd" letter-spacing="-2">
+      sis
+    </text>
+    <circle cx="88" cy="6" r="11" fill="#d81b60"/>
+
+    <!-- Bottom-left: Group Enterprises -->
+    <text x="6" y="90" font-family="Arial, sans-serif" font-size="18" font-weight="800" fill="#d81b60">
+      Group Enterprises
+    </text>
+
+    <!-- Right: Tagline -->
+    <text x="206" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="800" fill="#111">
+      A Market Leader in
+    </text>
+    <text x="206" y="54" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111">
+      Security, Cash Logistics
+    </text>
+    <text x="206" y="78" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111">
+      &amp; Facility Management
+    </text>
+
+    <!-- Red underline -->
+    <rect x="160" y="96" width="360" height="3" rx="1.5" fill="#d81b60"/>
+  </g>
+</svg>
