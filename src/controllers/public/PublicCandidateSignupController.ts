@@ -5,6 +5,7 @@ import { hashPassword } from '../../services/authService';
 import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
+import { credentialsEmailText } from '../../utils/emailTemplates';
 
 type CandidateRow = {
   candidate_id: number;
@@ -127,10 +128,13 @@ export class PublicCandidateSignupController extends Controller {
           },
           {
             to: candidate.email,
-            subject: 'SIS EHRM - Your Account Credentials',
-            text:
-              `Hello ${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim() +
-              `,\n\nYour account has been created.\n\nUsername: ${username}\nPassword: ${plainPassword}\n\nPlease login and change your password after first sign-in.\n`,
+            subject: 'SIS Global Connect — Candidate portal credentials',
+            text: credentialsEmailText({
+              name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+              username,
+              temporaryPassword: plainPassword,
+              portalLabel: 'Candidate',
+            }),
           }
         );
         emailed = true;

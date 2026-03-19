@@ -5,6 +5,7 @@ import { httpError } from '../../utils/httpErrors';
 import { env } from '../../config/env';
 import { sendSmtpMail } from '../../utils/smtpClient';
 import { hashPassword } from '../../services/authService';
+import { credentialsEmailText } from '../../utils/emailTemplates';
 
 type CompanyRow = {
   company_id: number;
@@ -181,10 +182,13 @@ export class CompaniesController extends Controller {
           },
           {
             to: company.email,
-            subject: 'SIS EHRM - Company Account Credentials',
-            text:
-              `Hello ${company.contact_person ?? company.company_name}`.trim() +
-              `,\n\nYour company account has been created.\n\nUsername: ${username}\nPassword: ${plainPassword}\n\nPlease login and change your password after first sign-in.\n`,
+            subject: 'SIS Global Connect — Company portal credentials',
+            text: credentialsEmailText({
+              name: company.contact_person ?? company.company_name,
+              username,
+              temporaryPassword: plainPassword,
+              portalLabel: 'Company',
+            }),
           }
         );
         emailed = true;

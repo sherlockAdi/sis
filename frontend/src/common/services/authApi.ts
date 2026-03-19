@@ -1,6 +1,7 @@
 import { apiFetch } from "./apiFetch";
 
 export type LoginResponse = { token: string };
+export type OtpRequestResponse = { sent: true };
 
 export type SelfMenu = {
   menu_id: number;
@@ -43,7 +44,22 @@ export async function login(username: string, password: string): Promise<LoginRe
   });
 }
 
+export async function requestLoginOtp(username: string): Promise<OtpRequestResponse> {
+  return apiFetch<OtpRequestResponse>("/auth/otp/request", {
+    method: "POST",
+    auth: false,
+    body: JSON.stringify({ username }),
+  });
+}
+
+export async function verifyLoginOtp(username: string, otp: string): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>("/auth/otp/verify", {
+    method: "POST",
+    auth: false,
+    body: JSON.stringify({ username, otp }),
+  });
+}
+
 export async function me(): Promise<MeResponse> {
   return apiFetch<MeResponse>("/auth/me", { method: "GET" });
 }
-

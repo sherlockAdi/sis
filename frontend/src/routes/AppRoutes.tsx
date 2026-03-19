@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Login from "../modules/login/Login";
+import AuthLogin from "../modules/login/AuthLogin";
 import GuidePage from "../modules/guide/GuidePage";
 import RequireAuth from "../common/auth/RequireAuth";
 import Dashboard from "../modules/dashboard/Dashboard";
@@ -43,6 +44,7 @@ export default function AppRoutes() {
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/login/auth" element={<AuthLogin />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<AppShellLayout />}>

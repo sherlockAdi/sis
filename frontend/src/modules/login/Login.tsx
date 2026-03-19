@@ -1,155 +1,93 @@
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import { Box, Button, Divider, Stack, Typography } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useEffect, useMemo, useState } from "react";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
+import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
+import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
+import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Ad3DBackground, AdAlertBox, AdButton, AdCard, AdCheckBox, AdDropDown, AdModal, AdNotification, AdTextBox, SisLogo } from "../../common/ad";
-import { login, me } from "../../common/services/authApi";
-import type { ApiError } from "../../common/services/apiFetch";
-import { getRememberMe, setAuthToken } from "../../common/services/tokenStorage";
-import { recruitmentApi } from "../../common/services/recruitmentApi";
-import { listPublicCities, listPublicCountries, listPublicStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { SisLogo } from "../../common/ad";
+
+type PortalKey = "candidate" | "administrator" | "employer" | "sourcing";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(getRememberMe());
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({ open: false, message: "", severity: "success" });
   const navigate = useNavigate();
   const location = useLocation();
 
-  const gradientBg = useMemo(
-    () =>
-      "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.24), transparent 35%), radial-gradient(circle at 80% 30%, rgba(255,255,255,0.18), transparent 35%), linear-gradient(135deg, rgba(236,72,153,0.92) 0%, rgba(168,85,247,0.88) 55%, rgba(99,102,241,0.84) 100%)",
-    []
-  );
+  const gradientBg = useMemo(() => "linear-gradient(180deg, #d81b60 0%, #ad1457 100%)", []);
 
-  const panelMinHeight = { xs: "auto", md: 640 };
+  const panelMinHeight = { xs: "auto", md: 560 };
 
-  const handleSubmit = async () => {
-    setError(null);
-    if (!username.trim() || !password) {
-      setError("Username and password are required.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await login(username.trim(), password);
-      setAuthToken(res.token, remember);
-      await me();
-      const to = (location.state as any)?.from ?? "/dashboard";
-      navigate(to, { replace: true });
-    } catch (e: any) {
-      const apiErr = e as ApiError;
-      setError(apiErr?.message ?? "Login failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const [signupOpen, setSignupOpen] = useState(false);
-  const [signupSubmitting, setSignupSubmitting] = useState(false);
-  const [signup, setSignup] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    email: "",
-    passport_number: "",
-    country_id: "",
-    state_id: "",
-    city_id: "",
-  });
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [states, setStates] = useState<StateRow[]>([]);
-  const [cities, setCities] = useState<CityRow[]>([]);
-
-  const countryOptions = useMemo(
-    () => [{ label: "— Select —", value: "" }].concat(countries.map((c) => ({ label: c.country_name, value: String(c.country_id) }))),
-    [countries],
-  );
-  const stateOptions = useMemo(
-    () => [{ label: "— Select —", value: "" }].concat(states.map((s) => ({ label: s.state_name, value: String(s.state_id) }))),
-    [states],
-  );
-  const cityOptions = useMemo(
-    () => [{ label: "— Select —", value: "" }].concat(cities.map((c) => ({ label: c.city_name, value: String(c.city_id) }))),
-    [cities],
-  );
-
-  useEffect(() => {
-    (async () => {
-      try {
-        setCountries(await listPublicCountries());
-      } catch {
-        setCountries([]);
-      }
-    })();
+  const demoCreds = useMemo(() => {
+    const env = import.meta.env as any;
+    return {
+      candidate: {
+        username: String(env.VITE_DEMO_CANDIDATE_USERNAME ?? ""),
+      },
+      administrator: {
+        username: String(env.VITE_DEMO_ADMIN_USERNAME ?? ""),
+      },
+      employer: {
+        username: String(env.VITE_DEMO_EMPLOYER_USERNAME ?? ""),
+      },
+      sourcing: {
+        username: String(env.VITE_DEMO_SOURCING_USERNAME ?? ""),
+      },
+    } satisfies Record<PortalKey, { username: string }>;
   }, []);
 
-  useEffect(() => {
-    if (!signup.country_id) {
-      setStates([]);
-      setCities([]);
-      return;
-    }
-    (async () => {
-      try {
-        setStates(await listPublicStates(Number(signup.country_id)));
-      } catch {
-        setStates([]);
-      }
-    })();
-  }, [signup.country_id]);
+  const portals = useMemo(
+    () =>
+      [
+        {
+          key: "candidate",
+          title: "Candidate Portal",
+          description: "Register, apply for jobs, upload documents, and track deployment",
+          icon: <PersonOutlineIcon fontSize="small" />,
+        },
+        {
+          key: "administrator",
+          title: "Administrator Portal",
+          description: "Manage jobs, users, compliance, recruitment, and deployments",
+          icon: <AdminPanelSettingsOutlinedIcon fontSize="small" />,
+        },
+        {
+          key: "employer",
+          title: "Employer Portal",
+          description: "View deployed workforce, attendance, and compliance summaries",
+          icon: <ApartmentOutlinedIcon fontSize="small" />,
+        },
+        {
+          key: "sourcing",
+          title: "Sourcing Partner Portal",
+          description: "Submit candidate referrals and track sourcing performance",
+          icon: <GroupAddOutlinedIcon fontSize="small" />,
+        },
+      ] as const,
+    [],
+  );
 
-  useEffect(() => {
-    if (!signup.state_id) {
-      setCities([]);
-      return;
-    }
-    (async () => {
-      try {
-        setCities(await listPublicCities(Number(signup.state_id)));
-      } catch {
-        setCities([]);
-      }
-    })();
-  }, [signup.state_id]);
+  const goToPortal = (portal: PortalKey) => {
+    navigate(`/login/auth?portal=${portal}`, { state: { ...(location.state as any) } });
+  };
 
-  const submitSignup = async () => {
-    try {
-      if (!signup.email.trim()) throw new Error("Email is required");
-      setSignupSubmitting(true);
-      const res = await recruitmentApi.public.candidateSignup({
-        first_name: signup.first_name.trim() || null,
-        last_name: signup.last_name.trim() || null,
-        phone: signup.phone.trim() || null,
-        email: signup.email.trim(),
-        passport_number: signup.passport_number.trim() || null,
-        country_id: signup.country_id ? Number(signup.country_id) : null,
-        state_id: signup.state_id ? Number(signup.state_id) : null,
-        city_id: signup.city_id ? Number(signup.city_id) : null,
-      });
-      setToast({
-        open: true,
-        severity: res.emailed ? "success" : "warning",
-        message: res.emailed
-          ? "Signup successful. Credentials have been emailed."
-          : `Signup successful. Username: ${res.username} (email not sent)`,
-      });
-      setSignupOpen(false);
-    } catch (e: any) {
-      setToast({ open: true, severity: "error", message: (e as ApiError)?.message ?? e?.message ?? "Signup failed" });
-    } finally {
-      setSignupSubmitting(false);
-    }
+  const goToDemo = (portal: PortalKey) => {
+    const creds = demoCreds[portal];
+    navigate(`/login/auth?portal=${portal}`, {
+      state: { ...(location.state as any), demo: { username: creds.username } },
+    });
   };
 
   return (
-    <Box position="relative" minHeight="100vh" width="100vw" overflow="hidden">
-      <Ad3DBackground variant="ehrm" />
+    <Box
+      position="relative"
+      minHeight="100vh"
+      width="100vw"
+      overflow="hidden"
+      sx={{
+        background: "linear-gradient(90deg, #d81b60 0%, #d81b60 50%, #f6f6f8 50%, #f6f6f8 100%)",
+      }}
+    >
 
       <Box
         position="relative"
@@ -158,7 +96,7 @@ export default function Login() {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        sx={{ px: { xs: 2, md: 5 }, py: { xs: 3, md: 5 }, width: "100%" }}
+        sx={{ px: { xs: 2, md: 5 }, py: { xs: 2, md: 3 }, width: "100%" }}
       >
         <Box
           sx={{
@@ -173,106 +111,79 @@ export default function Login() {
         >
           <Box sx={{ gridArea: "sis", display: "flex", justifyContent: { xs: "center", md: "flex-end" } }}>
             <Box sx={{ width: "100%", maxWidth: 720 }}>
-            <Box
-              sx={{
-                width: "100%",
-                minHeight: panelMinHeight,
-                borderRadius: { xs: 4, md: 6 },
-                background: gradientBg,
-                color: "white",
-                overflow: "hidden",
-                position: "relative",
-                p: { xs: 3, md: 5 },
-                boxShadow: "0 22px 70px rgba(2, 6, 23, 0.35)",
-              }}
-            >
               <Box
                 sx={{
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.22), transparent 40%), radial-gradient(circle at 80% 30%, rgba(255,255,255,0.16), transparent 45%)",
-                  pointerEvents: "none",
+                  width: "100%",
+                  minHeight: panelMinHeight,
+                  // borderRadius: { xs: 4, md: 6 },
+                  // background: gradientBg,
+                  color: "white",
+                  overflow: "hidden",
+                  position: "relative",
+                  p: { xs: 3, md: 4 },
                 }}
-              />
-
-              <Stack spacing={3} sx={{ position: "relative" }}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: 2.5,
-                      bgcolor: "rgba(255,255,255,0.18)",
-                      border: "1px solid rgba(255,255,255,0.28)",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <SisLogo height={28} />
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                      SIS EHRM
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Enterprise Human Resource Management
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                <Box>
-                  <Typography
-                    variant="h3"
-                    fontWeight={900}
-                    sx={{ letterSpacing: -0.8, fontSize: { xs: 34, md: 46 } }}
-                  >
-                    Workforce Management Ecosystem
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1.5, opacity: 0.92, maxWidth: 560 }}>
-                    Streamline employee lifecycle, attendance, payroll, compliance, and role-based access —
-                    all in one secure platform.
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                    gap: 2,
-                  }}
-                >
-                  {[
-                    { k: "25+", v: "Departments" },
-                    { k: "50K+", v: "Employees" },
-                    { k: "100+", v: "Enterprise Clients" },
-                    { k: "99.9%", v: "Uptime SLA" },
-                  ].map((s) => (
-                    <AdCard
-                      key={s.v}
-                      animate={false}
+              >
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Box
                       sx={{
-                        backgroundColor: "rgba(255,255,255,0.14)",
-                        border: "1px solid rgba(255,255,255,0.22)",
-                        color: "white",
+                        px: 1.5,
+                        py: 1,
+                        borderRadius: 2.5,
+                        bgcolor: "rgba(255,255,255,0.18)",
+                        border: "1px solid rgba(255,255,255,0.28)",
+                        display: "flex",
+                        alignItems: "center",
                       }}
-                      contentSx={{ p: 2.5 }}
                     >
-                      <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: 0.4 }}>
-                        {s.k}
+                      <SisLogo height={28} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                        SIS Global
                       </Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        {s.v}
+                        Connect
                       </Typography>
-                    </AdCard>
-                  ))}
-                </Box>
+                    </Box>
+                  </Stack>
 
-                <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                  Powered by SIS • Secure access with JWT + Role/Menu permissions
-                </Typography>
-              </Stack>
-            </Box>
+                  <Box>
+                    <Typography variant="h3" fontWeight={900} sx={{ letterSpacing: -0.8, fontSize: { xs: 34, md: 46 } }}>
+                      Workforce Management Ecosystem
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 1.5, opacity: 0.92, maxWidth: 560 }}>
+                      Digitizing the complete employee lifecycle — from sourcing and training to international deployment and beyond.
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+                    {[
+                      { k: "25+", v: "Countries" },
+                      { k: "50K+", v: "Workers Deployed" },
+                      { k: "200+", v: "Partner Agencies" },
+                      { k: "100+", v: "Enterprise Clients" },
+                    ].map((s) => (
+                      <Box
+                        key={s.v}
+                        sx={{
+                          p: 2,
+                          borderRadius: 3,
+                          backgroundColor: "rgba(255,255,255,0.12)",
+                          border: "1px solid rgba(255,255,255,0.20)",
+                        }}
+                      >
+                        <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: 0.4 }}>
+                          {s.k}
+                        </Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          {s.v}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Stack>
+              </Box>
             </Box>
           </Box>
 
@@ -285,148 +196,128 @@ export default function Login() {
             }}
           >
             <Box sx={{ width: "100%", maxWidth: 720 }}>
-            <AdCard
-              title="Welcome Back"
-              subtitle="Sign in to continue to your EHRM workspace"
-              animate={false}
-              sx={{
-                width: "100%",
-                minHeight: panelMinHeight,
-                borderRadius: { xs: 4, md: 6 },
-                backgroundColor: "rgba(255,255,255,0.62)",
-                border: "1px solid rgba(255,255,255,0.55)",
-                backdropFilter: "blur(14px)",
-              }}
-              contentSx={{
-                p: { xs: 3, md: 4 },
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Stack spacing={2} sx={{ flex: 1 }}>
-                <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
-                {error && (
-                  <AdAlertBox
-                    severity="error"
-                    title="Sign in failed"
-                    message={error}
-                    onClose={() => setError(null)}
-                  />
-                )}
-
-                <AdTextBox
-                  label="Username"
-                  placeholder="Enter your username"
-                  required
-                  value={username}
-                  onChange={setUsername}
-                  prefixIcon={<PersonOutlineIcon fontSize="small" />}
-                />
-
-                <AdTextBox
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                  minLength={6}
-                  showPasswordToggle
-                  value={password}
-                  onChange={setPassword}
-                  prefixIcon={<LockOutlinedIcon fontSize="small" />}
-                  onEnter={handleSubmit}
-                />
-
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <AdCheckBox label="Remember me" checked={remember} onChange={setRemember} />
-                  <AdButton
-                    variant="text"
-                    onClick={() => setError("Please contact your administrator to reset password.")}
-                  >
-                    Forgot password?
-                  </AdButton>
+              <Box
+                sx={{
+                  width: "100%",
+                  minHeight: panelMinHeight,
+                  // borderRadius: { xs: 4, md: 6 },
+                  // backgroundColor: "#ffffff",
+                  // border: "1px solid rgba(15,23,42,0.10)",
+                  p: { xs: 2.5, md: 3 },
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Stack spacing={0.75} sx={{ alignItems: "center", textAlign: "center", pb: 1.5 }}>
+                  <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.4 }}>
+                    Welcome Back
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Select your portal to continue
+                  </Typography>
                 </Stack>
 
-                <AdButton
-                  size="large"
-                  onClick={handleSubmit}
-                  loading={submitting}
-                  sx={{ py: 1.2, borderRadius: 2 }}
-                >
-                  Sign In
-                </AdButton>
+                <Stack spacing={1.25} sx={{ flex: 1 }}>
+                  {portals.map((p) => (
+                    <Box
+                      key={p.key}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => goToPortal(p.key)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") goToPortal(p.key);
+                      }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        backgroundColor: "#ffffff",
+                        border: "1px solid rgba(15,23,42,0.14)",
+                        cursor: "pointer",
+                        transition: "border-color 120ms ease, background-color 120ms ease",
+                        "&:hover": {
+                          borderColor: "rgba(216,27,96,0.24)",
+                          backgroundColor: "rgba(216,27,96,0.02)",
+                        },
+                        "&:focus-visible": {
+                          outline: "2px solid rgba(216,27,96,0.55)",
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          display: "grid",
+                          placeItems: "center",
+                          bgcolor: "rgba(216,27,96,0.10)",
+                          color: "#d81b60",
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        {p.icon}
+                      </Box>
 
-                <AdButton variant="text" onClick={() => setSignupOpen(true)}>
-                  Candidate Sign Up
-                </AdButton>
-                  <Divider sx={{ opacity: 0.8 }} />
-                <Box sx={{ display: "flex", justifyContent: "center", pt: 1 }}>
-                  <SisLogo height={95} />
-                </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography fontWeight={800} sx={{ fontSize: 14 }}>
+                          {p.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.15, fontSize: 12.5, lineHeight: 1.25 }}>
+                          {p.description}
+                        </Typography>
+                      </Box>
 
-               
-                {/* <Typography variant="caption" color="text.secondary" textAlign="center">
-                  SIS • EHRM Module
-                </Typography> */}
-              </Stack>
-            </AdCard>
+                      <ArrowForwardIosRoundedIcon fontSize="small" sx={{ color: "rgba(15,23,42,0.45)" }} />
+                    </Box>
+                  ))}
+
+                  <Divider sx={{ mt: 1.5, mb: 0.5 }} />
+                  <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ letterSpacing: 0.8 }}>
+                    QUICK DEMO ACCESS
+                  </Typography>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
+                    {(
+                      [
+                        { key: "candidate", label: "Demo: Candidate" },
+                        { key: "administrator", label: "Demo: Administrator" },
+                        { key: "employer", label: "Demo: Employer" },
+                        { key: "sourcing", label: "Demo: Sourcing" },
+                      ] as const
+                    ).map((b) => {
+                      const creds = demoCreds[b.key];
+                      const enabled = Boolean(creds.username);
+                      return (
+                        <Button
+                          key={b.key}
+                          variant="outlined"
+                          disabled={!enabled}
+                          onClick={() => goToDemo(b.key)}
+                          sx={{
+                            borderRadius: 999,
+                            textTransform: "none",
+                            borderColor: "rgba(15,23,42,0.18)",
+                            color: "rgba(15,23,42,0.75)",
+                            "&:hover": { borderColor: "rgba(216,27,96,0.35)" },
+                            py: 0.6,
+                            fontSize: 12.5,
+                          }}
+                        >
+                          {b.label}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Stack>
+              </Box>
             </Box>
           </Box>
         </Box>
       </Box>
-
-      <AdModal
-        open={signupOpen}
-        onClose={() => setSignupOpen(false)}
-        title="Candidate Sign Up"
-        subtitle="Create your account — credentials will be emailed to you."
-        maxWidth="md"
-        actions={
-          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
-            <AdButton variant="text" onClick={() => setSignupOpen(false)}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={submitSignup} loading={signupSubmitting}>
-              Create Account
-            </AdButton>
-          </Stack>
-        }
-      >
-        <Stack spacing={2}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdTextBox label="First Name" value={signup.first_name} onChange={(v) => setSignup((s) => ({ ...s, first_name: v }))} />
-            <AdTextBox label="Last Name" value={signup.last_name} onChange={(v) => setSignup((s) => ({ ...s, last_name: v }))} />
-          </Stack>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdTextBox label="Phone" value={signup.phone} onChange={(v) => setSignup((s) => ({ ...s, phone: v }))} />
-            <AdTextBox label="Email" required value={signup.email} onChange={(v) => setSignup((s) => ({ ...s, email: v }))} />
-          </Stack>
-          <AdTextBox label="Passport Number" value={signup.passport_number} onChange={(v) => setSignup((s) => ({ ...s, passport_number: v }))} />
-
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdDropDown
-              label="Country"
-              options={countryOptions}
-              value={signup.country_id}
-              onChange={(v) => setSignup((s) => ({ ...s, country_id: String(v), state_id: "", city_id: "" }))}
-            />
-            <AdDropDown
-              label="State"
-              options={stateOptions}
-              disabled={!signup.country_id}
-              value={signup.state_id}
-              onChange={(v) => setSignup((s) => ({ ...s, state_id: String(v), city_id: "" }))}
-            />
-            <AdDropDown
-              label="City"
-              options={cityOptions}
-              disabled={!signup.state_id}
-              value={signup.city_id}
-              onChange={(v) => setSignup((s) => ({ ...s, city_id: String(v) }))}
-            />
-          </Stack>
-        </Stack>
-      </AdModal>
     </Box>
   );
 }

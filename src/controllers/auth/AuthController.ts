@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Request, Route, Security, Tags } from 'tsoa';
-import { bootstrapFirstAdmin, getSelfProfile, loginWithPassword } from '../../services/authService';
+import { bootstrapFirstAdmin, getSelfProfile, loginWithOtp, loginWithPassword, requestLoginOtp } from '../../services/authService';
 import { httpError } from '../../utils/httpErrors';
 
 type LoginRequest = {
@@ -9,6 +9,19 @@ type LoginRequest = {
 
 type LoginResponse = {
   token: string;
+};
+
+type LoginOtpRequest = {
+  username: string;
+};
+
+type LoginOtpVerifyRequest = {
+  username: string;
+  otp: string;
+};
+
+type LoginOtpRequestResponse = {
+  sent: true;
 };
 
 type BootstrapRequest = {
@@ -22,6 +35,17 @@ export class AuthController extends Controller {
   @Post('login')
   public async login(@Body() body: LoginRequest): Promise<LoginResponse> {
     return loginWithPassword(body.username, body.password);
+  }
+
+  @Post('otp/request')
+  public async requestOtp(@Body() body: LoginOtpRequest): Promise<LoginOtpRequestResponse> {
+    await requestLoginOtp(body.username);
+    return { sent: true };
+  }
+
+  @Post('otp/verify')
+  public async verifyOtp(@Body() body: LoginOtpVerifyRequest): Promise<LoginResponse> {
+    return loginWithOtp(body.username, body.otp);
   }
 
   @Get('me')
