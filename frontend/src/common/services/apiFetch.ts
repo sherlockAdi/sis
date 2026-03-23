@@ -8,7 +8,9 @@ export type ApiError = {
 
 function getBaseUrl(): string {
   const base = String((import.meta as any).env?.VITE_API_BASE_URL ?? "").trim();
-  return base || "http://localhost:3000";
+  if (base) return base.replace(/\/+$/, "");
+  // return "https://sisglobalapi.neuralinfo.co.in";
+  return "http://localhost:3000"
 }
 
 async function readErrorBody(res: Response): Promise<{ message: string; details?: unknown }> {
@@ -52,4 +54,3 @@ export async function apiFetch<T>(
   if (contentType.includes("application/json")) return (await res.json()) as T;
   return (await res.text()) as unknown as T;
 }
-

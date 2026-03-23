@@ -135,7 +135,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" 
 export default function AdAppShell({
   title = "SIS EHRM",
   // subtitle = "Enterprise Human Resource Management",
-  // brand = "SIS Global",
+  brand,
   navItems,
   rightSlot,
   children,
@@ -183,25 +183,19 @@ export default function AdAppShell({
         display: "flex",
         flexDirection: "column",
         bgcolor: "#ffffff",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
         borderRight: "1px solid rgba(2, 6, 23, 0.08)",
       }}
     >
-      <DrawerHeader sx={{ justifyContent: "space-between", px: 2 }}>
+      <DrawerHeader sx={{ justifyContent: effectiveOpen ? "space-between" : "center", px: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <SisLogo height={32} />
           </Box>
-          {/* <Box sx={{ minWidth: 0, display: effectiveOpen ? "block" : "none" }}>
-            <Typography variant="subtitle1" fontWeight={900} noWrap>
-              {brand}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              Connect
-            </Typography>
-          </Box> */}
         </Stack>
 
-        {isMdUp && (
+        {isMdUp && effectiveOpen && (
           <IconButton onClick={handleDrawerClose} aria-label="collapse sidebar">
             {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
@@ -227,6 +221,15 @@ export default function AdAppShell({
         </Typography>
       </Box>
 
+      <Box sx={{ px: effectiveOpen ? 2 : 1, pb: 1, display: effectiveOpen ? "block" : "none" }}>
+        <Typography
+          variant="overline"
+          sx={{ fontWeight: 900, color: "rgba(2,6,23,0.55)", letterSpacing: 1.2 }}
+        >
+          Main Menu
+        </Typography>
+      </Box>
+
       <List sx={{ px: 1 }}>
         {navItems.map((item) => {
           const key = item.to;
@@ -249,14 +252,46 @@ export default function AdAppShell({
                     }
                   }}
                   sx={[
-                    { minHeight: 44, px: 2, borderRadius: 999, mx: 0.5, my: 0.25 },
-                    effectiveOpen ? { justifyContent: "initial" } : { justifyContent: "center" },
+                    {
+                      minHeight: 44,
+                      px: 2,
+                      borderRadius: 3,
+                      mx: 0.5,
+                      my: 0.25,
+                      position: "relative",
+                      "&.Mui-selected": {
+                        bgcolor: "rgba(216,27,96,0.10)",
+                        color: "#0f172a",
+                      },
+                      "&.Mui-selected:hover": {
+                        bgcolor: "rgba(216,27,96,0.12)",
+                      },
+                      ...(effectiveOpen
+                        ? {
+                            "&.Mui-selected::before": {
+                              content: '""',
+                              position: "absolute",
+                              left: 6,
+                              top: 10,
+                              bottom: 10,
+                              width: 3,
+                              borderRadius: 999,
+                              bgcolor: "#d81b60",
+                            },
+                          }
+                        : {}),
+                      "&:hover": {
+                        bgcolor: "rgba(2,6,23,0.05)",
+                      },
+                    },
+                    effectiveOpen ? { justifyContent: "initial" } : { justifyContent: "center", px: 1.25 },
                   ]}
                 >
                   <ListItemIcon
                     sx={[
                       { minWidth: 0, justifyContent: "center" },
-                      effectiveOpen ? { mr: 2 } : { mr: "auto" },
+                      effectiveOpen ? { mr: 2 } : { mr: 0 },
+                      selected ? { color: "#d81b60" } : { color: "rgba(2,6,23,0.72)" },
                     ]}
                   >
                     {item.icon ?? fallbackIcon}
@@ -264,7 +299,7 @@ export default function AdAppShell({
                   <ListItemText
                     primary={item.label}
                     primaryTypographyProps={{ noWrap: true, fontSize: 14, fontWeight: 650 }}
-                    sx={[effectiveOpen ? { opacity: 1 } : { opacity: 0 }]}
+                    sx={[effectiveOpen ? { opacity: 1 } : { display: "none" }]}
                   />
                   {hasChildren && effectiveOpen ? (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />) : null}
                 </ListItemButton>
@@ -285,9 +320,23 @@ export default function AdAppShell({
                           sx={{
                             minHeight: 40,
                             px: 2,
-                            borderRadius: 999,
+                            borderRadius: 3,
                             mx: 0.5,
                             my: 0.25,
+                            position: "relative",
+                            "&.Mui-selected": {
+                              bgcolor: "rgba(59,130,246,0.10)",
+                            },
+                            "&.Mui-selected::before": {
+                              content: '""',
+                              position: "absolute",
+                              left: 6,
+                              top: 10,
+                              bottom: 10,
+                              width: 3,
+                              borderRadius: 999,
+                              bgcolor: "#3b82f6",
+                            },
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 0, justifyContent: "center", mr: 2 }}>
@@ -313,32 +362,65 @@ export default function AdAppShell({
       <Divider />
 
       <Box sx={{ p: 1.5 }}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          alignItems="center"
-          sx={{
-            p: 1.25,
-            borderRadius: 3,
-            border: "1px solid rgba(2,6,23,0.08)",
-            bgcolor: "rgba(2,6,23,0.02)",
-          }}
-        >
-          <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
-            {(userName ?? "U").slice(0, 2).toUpperCase()}
-          </Avatar>
-          <Box sx={{ minWidth: 0, flex: 1, display: effectiveOpen ? "block" : "none" }}>
-            <Typography variant="body2" fontWeight={800} noWrap>
-              {userName ?? "User"}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {userEmail ?? ""}
-            </Typography>
-          </Box>
-          <IconButton aria-label="settings" onClick={settingsHandler} size="small">
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Stack>
+        {effectiveOpen ? (
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{
+              p: 1.25,
+              borderRadius: 3,
+              border: "1px solid rgba(2,6,23,0.08)",
+              bgcolor: "rgba(2,6,23,0.02)",
+              overflow: "hidden",
+            }}
+          >
+            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
+              {(userName ?? "U").slice(0, 2).toUpperCase()}
+            </Avatar>
+            <Box sx={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+              <Typography
+                variant="body2"
+                fontWeight={900}
+                noWrap
+                sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+              >
+                {userName ?? "User"}
+              </Typography>
+              {userEmail ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}
+                >
+                  {userEmail}
+                </Typography>
+              ) : null}
+            </Box>
+            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : (
+          <Stack
+            spacing={1}
+            alignItems="center"
+            sx={{
+              p: 1,
+              borderRadius: 3,
+              border: "1px solid rgba(2,6,23,0.08)",
+              bgcolor: "rgba(2,6,23,0.02)",
+            }}
+          >
+            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
+              {(userName ?? "U").slice(0, 2).toUpperCase()}
+            </Avatar>
+            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        )}
 
         {isMdUp && (
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>

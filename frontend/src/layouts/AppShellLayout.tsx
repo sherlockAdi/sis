@@ -22,12 +22,14 @@ import BusinessIcon from "@mui/icons-material/Business";
 import { AdAppShell, AdButton } from "../common/ad";
 import { useAuth } from "../common/auth/AuthContext";
 import { clearAuthToken } from "../common/services/tokenStorage";
+import { withPortalBase } from "../common/paths";
 
 function safePath(path?: string | null): string | null {
   if (!path) return null;
   const p = path.trim();
   if (!p) return null;
-  return p.startsWith("/") ? p : `/${p}`;
+  const normalized = p.startsWith("/") ? p : `/${p}`;
+  return withPortalBase(normalized);
 }
 
 function iconFromDb(name?: string | null) {
@@ -96,7 +98,7 @@ export default function AppShellLayout() {
       const targetPath =
         safePath(r.menu_path) ??
         safePath(children[0]?.menu_path) ??
-        "/dashboard";
+        withPortalBase("/dashboard");
 
       items.push({
         label: r.menu_name,
@@ -132,7 +134,7 @@ export default function AppShellLayout() {
         startIcon={<LogoutIcon />}
         onClick={() => {
           clearAuthToken();
-          navigate("/login", { replace: true });
+          navigate(withPortalBase("/login"), { replace: true });
         }}
       >
         Logout

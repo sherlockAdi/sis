@@ -4,15 +4,17 @@ import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettin
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
-import { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { SisLogo } from "../../common/ad";
+import { PORTAL_BASE } from "../../common/paths";
 
 type PortalKey = "candidate" | "administrator" | "employer" | "sourcing";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const gradientBg = useMemo(() => "linear-gradient(180deg, #d81b60 0%, #ad1457 100%)", []);
 
@@ -68,15 +70,24 @@ export default function Login() {
   );
 
   const goToPortal = (portal: PortalKey) => {
-    navigate(`/login/auth?portal=${portal}`, { state: { ...(location.state as any) } });
+    navigate(`${PORTAL_BASE}/login/auth?portal=${portal}`, { state: { ...(location.state as any) } });
   };
 
   const goToDemo = (portal: PortalKey) => {
     const creds = demoCreds[portal];
-    navigate(`/login/auth?portal=${portal}`, {
+    navigate(`${PORTAL_BASE}/login/auth?portal=${portal}`, {
       state: { ...(location.state as any), demo: { username: creds.username } },
     });
   };
+
+  useEffect(() => {
+    const portal = String(searchParams.get("portal") ?? "").trim().toLowerCase();
+    if (!portal) return;
+    if (portal === "candidate" || portal === "administrator" || portal === "employer" || portal === "sourcing") {
+      goToPortal(portal as PortalKey);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Box

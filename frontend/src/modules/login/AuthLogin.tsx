@@ -17,6 +17,7 @@ import { login, me, requestLoginOtp, verifyLoginOtp } from "../../common/service
 import type { ApiError } from "../../common/services/apiFetch";
 import { getRememberMe, setAuthToken } from "../../common/services/tokenStorage";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
+import { withPortalBase } from "../../common/paths";
 import {
   listPublicCities,
   listPublicCountries,
@@ -139,7 +140,8 @@ export default function AuthLogin() {
       const res = await login(username.trim(), password);
       setAuthToken(res.token, remember);
       await me();
-      const to = (location.state as any)?.from ?? "/dashboard";
+      const rawTo = (location.state as any)?.from ?? withPortalBase("/dashboard");
+      const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
       navigate(to, { replace: true });
     } catch (e: any) {
       const apiErr = e as ApiError;
@@ -185,7 +187,8 @@ export default function AuthLogin() {
       const res = await verifyLoginOtp(username.trim(), otp.trim());
       setAuthToken(res.token, remember);
       await me();
-      const to = (location.state as any)?.from ?? "/dashboard";
+      const rawTo = (location.state as any)?.from ?? withPortalBase("/dashboard");
+      const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
       navigate(to, { replace: true });
     } catch (e: any) {
       const apiErr = e as ApiError;
