@@ -58,10 +58,10 @@ export default function PublicHeader() {
   );
 
   const inPublicMenu = location.pathname === "/menu";
-  const activeAbout = location.pathname === "/about";
+  const activeAbout = location.pathname === "/about" || location.pathname.startsWith("/about/");
   const activeJobs = location.pathname === "/jobs" || location.pathname.startsWith("/jobs/");
-  const activeEmployer = location.pathname === "/employer-zone";
-  const activePartner = location.pathname === "/partner-zone";
+  const activeEmployer = location.pathname === "/employer-zone" || location.pathname.startsWith("/employer-zone/");
+  const activePartner = location.pathname === "/partner-zone" || location.pathname.startsWith("/partner-zone/");
 
   const go = (to: string) => {
     setAboutOpen(false);

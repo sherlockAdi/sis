@@ -24,6 +24,22 @@ import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentAppli
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
 import CandidateApplicationsPage from "../modules/candidate/CandidateApplicationsPage";
+import CandidateHomePage from "../modules/candidate/CandidateHomePage";
+import CandidateTrainingPage from "../modules/candidate/CandidateTrainingPage";
+import CandidateProfilePage from "../modules/candidate/CandidateProfilePage";
+import CandidateProfileDocumentsPage from "../modules/candidate/CandidateProfileDocumentsPage";
+import CandidateProfileTradeTestPage from "../modules/candidate/CandidateProfileTradeTestPage";
+import CandidateProfileDeploymentPage from "../modules/candidate/CandidateProfileDeploymentPage";
+import CandidateProfileHelpdeskPage from "../modules/candidate/CandidateProfileHelpdeskPage";
+import CandidateProfileSettingsPage from "../modules/candidate/CandidateProfileSettingsPage";
+import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
+import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
+import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
+import PartnerMySubmissionsPage from "../modules/partner/PartnerMySubmissionsPage";
+import PartnerPerformancePage from "../modules/partner/PartnerPerformancePage";
+import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
+import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
+import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import PublicLayout from "../modules/public/layout/PublicLayout";
 import PublicHomePage from "../modules/public/pages/PublicHomePage";
@@ -49,6 +65,8 @@ import PartnerZoneLandingPage from "../modules/public/pages/partner/PartnerZoneL
 import PartnerBenefitsPage from "../modules/public/pages/partner/PartnerBenefitsPage";
 import PartnerHowItWorksPage from "../modules/public/pages/partner/PartnerHowItWorksPage";
 import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/PartnerSubmitCandidatesPage";
+import PlaceholderPage from "../modules/admin/PlaceholderPage";
+import { useAuth } from "../common/auth/AuthContext";
 
 const mode = import.meta.env.VITE_APP_MODE ?? "all";
 
@@ -63,6 +81,14 @@ const OpdDashboard: any = opdModules["../modules/opd/OpdDashboard.tsx"]
 const IpdDashboard: any = ipdModules["../modules/ipd/IpdDashboard.tsx"]
   ? lazy(ipdModules["../modules/ipd/IpdDashboard.tsx"] as any)
   : null;
+
+function PortalIndexRedirect() {
+  const { me } = useAuth();
+  const role = String(me?.role_code ?? "").toUpperCase();
+  if (role === "CANDIDATE") return <Navigate to="candidate/home" replace />;
+  if (role === "SOURCING" || role === "PARTNER") return <Navigate to="partner/dashboard" replace />;
+  return <Navigate to="dashboard" replace />;
+}
 
 export default function AppRoutes() {
   return (
@@ -158,6 +184,17 @@ export default function AppRoutes() {
           path="/candidate/applications"
           element={<Navigate to="/portal/candidate/applications" replace />}
         />
+        <Route path="/candidate/home" element={<Navigate to="/portal/candidate/home" replace />} />
+        <Route path="/candidate/training" element={<Navigate to="/portal/candidate/training" replace />} />
+        <Route path="/candidate/profile" element={<Navigate to="/portal/candidate/profile" replace />} />
+        <Route path="/partner/dashboard" element={<Navigate to="/portal/partner/dashboard" replace />} />
+        <Route path="/partner/job-mandates" element={<Navigate to="/portal/partner/job-mandates" replace />} />
+        <Route path="/partner/submit-candidate" element={<Navigate to="/portal/partner/submit-candidate" replace />} />
+        <Route path="/partner/my-submissions" element={<Navigate to="/portal/partner/my-submissions" replace />} />
+        <Route path="/partner/performance" element={<Navigate to="/portal/partner/performance" replace />} />
+        <Route path="/partner/earnings" element={<Navigate to="/portal/partner/earnings" replace />} />
+        <Route path="/partner/helpdesk" element={<Navigate to="/portal/partner/helpdesk" replace />} />
+        <Route path="/partner/profile" element={<Navigate to="/portal/partner/profile" replace />} />
         <Route path="/companies" element={<Navigate to="/portal/companies" replace />} />
         <Route path="/opd" element={<Navigate to="/portal/opd" replace />} />
         <Route path="/ipd" element={<Navigate to="/portal/ipd" replace />} />
@@ -167,7 +204,7 @@ export default function AppRoutes() {
 
         <Route path="/portal" element={<RequireAuth />}>
           <Route element={<AppShellLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route index element={<PortalIndexRedirect />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="guide" element={<GuidePage />} />
             <Route path="location/countries" element={<CountriesPage />} />
@@ -184,9 +221,81 @@ export default function AppRoutes() {
             <Route path="jobs-preview" element={<JobsPreviewPage />} />
             <Route path="recruitment/applications" element={<RecruitmentApplicationsPage />} />
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
+            <Route path="candidate/home" element={<CandidateHomePage />} />
             <Route path="candidate/jobs" element={<CandidateJobsPage />} />
             <Route path="candidate/applications" element={<CandidateApplicationsPage />} />
+            <Route path="candidate/training" element={<CandidateTrainingPage />} />
+            <Route path="candidate/profile" element={<CandidateProfilePage />} />
+            <Route path="candidate/profile/documents" element={<CandidateProfileDocumentsPage />} />
+            <Route path="candidate/profile/trade-test" element={<CandidateProfileTradeTestPage />} />
+            <Route path="candidate/profile/deployment" element={<CandidateProfileDeploymentPage />} />
+            <Route path="candidate/profile/helpdesk" element={<CandidateProfileHelpdeskPage />} />
+            <Route path="candidate/profile/settings" element={<CandidateProfileSettingsPage />} />
+            <Route path="partner/dashboard" element={<PartnerDashboardPage />} />
+            <Route path="partner/job-mandates" element={<PartnerJobMandatesPage />} />
+            <Route path="partner/submit-candidate" element={<PartnerSubmitCandidatePage />} />
+            <Route path="partner/my-submissions" element={<PartnerMySubmissionsPage />} />
+            <Route path="partner/performance" element={<PartnerPerformancePage />} />
+            <Route path="partner/earnings" element={<PartnerEarningsPage />} />
+            <Route path="partner/helpdesk" element={<PartnerHelpdeskPage />} />
+            <Route path="partner/profile" element={<PartnerProfilePage />} />
             <Route path="companies" element={<CompaniesPage />} />
+
+            {/* Admin scaffolding routes (dummy pages for now, safe for dynamic Menu Management paths) */}
+            <Route
+              path="recruitment/job-management"
+              element={<PlaceholderPage title="Recruitment • Job Management" nextLinks={[{ label: "Jobs", to: "/portal/jobs" }]} />}
+            />
+            <Route
+              path="recruitment/candidate-management"
+              element={<PlaceholderPage title="Recruitment • Candidate Management" nextLinks={[{ label: "Candidates", to: "/portal/recruitment/candidates" }]} />}
+            />
+            <Route
+              path="recruitment/screening-interviews"
+              element={<PlaceholderPage title="Recruitment • Screening & Interviews" />}
+            />
+            <Route path="trade-test" element={<PlaceholderPage title="Trade Test & Assessment" />} />
+            <Route path="trade-test/*" element={<PlaceholderPage title="Trade Test & Assessment" />} />
+
+            <Route path="training" element={<PlaceholderPage title="Training & LMS" />} />
+            <Route path="training/*" element={<PlaceholderPage title="Training & LMS" />} />
+
+            <Route path="deployment" element={<PlaceholderPage title="Deployment Management" />} />
+            <Route path="deployment/*" element={<PlaceholderPage title="Deployment Management" />} />
+
+            <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
+            <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />
+
+            <Route path="helpdesk" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
+            <Route path="helpdesk/*" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
+
+            <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
+            <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
+
+            <Route path="partners" element={<PlaceholderPage title="Partner Management" />} />
+            <Route path="partners/*" element={<PlaceholderPage title="Partner Management" />} />
+
+            <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
+            <Route path="reports/*" element={<PlaceholderPage title="Reports & Analytics" />} />
+
+            <Route path="compliance" element={<PlaceholderPage title="Compliance & Documents" />} />
+            <Route path="compliance/*" element={<PlaceholderPage title="Compliance & Documents" />} />
+
+            <Route
+              path="settings"
+              element={
+                <PlaceholderPage title="System Settings" nextLinks={[{ label: "Menu Management", to: "/portal/admin/menu-management" }]} />
+              }
+            />
+            <Route
+              path="settings/*"
+              element={
+                <PlaceholderPage title="System Settings" nextLinks={[{ label: "Menu Management", to: "/portal/admin/menu-management" }]} />
+              }
+            />
+
+            {/* Catch-all inside portal */}
+            <Route path="*" element={<PlaceholderPage title="Page not found (Dummy)" />} />
             {(mode === "opd" || mode === "all") && OpdDashboard && (
               <Route path="opd" element={<OpdDashboard />} />
             )}

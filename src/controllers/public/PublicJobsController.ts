@@ -81,8 +81,9 @@ export class PublicJobsController extends Controller {
         state_id: typeof state_id === 'number' ? state_id : null,
         city_id: typeof city_id === 'number' ? city_id : null,
         category_id: typeof category_id === 'number' ? category_id : null,
-        // Fetch without status so we can do safe, trimmed matching in Node.
-        status: null
+        // Pass desired status for compatibility with older DB procedure versions.
+        // We still trim/normalize in Node to keep output tolerant.
+        status: desiredStatus
       }
     );
 
