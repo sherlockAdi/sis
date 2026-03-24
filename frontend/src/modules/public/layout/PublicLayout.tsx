@@ -12,8 +12,19 @@ export default function PublicLayout() {
   const hideChrome = location.pathname === "/menu";
 
   useEffect(() => {
-    if (!hideChrome) window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [hideChrome, location.pathname]);
+    if (hideChrome) return;
+    const raw = String(location.hash ?? "").trim();
+    if (raw && raw.startsWith("#") && raw.length > 1) {
+      const id = decodeURIComponent(raw.slice(1));
+      // Wait a tick so the route content mounts before scrolling.
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id);
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, [hideChrome, location.hash, location.pathname]);
 
   return (
     <ThemeProvider theme={publicTheme}>
