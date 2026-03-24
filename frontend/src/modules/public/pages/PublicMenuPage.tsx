@@ -64,10 +64,10 @@ export default function PublicMenuPage() {
                 About Us
               </Typography>
               {[
-                { label: "Company overview", to: "/about/company-overview" },
-                { label: "Global presence", to: "/about/global-presence" },
-                { label: "Trust / certifications", to: "/about/trust-certifications" },
-                { label: "Why SIS", to: "/about/why-sis" },
+                { label: "Company overview", to: "/about#overview" },
+                { label: "Global presence", to: "/about#presence" },
+                { label: "Trust / certifications", to: "/about#trust" },
+                { label: "Why SIS", to: "/about#why" },
               ].map((l) => (
                 <Button
                   key={l.to}

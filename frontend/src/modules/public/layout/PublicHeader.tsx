@@ -1,17 +1,12 @@
-import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
   AppBar,
   Box,
   Button,
-  ClickAwayListener,
   Container,
   IconButton,
-  MenuItem,
-  Paper,
   Stack,
   Toolbar,
   Typography,
@@ -24,39 +19,6 @@ export default function PublicHeader() {
   const location = useLocation();
   const isMdUp = useMediaQuery((theme: any) => theme.breakpoints.up("md"));
 
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [employerOpen, setEmployerOpen] = useState(false);
-  const [partnerOpen, setPartnerOpen] = useState(false);
-
-  const aboutLinks = useMemo(
-    () => [
-      { label: "Company overview", to: "/about/company-overview" },
-      { label: "Global presence", to: "/about/global-presence" },
-      { label: "Trust / certifications", to: "/about/trust-certifications" },
-      { label: "Why SIS", to: "/about/why-sis" },
-    ],
-    [],
-  );
-
-  const employerLinks = useMemo(
-    () => [
-      { label: "Why partner with SIS", to: "/employer-zone/why-partner-with-sis" },
-      { label: "Workforce solutions", to: "/employer-zone/workforce-solutions" },
-      { label: "Process", to: "/employer-zone/process" },
-      { label: "Contact / Inquiry", to: "/employer-zone/contact" },
-    ],
-    [],
-  );
-
-  const partnerLinks = useMemo(
-    () => [
-      { label: "Benefits", to: "/partner-zone/benefits" },
-      { label: "How it works", to: "/partner-zone/how-it-works" },
-      { label: "Submit candidates", to: "/partner-zone/submit-candidates" },
-    ],
-    [],
-  );
-
   const inPublicMenu = location.pathname === "/menu";
   const activeAbout = location.pathname === "/about" || location.pathname.startsWith("/about/");
   const activeJobs = location.pathname === "/jobs" || location.pathname.startsWith("/jobs/");
@@ -64,9 +26,6 @@ export default function PublicHeader() {
   const activePartner = location.pathname === "/partner-zone" || location.pathname.startsWith("/partner-zone/");
 
   const go = (to: string) => {
-    setAboutOpen(false);
-    setEmployerOpen(false);
-    setPartnerOpen(false);
     navigate(to);
   };
 
@@ -125,57 +84,21 @@ export default function PublicHeader() {
                 Home
               </Button>
 
-              <Box
-                sx={{ position: "relative" }}
-                onMouseEnter={() => {
-                  setAboutOpen(true);
-                  setEmployerOpen(false);
-                  setPartnerOpen(false);
+              <Button
+                color="inherit"
+                onClick={() => go("/about")}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 900,
+                  opacity: 1,
+                  borderRadius: 0,
+                  borderBottom: activeAbout ? "3px solid" : "3px solid transparent",
+                  borderBottomColor: activeAbout ? "primary.main" : "transparent",
+                  px: 1.25,
                 }}
               >
-                <ClickAwayListener onClickAway={() => setAboutOpen(false)}>
-                  <Box>
-                    <Button
-                      color="inherit"
-                      onClick={() => go("/about")}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 900,
-                        opacity: 1,
-                        borderRadius: 0,
-                        borderBottom: activeAbout ? "3px solid" : "3px solid transparent",
-                        borderBottomColor: activeAbout ? "primary.main" : "transparent",
-                        px: 1.25,
-                      }}
-                      endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-                    >
-                      About Us
-                    </Button>
-
-                    {aboutOpen ? (
-                      <Paper
-                        elevation={6}
-                        sx={{
-                          position: "absolute",
-                          top: "calc(100% + 6px)",
-                          left: 0,
-                          minWidth: 260,
-                          borderRadius: 2,
-                          overflow: "hidden",
-                          border: "1px solid rgba(15,23,42,0.10)",
-                          zIndex: 1500,
-                        }}
-                      >
-                        {aboutLinks.map((l) => (
-                          <MenuItem key={l.to} onClick={() => go(l.to)} sx={{ fontWeight: 900 }}>
-                            {l.label}
-                          </MenuItem>
-                        ))}
-                      </Paper>
-                    ) : null}
-                  </Box>
-                </ClickAwayListener>
-              </Box>
+                About Us
+              </Button>
 
               <Button
                 color="inherit"
@@ -193,109 +116,37 @@ export default function PublicHeader() {
                 Jobs
               </Button>
 
-              <Box
-                sx={{ position: "relative" }}
-                onMouseEnter={() => {
-                  setEmployerOpen(true);
-                  setAboutOpen(false);
-                  setPartnerOpen(false);
+              <Button
+                color="inherit"
+                onClick={() => go("/employer-zone")}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 900,
+                  opacity: 1,
+                  borderRadius: 0,
+                  borderBottom: activeEmployer ? "3px solid" : "3px solid transparent",
+                  borderBottomColor: activeEmployer ? "primary.main" : "transparent",
+                  px: 1.25,
                 }}
               >
-                <ClickAwayListener onClickAway={() => setEmployerOpen(false)}>
-                  <Box>
-                    <Button
-                      color="inherit"
-                      onClick={() => go("/employer-zone")}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 900,
-                        opacity: 1,
-                        borderRadius: 0,
-                        borderBottom: activeEmployer ? "3px solid" : "3px solid transparent",
-                        borderBottomColor: activeEmployer ? "primary.main" : "transparent",
-                        px: 1.25,
-                      }}
-                      endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-                    >
-                      Employer Zone
-                    </Button>
+                Employer Zone
+              </Button>
 
-                    {employerOpen ? (
-                      <Paper
-                        elevation={6}
-                        sx={{
-                          position: "absolute",
-                          top: "calc(100% + 6px)",
-                          left: 0,
-                          minWidth: 280,
-                          borderRadius: 2,
-                          overflow: "hidden",
-                          border: "1px solid rgba(15,23,42,0.10)",
-                          zIndex: 1500,
-                        }}
-                      >
-                        {employerLinks.map((l) => (
-                          <MenuItem key={l.to} onClick={() => go(l.to)} sx={{ fontWeight: 900 }}>
-                            {l.label}
-                          </MenuItem>
-                        ))}
-                      </Paper>
-                    ) : null}
-                  </Box>
-                </ClickAwayListener>
-              </Box>
-
-              <Box
-                sx={{ position: "relative" }}
-                onMouseEnter={() => {
-                  setPartnerOpen(true);
-                  setAboutOpen(false);
-                  setEmployerOpen(false);
+              <Button
+                color="inherit"
+                onClick={() => go("/partner-zone")}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 900,
+                  opacity: 1,
+                  borderRadius: 0,
+                  borderBottom: activePartner ? "3px solid" : "3px solid transparent",
+                  borderBottomColor: activePartner ? "primary.main" : "transparent",
+                  px: 1.25,
                 }}
               >
-                <ClickAwayListener onClickAway={() => setPartnerOpen(false)}>
-                  <Box>
-                    <Button
-                      color="inherit"
-                      onClick={() => go("/partner-zone")}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 900,
-                        opacity: 1,
-                        borderRadius: 0,
-                        borderBottom: activePartner ? "3px solid" : "3px solid transparent",
-                        borderBottomColor: activePartner ? "primary.main" : "transparent",
-                        px: 1.25,
-                      }}
-                      endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-                    >
-                      Partner Zone
-                    </Button>
-
-                    {partnerOpen ? (
-                      <Paper
-                        elevation={6}
-                        sx={{
-                          position: "absolute",
-                          top: "calc(100% + 6px)",
-                          left: 0,
-                          minWidth: 260,
-                          borderRadius: 2,
-                          overflow: "hidden",
-                          border: "1px solid rgba(15,23,42,0.10)",
-                          zIndex: 1500,
-                        }}
-                      >
-                        {partnerLinks.map((l) => (
-                          <MenuItem key={l.to} onClick={() => go(l.to)} sx={{ fontWeight: 900 }}>
-                            {l.label}
-                          </MenuItem>
-                        ))}
-                      </Paper>
-                    ) : null}
-                  </Box>
-                </ClickAwayListener>
-              </Box>
+                Partner Zone
+              </Button>
 
               <Button
                 variant="contained"

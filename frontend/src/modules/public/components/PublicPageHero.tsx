@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Box, Container, Stack, Typography } from "@mui/material";
 
 export default function PublicPageHero({
@@ -5,11 +6,13 @@ export default function PublicPageHero({
   title,
   highlight,
   subtitle,
+  actions,
 }: {
   eyebrow?: string;
   title: string;
   highlight?: string;
   subtitle?: string;
+  actions?: ReactNode;
 }) {
   return (
     <Box
@@ -36,9 +39,9 @@ export default function PublicPageHero({
           {subtitle ? (
             <Typography sx={{ color: "text.secondary", maxWidth: 980 }}>{subtitle}</Typography>
           ) : null}
+          {actions ? <Box sx={{ pt: 0.5 }}>{actions}</Box> : null}
         </Stack>
       </Container>
     </Box>
   );
 }
-

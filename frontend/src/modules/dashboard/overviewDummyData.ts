@@ -40,9 +40,7 @@ export function createOverviewDummyData() {
     { key: "projects", label: "Total No of Project's", value: "90/125", helper: "View All", tone: "teal" as const },
     { key: "clients", label: "Total No of Clients", value: "69/86", helper: "View All", tone: "blue" as const },
     { key: "tasks", label: "Total No of Tasks", value: "225/28", helper: "View All", tone: "pink" as const },
-    { key: "earnings", label: "Earnings", value: "$21445", helper: "View All", tone: "purple" as const },
     { key: "profit", label: "Profit This Week", value: "$5,544", helper: "View All", tone: "red" as const },
-    { key: "applicants", label: "Job Applicants", value: "98", helper: "View All", tone: "green" as const },
     { key: "newHire", label: "New Hire", value: "45/48", helper: "View All", tone: "slate" as const },
   ];
 
@@ -102,13 +100,6 @@ export function createOverviewDummyData() {
     },
   ];
 
-  const applicants: ApplicantItem[] = [
-    { id: "app-1", name: "Brian Villalobos", exp: "5+ Years", country: "USA", role: "UI/UX Designer", roleColor: "teal" },
-    { id: "app-2", name: "Anthony Lewis", exp: "4+ Years", country: "USA", role: "Python Developer", roleColor: "blue" },
-    { id: "app-3", name: "Stephan Peralt", exp: "6+ Years", country: "USA", role: "Android Developer", roleColor: "purple" },
-    { id: "app-4", name: "Doglas Martini", exp: "2+ Years", country: "USA", role: "React Developer", roleColor: "gray" },
-  ];
-
   const todos: TodoItem[] = [
     { id: "todo-1", title: "Add Holidays", dueLabel: "Today", done: false },
     { id: "todo-2", title: "Review Job Postings", dueLabel: "Today", done: false },
@@ -121,8 +112,6 @@ export function createOverviewDummyData() {
     departments,
     attendance,
     clockItems,
-    applicants,
     todos,
   };
 }
-

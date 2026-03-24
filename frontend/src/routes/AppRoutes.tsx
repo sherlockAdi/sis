@@ -52,10 +52,6 @@ import PartnerZonePage from "../modules/public/pages/PartnerZonePage";
 import PublicRegisterPage from "../modules/public/pages/PublicRegisterPage";
 import PublicMenuPage from "../modules/public/pages/PublicMenuPage";
 import AboutIndexPage from "../modules/public/pages/about/AboutIndexPage";
-import CompanyOverviewPage from "../modules/public/pages/about/CompanyOverviewPage";
-import GlobalPresencePage from "../modules/public/pages/about/GlobalPresencePage";
-import TrustCertificationsPage from "../modules/public/pages/about/TrustCertificationsPage";
-import WhySisPage from "../modules/public/pages/about/WhySisPage";
 import EmployerZoneLandingPage from "../modules/public/pages/employer/EmployerZoneLandingPage";
 import EmployerWhyPartnerPage from "../modules/public/pages/employer/EmployerWhyPartnerPage";
 import EmployerWorkforceSolutionsPage from "../modules/public/pages/employer/EmployerWorkforceSolutionsPage";
@@ -99,30 +95,30 @@ export default function AppRoutes() {
           <Route path="/" element={<PublicHomePage />} />
           {/* About (index + section pages) */}
           <Route path="/about" element={<AboutIndexPage />} />
-          <Route path="/about/company-overview" element={<CompanyOverviewPage />} />
-          <Route path="/about/global-presence" element={<GlobalPresencePage />} />
-          <Route path="/about/trust-certifications" element={<TrustCertificationsPage />} />
-          <Route path="/about/why-sis" element={<WhySisPage />} />
+          <Route path="/about/company-overview" element={<Navigate to="/about#overview" replace />} />
+          <Route path="/about/global-presence" element={<Navigate to="/about#presence" replace />} />
+          <Route path="/about/trust-certifications" element={<Navigate to="/about#trust" replace />} />
+          <Route path="/about/why-sis" element={<Navigate to="/about#why" replace />} />
 
           {/* Legacy single-page about with anchors */}
           <Route path="/about-legacy" element={<PublicAboutPage />} />
           <Route path="/jobs" element={<PublicJobsPage />} />
           <Route path="/jobs/country/:countryCode" element={<PublicJobsByCountryPage />} />
           <Route path="/jobs/:jobId" element={<PublicJobDetailPage />} />
-          {/* Employer Zone (landing + section pages) */}
-          <Route path="/employer-zone" element={<EmployerZoneLandingPage />} />
-          <Route path="/employer-zone/why-partner-with-sis" element={<EmployerWhyPartnerPage />} />
-          <Route path="/employer-zone/workforce-solutions" element={<EmployerWorkforceSolutionsPage />} />
-          <Route path="/employer-zone/process" element={<EmployerProcessPage />} />
-          <Route path="/employer-zone/contact" element={<EmployerInquiryPage />} />
+        {/* Employer Zone (landing + section pages) */}
+          <Route path="/employer-zone" element={<EmployerZonePage />} />
+          <Route path="/employer-zone/why-partner-with-sis" element={<Navigate to="/employer-zone#why" replace />} />
+          <Route path="/employer-zone/workforce-solutions" element={<Navigate to="/employer-zone#solutions" replace />} />
+          <Route path="/employer-zone/process" element={<Navigate to="/employer-zone#process" replace />} />
+          <Route path="/employer-zone/contact" element={<Navigate to="/employer-zone#inquiry" replace />} />
 
           {/* Legacy single-page employer zone */}
           <Route path="/employer-zone-legacy" element={<EmployerZonePage />} />
           {/* Partner Zone (landing + section pages) */}
-          <Route path="/partner-zone" element={<PartnerZoneLandingPage />} />
-          <Route path="/partner-zone/benefits" element={<PartnerBenefitsPage />} />
-          <Route path="/partner-zone/how-it-works" element={<PartnerHowItWorksPage />} />
-          <Route path="/partner-zone/submit-candidates" element={<PartnerSubmitCandidatesPage />} />
+          <Route path="/partner-zone" element={<PartnerZonePage />} />
+          <Route path="/partner-zone/benefits" element={<Navigate to="/partner-zone#benefits" replace />} />
+          <Route path="/partner-zone/how-it-works" element={<Navigate to="/partner-zone#how" replace />} />
+          <Route path="/partner-zone/submit-candidates" element={<Navigate to="/partner-zone#submit" replace />} />
 
           {/* Legacy single-page partner zone */}
           <Route path="/partner-zone-legacy" element={<PartnerZonePage />} />

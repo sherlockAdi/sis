@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Avatar,
   Box,
   Button,
-  Checkbox,
   Chip,
   Divider,
   Grid,
@@ -17,14 +16,12 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import GroupsIcon from "@mui/icons-material/Groups";
 import FolderCopyIcon from "@mui/icons-material/FolderCopy";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
-import PaidIcon from "@mui/icons-material/Paid";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { AdCard } from "../../common/ad";
-import { createOverviewDummyData, type ApplicantItem, type ClockItem } from "./overviewDummyData";
+import { createOverviewDummyData, type ClockItem } from "./overviewDummyData";
 
 type KpiTone = "orange" | "teal" | "blue" | "pink" | "purple" | "red" | "green" | "slate";
 
@@ -283,28 +280,6 @@ function SemiGauge({
   );
 }
 
-function roleChip(app: ApplicantItem) {
-  const map: Record<ApplicantItem["roleColor"], { bg: string; fg: string }> = {
-    teal: { bg: "rgba(14,116,144,0.10)", fg: "#0e7490" },
-    blue: { bg: "rgba(37,99,235,0.10)", fg: "#2563eb" },
-    purple: { bg: "rgba(147,51,234,0.10)", fg: "#9333ea" },
-    gray: { bg: "rgba(15,23,42,0.08)", fg: "#0f172a" },
-  };
-  const c = map[app.roleColor] ?? map.gray;
-  return (
-    <Chip
-      size="small"
-      label={app.role}
-      sx={{
-        bgcolor: c.bg,
-        color: c.fg,
-        border: "1px solid rgba(2,6,23,0.08)",
-        "& .MuiChip-label": { fontWeight: 900 },
-      }}
-    />
-  );
-}
-
 function clockStatusChip(item: ClockItem) {
   const late = item.status === "Late";
   return (
@@ -323,7 +298,6 @@ function clockStatusChip(item: ClockItem) {
 
 export default function OverviewDashboard({ userName }: { userName: string }) {
   const data = useMemo(() => createOverviewDummyData(), []);
-  const [todos, setTodos] = useState(data.todos);
 
   const deptBars = useMemo(
     () => data.departments.map((d) => ({ label: d.dept, value: d.count })),
@@ -417,12 +391,8 @@ export default function OverviewDashboard({ userName }: { userName: string }) {
                   <GroupsIcon fontSize="small" />
                 ) : k.key === "tasks" ? (
                   <FactCheckIcon fontSize="small" />
-                ) : k.key === "earnings" ? (
-                  <PaidIcon fontSize="small" />
                 ) : k.key === "profit" ? (
                   <TrendingUpIcon fontSize="small" />
-                ) : k.key === "applicants" ? (
-                  <PersonSearchIcon fontSize="small" />
                 ) : (
                   <WorkOutlineIcon fontSize="small" />
                 )
@@ -640,132 +610,6 @@ export default function OverviewDashboard({ userName }: { userName: string }) {
           </AdCard>
         </Box>
 
-        <Box sx={{ display: "flex" }}>
-          <AdCard
-            title="Jobs Applicants"
-            animate={false}
-            sx={{
-              backgroundColor: "rgba(255,255,255,0.92)",
-              border: "1px solid rgba(2,6,23,0.08)",
-              boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-              flex: 1,
-            }}
-            contentSx={{ p: 2 }}
-            headerRight={
-              <Button size="small" variant="outlined" sx={{ textTransform: "none", fontWeight: 900, borderRadius: 2 }}>
-                View All
-              </Button>
-            }
-          >
-            <Box
-              sx={{
-                height: 34,
-                borderRadius: 2.5,
-                bgcolor: "rgba(2,6,23,0.06)",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                overflow: "hidden",
-                mb: 1.5,
-              }}
-            >
-              <Box sx={{ display: "grid", placeItems: "center", fontWeight: 900, color: "#0f172a" }}>
-                Openings
-              </Box>
-              <Box sx={{ display: "grid", placeItems: "center", fontWeight: 900, bgcolor: "#f97316", color: "white" }}>
-                Applicants
-              </Box>
-            </Box>
-
-            <Stack spacing={1.25}>
-              {data.applicants.map((a) => (
-                <Stack
-                  key={a.id}
-                  direction="row"
-                  spacing={1.25}
-                  alignItems="center"
-                  sx={{ py: 0.75 }}
-                >
-                  <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(2,6,23,0.06)", color: "#0f172a", fontWeight: 950 }}>
-                    {a.name.slice(0, 2).toUpperCase()}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={950} noWrap>
-                      {a.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap>
-                      Exp : {a.exp} &nbsp;•&nbsp; {a.country}
-                    </Typography>
-                  </Box>
-                  {roleChip(a)}
-                </Stack>
-              ))}
-            </Stack>
-          </AdCard>
-        </Box>
-
-        <Box sx={{ display: "flex" }}>
-          <AdCard
-            title="Todo"
-            animate={false}
-            sx={{
-              backgroundColor: "rgba(255,255,255,0.92)",
-              border: "1px solid rgba(2,6,23,0.08)",
-              boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-              flex: 1,
-            }}
-            contentSx={{ p: 2 }}
-            headerRight={
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<CalendarMonthIcon />}
-                  sx={{ textTransform: "none", fontWeight: 900, borderRadius: 2 }}
-                >
-                  Today
-                </Button>
-                <IconButton size="small" aria-label="add todo">
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            }
-          >
-            <Stack spacing={1.25}>
-              {todos.map((t) => (
-                <Stack
-                  key={t.id}
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{
-                    p: 1,
-                    borderRadius: 3,
-                    border: "1px solid rgba(2,6,23,0.08)",
-                    bgcolor: "rgba(2,6,23,0.01)",
-                  }}
-                >
-                  <Checkbox
-                    checked={t.done}
-                    onChange={(e) => setTodos((x) => x.map((it) => (it.id === t.id ? { ...it, done: e.target.checked } : it)))}
-                  />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight={900}
-                      noWrap
-                      sx={{ textDecoration: t.done ? "line-through" : "none", opacity: t.done ? 0.65 : 1 }}
-                    >
-                      {t.title}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t.dueLabel}
-                    </Typography>
-                  </Box>
-                </Stack>
-              ))}
-            </Stack>
-          </AdCard>
-        </Box>
       </Box>
     </Stack>
   );
