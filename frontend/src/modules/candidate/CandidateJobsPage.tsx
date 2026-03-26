@@ -2,15 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import PlaceIcon from "@mui/icons-material/Place";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdModal, AdNotification } from "../../common/ad";
+import { useNavigate } from "react-router-dom";
+import { AdAlertBox, AdButton, AdCard, AdDropDown, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
-import { jobsApi, type JobDetail, type JobListRow } from "../../common/services/jobsApi";
+import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
 import { mastersApi, type JobCategory } from "../../common/services/mastersApi";
 import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
-import { candidateApi, type CandidateApplicationDocRow } from "../../common/services/candidateApi";
-import { recruitmentApi } from "../../common/services/recruitmentApi";
+import { candidateApi } from "../../common/services/candidateApi";
 
 type Filters = {
   country_id?: number;
@@ -20,13 +18,8 @@ type Filters = {
   status?: string;
 };
 
-function fileExt(name: string): string {
-  const idx = name.lastIndexOf(".");
-  if (idx < 0) return "";
-  return name.slice(idx).toLowerCase();
-}
-
 export default function CandidateJobsPage() {
+  const navigate = useNavigate();
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -36,23 +29,13 @@ export default function CandidateJobsPage() {
   const [rows, setRows] = useState<JobListRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appByJobId, setAppByJobId] = useState<Record<number, { application_id: number; status: string | null }>>({});
 
   const [filters, setFilters] = useState<Filters>({ status: "Open" });
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<StateRow[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
   const [categories, setCategories] = useState<JobCategory[]>([]);
-
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
-  const [detail, setDetail] = useState<JobDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [applying, setApplying] = useState(false);
-
-  const [docsOpen, setDocsOpen] = useState(false);
-  const [activeApplicationId, setActiveApplicationId] = useState<number | null>(null);
-  const [docs, setDocs] = useState<CandidateApplicationDocRow[]>([]);
-  const [docsLoading, setDocsLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -142,74 +125,26 @@ export default function CandidateJobsPage() {
   }, []);
 
   useEffect(() => {
-    if (!detailOpen || !selectedJobId) return;
+    let cancelled = false;
     (async () => {
-      setDetailLoading(true);
       try {
-        setDetail(await jobsApi.get(selectedJobId));
+        const apps = await candidateApi.applications.list();
+        if (cancelled) return;
+        const m: Record<number, { application_id: number; status: string | null }> = {};
+        for (const a of apps) {
+          if (!a?.job_id || !a?.application_id) continue;
+          if (m[a.job_id] == null) m[a.job_id] = { application_id: a.application_id, status: a.status ?? null }; // keep latest per job
+        }
+        setAppByJobId(m);
       } catch (e: any) {
-        setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load job", severity: "error" });
-      } finally {
-        setDetailLoading(false);
+        // Not fatal; page still works, but we can't label jobs as applied/in-progress.
+        setToast({ open: true, message: e?.message ? String(e.message) : "Unable to load application status.", severity: "warning" });
       }
     })();
-  }, [detailOpen, selectedJobId]);
-
-  const loadDocs = async (application_id: number) => {
-    setDocsLoading(true);
-    try {
-      setDocs(await candidateApi.applications.documents(application_id));
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load documents", severity: "error" });
-    } finally {
-      setDocsLoading(false);
-    }
-  };
-
-  const applyToJob = async () => {
-    if (!selectedJobId) return;
-    setApplying(true);
-    try {
-      const res = await candidateApi.applications.apply(selectedJobId);
-      setToast({ open: true, message: "Applied successfully", severity: "success" });
-      setActiveApplicationId(res.application_id);
-      setDocsOpen(true);
-      loadDocs(res.application_id);
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Apply failed", severity: "error" });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const uploadForDoc = async (doc: CandidateApplicationDocRow, file: File) => {
-    if (!activeApplicationId) return;
-    try {
-      const now = Date.now();
-      const ext = fileExt(file.name);
-      const objectKey = `applications/${activeApplicationId}/docs/${doc.document_type_id}/${now}${ext}`;
-
-      const presign = await recruitmentApi.files.presignUpload(objectKey);
-      const put = await fetch(presign.url, { method: "PUT", body: file });
-      if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-
-      await candidateApi.applications.upsertDocument(activeApplicationId, doc.document_type_id, objectKey);
-      setToast({ open: true, message: "Uploaded", severity: "success" });
-      loadDocs(activeApplicationId);
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Upload failed", severity: "error" });
-    }
-  };
-
-  const openDoc = async (doc: CandidateApplicationDocRow) => {
-    if (!doc.file_path) return;
-    try {
-      const presign = await recruitmentApi.files.presignDownload(doc.file_path);
-      window.open(presign.url, "_blank", "noopener,noreferrer");
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <Stack spacing={2.5}>
@@ -298,11 +233,35 @@ export default function CandidateJobsPage() {
         ) : null}
         {rows.map((r) => (
           <Grid key={r.job_id} item xs={12} sm={6} lg={4}>
+            {/*
+              This list doesn't include application status, so we cross-check the candidate's applications list
+              and mark jobs that already have an "Applied" application.
+            */}
+            {(() => {
+              const app = appByJobId[r.job_id];
+              const status = String(app?.status ?? "").trim();
+              const statusKey = status.toLowerCase();
+              const hasApp = Boolean(app?.application_id);
+              const isApplied = hasApp && statusKey === "applied";
+
+              const go = () => {
+                if (isApplied) return navigate(`/portal/candidate/applications/${app!.application_id}`);
+                return navigate(`/portal/candidate/jobs/${r.job_id}/apply`);
+              };
+
+              const chip =
+                isApplied ? <Chip size="small" label="Applied" color="success" /> :
+                hasApp ? <Chip size="small" label={status ? `In progress: ${status}` : "In progress"} /> :
+                null;
+
+              const btnLabel =
+                isApplied ? "View Application" :
+                hasApp ? "Continue" :
+                "View & Apply";
+
+              return (
             <Card
-              onClick={() => {
-                setSelectedJobId(r.job_id);
-                setDetailOpen(true);
-              }}
+              onClick={go}
               sx={{
                 cursor: "pointer",
                 borderRadius: 4,
@@ -317,7 +276,7 @@ export default function CandidateJobsPage() {
                   <Typography fontWeight={900}>{r.job_title}</Typography>
                 </Stack>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {r.category_name ?? "—"} • {r.status ?? "—"}
+                  {r.category_name ?? "—"} • {r.status ? `Job: ${r.status}` : "Job: —"}
                 </Typography>
 
                 <Divider sx={{ my: 1.5 }} />
@@ -334,131 +293,29 @@ export default function CandidateJobsPage() {
                   {r.salary_min || r.salary_max ? (
                     <Chip size="small" label={`Salary: ${[r.salary_min, r.salary_max].filter(Boolean).join(" - ")}`} />
                   ) : null}
+                  {chip}
                 </Stack>
+
+                <Box sx={{ mt: 1.75, display: "flex", justifyContent: "flex-end" }}>
+                  <AdButton
+                    variant={isApplied ? "secondary" : "primary"}
+                    size="small"
+                    onClick={(e: any) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go();
+                    }}
+                  >
+                    {btnLabel}
+                  </AdButton>
+                </Box>
               </CardContent>
             </Card>
+              );
+            })()}
           </Grid>
         ))}
       </Grid>
-
-      <AdModal
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        title="Job Details"
-        subtitle={detail?.job?.job_code ? `Job Code: ${detail.job.job_code}` : undefined}
-        maxWidth="lg"
-      >
-        {detailLoading ? <Typography>Loading...</Typography> : null}
-        {!detailLoading && !detail ? <AdAlertBox severity="info" title="Select a job" message="Click a job card to view details." /> : null}
-
-        {detail ? (
-          <Stack spacing={2}>
-            <Stack spacing={0.25}>
-              <Typography variant="h6" fontWeight={900}>
-                {detail.job.job_title}
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {detail.job.status ? <Chip size="small" label={detail.job.status} /> : null}
-                {detail.job.contract_duration_id ? (
-                  <Chip size="small" label={detail.locations?.length ? `${detail.locations.length} location(s)` : "Locations"} />
-                ) : null}
-              </Stack>
-            </Stack>
-
-            {detail.job.job_description ? (
-              <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.75)" }} contentSx={{ p: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
-                  Description
-                </Typography>
-                <Typography>{detail.job.job_description}</Typography>
-              </AdCard>
-            ) : null}
-
-            <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.75)" }} contentSx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Required Documents
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {detail.documents?.length ? (
-                  detail.documents.map((d) => (
-                    <Chip key={d.document_type_id} size="small" label={`${d.document_name}${d.is_required ? " • Required" : ""}`} />
-                  ))
-                ) : (
-                  <Typography variant="body2">No documents configured.</Typography>
-                )}
-              </Stack>
-            </AdCard>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1} justifyContent="flex-end">
-              <AdButton
-                variant="contained"
-                disabled={!selectedJobId || applying}
-                onClick={applyToJob}
-              >
-                {applying ? "Applying..." : "Apply Now"}
-              </AdButton>
-            </Stack>
-          </Stack>
-        ) : null}
-      </AdModal>
-
-      <AdModal
-        open={docsOpen}
-        onClose={() => setDocsOpen(false)}
-        title="Application Documents"
-        subtitle={activeApplicationId ? `Application #${activeApplicationId}` : undefined}
-        maxWidth="md"
-      >
-        {!activeApplicationId ? (
-          <AdAlertBox severity="info" title="No application" message="Apply to a job first." />
-        ) : (
-          <Stack spacing={1.5}>
-            {docsLoading ? <Typography>Loading...</Typography> : null}
-            {!docsLoading && !docs.length ? (
-              <AdAlertBox severity="warning" title="No required docs" message="No job documents found for this application." />
-            ) : null}
-
-            {docs.map((d) => (
-              <AdCard key={d.document_type_id} animate={false} contentSx={{ p: 1.75 }} sx={{ backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 3 }}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
-                  <Stack spacing={0.25}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography fontWeight={900}>{d.document_name}</Typography>
-                      {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
-                      {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
-                    </Stack>
-                    <Typography variant="caption" color="text.secondary">
-                      {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
-                    </Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    {d.file_path ? (
-                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => openDoc(d)}>
-                        View
-                      </AdButton>
-                    ) : null}
-
-                    <AdButton component="label" startIcon={<UploadFileIcon fontSize="small" />}>
-                      {d.file_path ? "Update" : "Upload"}
-                      <input
-                        type="file"
-                        hidden
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) uploadForDoc(d, f);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </AdButton>
-                  </Stack>
-                </Stack>
-              </AdCard>
-            ))}
-          </Stack>
-        )}
-      </AdModal>
     </Stack>
   );
 }
-

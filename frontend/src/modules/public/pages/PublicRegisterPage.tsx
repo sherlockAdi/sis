@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Container, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { PORTAL_BASE } from "../../../common/paths";
@@ -15,6 +15,7 @@ import {
 
 export default function PublicRegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -229,7 +230,7 @@ export default function PublicRegisterPage() {
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => navigate(`${PORTAL_BASE}/login?portal=candidate`)}
+                onClick={() => navigate(`${PORTAL_BASE}/login?portal=candidate`, { state: { ...(location.state as any) } })}
                 sx={{ textTransform: "none", fontWeight: 950, borderRadius: 3 }}
                 fullWidth
               >

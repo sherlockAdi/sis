@@ -20,15 +20,30 @@ export type CandidateApplicationDocRow = {
   candidate_document_id: number | null;
   file_path: string | null;
   uploaded_at: string | null;
+  is_reused?: number;
+  reused_from_application_id?: number | null;
+  reused_from_uploaded_at?: string | null;
 };
 
 export const candidateApi = {
   applications: {
     list: () => apiFetch<CandidateApplicationRow[]>(`/candidate/applications`, { method: "GET" }),
+    get: (application_id: number) =>
+      apiFetch<CandidateApplicationRow>(`/candidate/applications/${application_id}`, { method: "GET" }),
+    start: (job_id: number) =>
+      apiFetch<{ application_id: number }>(`/candidate/applications/start`, {
+        method: "POST",
+        body: JSON.stringify({ job_id }),
+      }),
     apply: (job_id: number) =>
       apiFetch<{ application_id: number }>(`/candidate/applications/apply`, {
         method: "POST",
         body: JSON.stringify({ job_id }),
+      }),
+    submit: (application_id: number) =>
+      apiFetch<{ submitted: true }>(`/candidate/applications/${application_id}/submit`, {
+        method: "POST",
+        body: JSON.stringify({ consent: true }),
       }),
     documents: (application_id: number) =>
       apiFetch<CandidateApplicationDocRow[]>(`/candidate/applications/${application_id}/documents`, { method: "GET" }),
@@ -39,4 +54,3 @@ export const candidateApi = {
       }),
   },
 };
-

@@ -23,7 +23,9 @@ import JobsPreviewPage from "../modules/job/JobsPreviewPage";
 import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentApplicationsPage";
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
+import CandidateJobApplyPage from "../modules/candidate/CandidateJobApplyPage";
 import CandidateApplicationsPage from "../modules/candidate/CandidateApplicationsPage";
+import CandidateApplicationDetailPage from "../modules/candidate/CandidateApplicationDetailPage";
 import CandidateHomePage from "../modules/candidate/CandidateHomePage";
 import CandidateTrainingPage from "../modules/candidate/CandidateTrainingPage";
 import CandidateProfilePage from "../modules/candidate/CandidateProfilePage";
@@ -219,7 +221,9 @@ export default function AppRoutes() {
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
             <Route path="candidate/home" element={<CandidateHomePage />} />
             <Route path="candidate/jobs" element={<CandidateJobsPage />} />
+            <Route path="candidate/jobs/:jobId/apply" element={<CandidateJobApplyPage />} />
             <Route path="candidate/applications" element={<CandidateApplicationsPage />} />
+            <Route path="candidate/applications/:applicationId" element={<CandidateApplicationDetailPage />} />
             <Route path="candidate/training" element={<CandidateTrainingPage />} />
             <Route path="candidate/profile" element={<CandidateProfilePage />} />
             <Route path="candidate/profile/documents" element={<CandidateProfileDocumentsPage />} />

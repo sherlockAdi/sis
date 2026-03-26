@@ -29,6 +29,13 @@ export default function PublicJobsPage() {
   const [rows, setRows] = useState<JobListRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const token = getAuthToken();
+
+  const goApply = (job_id: number) => {
+    const target = `/portal/candidate/jobs/${job_id}/apply`;
+    if (token) navigate(target);
+    else navigate("/register", { state: { from: target } });
+  };
 
   const featuredCountries = useMemo(
     () => [
@@ -166,10 +173,10 @@ export default function PublicJobsPage() {
             <Button
               variant="outlined"
               endIcon={<ArrowForwardIcon />}
-              onClick={() => navigate("/register")}
+              onClick={() => (token ? navigate("/portal/candidate/jobs") : navigate("/register"))}
               sx={{ textTransform: "none", fontWeight: 950, borderRadius: 999 }}
             >
-              Register to Apply
+              {token ? "Go to Candidate Portal" : "Register to Apply"}
             </Button>
           </Stack>
 
@@ -189,6 +196,21 @@ export default function PublicJobsPage() {
                           <Chip size="small" label={`Salary: ${moneyRange(r.salary_min, r.salary_max)}`} />
                         ) : null}
                         {r.duration_name ? <Chip size="small" label={r.duration_name} /> : null}
+                      </Box>
+
+                      <Box sx={{ mt: 1.75, display: "flex", justifyContent: "flex-end" }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            goApply(r.job_id);
+                          }}
+                          sx={{ borderRadius: 999, fontWeight: 950, textTransform: "none" }}
+                        >
+                          Apply
+                        </Button>
                       </Box>
                     </CardContent>
                   </CardActionArea>

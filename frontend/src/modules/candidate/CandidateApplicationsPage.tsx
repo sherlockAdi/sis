@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Chip, Stack, Typography } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { useNavigate } from "react-router-dom";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
@@ -14,6 +15,7 @@ function fileExt(name: string): string {
 }
 
 export default function CandidateApplicationsPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<CandidateApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,23 +71,28 @@ export default function CandidateApplicationsPage() {
       {
         field: "__actions",
         headerName: "Actions",
-        width: 190,
+        width: 230,
         sortable: false,
         filterable: false,
         renderCell: (p: any) => {
           const r = p.row as CandidateApplicationRow;
           return (
-            <AdButton
-              variant="text"
-              startIcon={<UploadFileIcon fontSize="small" />}
-              onClick={() => {
-                setActiveApp(r);
-                setDocsOpen(true);
-                loadDocs(r.application_id);
-              }}
-            >
-              Documents
-            </AdButton>
+            <Stack direction="row" spacing={0.5}>
+              <AdButton variant="text" onClick={() => navigate(`/portal/candidate/applications/${r.application_id}`)}>
+                View
+              </AdButton>
+              <AdButton
+                variant="text"
+                startIcon={<UploadFileIcon fontSize="small" />}
+                onClick={() => {
+                  setActiveApp(r);
+                  setDocsOpen(true);
+                  loadDocs(r.application_id);
+                }}
+              >
+                Documents
+              </AdButton>
+            </Stack>
           );
         },
       },
@@ -200,4 +207,3 @@ export default function CandidateApplicationsPage() {
     </Stack>
   );
 }
-

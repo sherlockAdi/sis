@@ -15,6 +15,13 @@ export default function PublicJobsByCountryPage() {
   const navigate = useNavigate();
   const { countryCode } = useParams();
   const norm = normalizeCountryCode(countryCode);
+  const token = getAuthToken();
+
+  const goApply = (job_id: number) => {
+    const target = `/portal/candidate/jobs/${job_id}/apply`;
+    if (token) navigate(target);
+    else navigate("/register", { state: { from: target } });
+  };
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [rows, setRows] = useState<JobListRow[]>([]);
@@ -91,8 +98,12 @@ export default function PublicJobsByCountryPage() {
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/jobs")} sx={{ textTransform: "none", fontWeight: 900 }}>
             Back to Jobs
           </Button>
-          <Button variant="outlined" onClick={() => navigate("/register")} sx={{ textTransform: "none", fontWeight: 950, borderRadius: 999 }}>
-            Register
+          <Button
+            variant="outlined"
+            onClick={() => (token ? navigate("/portal/candidate/jobs") : navigate("/register"))}
+            sx={{ textTransform: "none", fontWeight: 950, borderRadius: 999 }}
+          >
+            {token ? "Go to Candidate Portal" : "Register"}
           </Button>
         </Stack>
 
@@ -120,6 +131,21 @@ export default function PublicJobsByCountryPage() {
                     <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
                       {(r.country_name ?? "Country") + (r.category_name ? ` • ${r.category_name}` : "")}
                     </Typography>
+
+                    <Box sx={{ mt: 1.75, display: "flex", justifyContent: "flex-end" }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          goApply(r.job_id);
+                        }}
+                        sx={{ borderRadius: 999, fontWeight: 950, textTransform: "none" }}
+                      >
+                        Apply
+                      </Button>
+                    </Box>
                   </CardContent>
                 </CardActionArea>
               </Card>

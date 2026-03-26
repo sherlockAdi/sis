@@ -10,10 +10,18 @@ export default function PublicJobDetailPage() {
   const navigate = useNavigate();
   const { jobId } = useParams();
   const id = Number(jobId);
+  const token = getAuthToken();
 
   const [data, setData] = useState<JobDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const goApply = () => {
+    if (!Number.isFinite(id) || id <= 0) return;
+    const target = `/portal/candidate/jobs/${id}/apply`;
+    if (token) navigate(target);
+    else navigate("/register", { state: { from: target } });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -57,10 +65,11 @@ export default function PublicJobDetailPage() {
           <Button
             variant="contained"
             endIcon={<ArrowForwardIcon />}
-            onClick={() => navigate("/register")}
+            onClick={goApply}
             sx={{ borderRadius: 999 }}
+            disabled={!Number.isFinite(id) || id <= 0}
           >
-            Register to Apply
+            {token ? "Apply Now" : "Register to Apply"}
           </Button>
         </Stack>
 

@@ -39,7 +39,8 @@ export default function RequireAuth() {
   if (!ready) return <div>Loading...</div>;
 
   if (!getAuthToken()) {
-    return <Navigate to={withPortalBase("/login")} replace state={{ from: location.pathname }} />;
+    const from = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={withPortalBase("/login")} replace state={{ from }} />;
   }
 
   return <Outlet />;
