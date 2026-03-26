@@ -4,6 +4,14 @@
 - Create `frontend/.env` from `frontend/.env.example` and set `VITE_API_BASE_URL` (example: `http://localhost:3000`)
 - Login page calls `POST /auth/login` and stores JWT (localStorage when “Remember me” is checked, else sessionStorage)
 
+## FTP Deploy (Build + Upload)
+- Install `lftp` (macOS): `brew install lftp`
+- Create `frontend/.env.ftp` from `frontend/.env.ftp.example` and fill `FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_REMOTE_DIR`
+- Deploy:
+  - `npm run deploy:ftp` (mode `all`)
+  - `npm run deploy:ftp:opd`
+  - `npm run deploy:ftp:ipd`
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -9,8 +9,8 @@ export type ApiError = {
 function getBaseUrl(): string {
   const base = String((import.meta as any).env?.VITE_API_BASE_URL ?? "").trim();
   if (base) return base.replace(/\/+$/, "");
-  return "https://sisglobalapi.neuralinfo.co.in";
-  // return "http://localhost:3000"
+  // return "https://sisglobalapi.neuralinfo.co.in";
+  return "http://localhost:3000"
 }
 
 async function readErrorBody(res: Response): Promise<{ message: string; details?: unknown }> {

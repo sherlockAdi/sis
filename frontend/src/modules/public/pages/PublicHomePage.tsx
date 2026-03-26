@@ -83,8 +83,7 @@ export default function PublicHomePage() {
                 </Box>
               </Typography>
               <Typography sx={{ color: "text.secondary", maxWidth: 720, lineHeight: 1.9 }}>
-                Naukri-style job discovery + Gulf portal speed + corporate trust signals. Users land, discover jobs, and then move into the
-                right portal: Candidate / Partner / Customer / Admin.
+                A trusted platform for overseas jobs, workforce deployment, and career growth.
               </Typography>
 
               <Box
@@ -117,7 +116,7 @@ export default function PublicHomePage() {
                   </Button>
                 </Stack>
 
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.5 }}>
+                <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {quickCountries.map((c) => (
                     <Chip
                       key={c.code}
@@ -126,7 +125,7 @@ export default function PublicHomePage() {
                       sx={{ bgcolor: "white", border: "1px solid rgba(15,23,42,0.10)" }}
                     />
                   ))}
-                </Stack>
+                </Box>
               </Box>
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
@@ -159,7 +158,7 @@ export default function PublicHomePage() {
               <Box
                 component="img"
                 alt="Workforce collage"
-                src="/home/hero-collage.svg"
+                src="/assests/home.jpeg"
                 sx={{ width: "100%", height: { xs: 240, md: 420 }, objectFit: "cover", display: "block" }}
               />
             </Box>
@@ -221,7 +220,7 @@ export default function PublicHomePage() {
               Why Choose SIS Global
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860 }}>
-              Naukri-style job discovery + Gulf portal efficiency + corporate trust signals — designed for conversion, not content.
+            Connecting skilled talent with global job opportunities across trusted employers.
             </Typography>
           </Box>
 
@@ -279,7 +278,7 @@ export default function PublicHomePage() {
                 boxShadow: "0 16px 50px rgba(17,24,39,0.10)",
               }}
             >
-              <Box component="img" alt="Workforce" src="/home/workforce-1.svg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <Box component="img" alt="Workforce" src="/assests/employee.jpeg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </Box>
           </Box>
 
@@ -292,7 +291,7 @@ export default function PublicHomePage() {
                 boxShadow: "0 16px 50px rgba(17,24,39,0.10)",
               }}
             >
-              <Box component="img" alt="Workforce" src="/home/workforce-2.svg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <Box component="img" alt="Workforce" src="/assests/partner.jpeg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </Box>
             <Box
               sx={{

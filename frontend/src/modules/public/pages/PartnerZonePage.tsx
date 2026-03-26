@@ -76,16 +76,16 @@ export default function PartnerZonePage() {
                 Find mandates fast, submit candidates in minutes, and track each candidate’s status across the pipeline — with
                 clear feedback and performance visibility.
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.75 }}>
+              <Box sx={{ mt: 1.75, display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Chip label="Job mandates" sx={{ fontWeight: 900 }} />
                 <Chip label="Quick submission" sx={{ fontWeight: 900 }} />
                 <Chip label="Bulk upload-ready" sx={{ fontWeight: 900 }} />
                 <Chip label="Status transparency" sx={{ fontWeight: 900 }} />
-              </Stack>
+              </Box>
             </Box>
             <Box
               component="img"
-              src="/home/workforce-2.svg"
+              src="/assests/partner.jpeg"
               alt="Partner sourcing"
               sx={{
                 width: "100%",

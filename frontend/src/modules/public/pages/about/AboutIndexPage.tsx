@@ -58,16 +58,16 @@ export default function AboutIndexPage() {
                 The outer site helps users discover jobs quickly. The portals handle execution (applications, submissions,
                 compliance, deployment tracking) with audit-ready visibility.
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.75 }}>
+              <Box sx={{ mt: 1.75, display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Chip label="Jobs-first UX" sx={{ fontWeight: 900 }} />
                 <Chip label="Role-based portals" sx={{ fontWeight: 900 }} />
                 <Chip label="Compliance tracking" sx={{ fontWeight: 900 }} />
                 <Chip label="Process-driven workflow" sx={{ fontWeight: 900 }} />
-              </Stack>
+              </Box>
             </Box>
             <Box
               component="img"
-              src="/home/hero-collage.svg"
+              src="/assests/about.jpeg"
               alt="SIS Global"
               sx={{
                 width: "100%",
@@ -114,11 +114,11 @@ export default function AboutIndexPage() {
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9, maxWidth: 980 }}>
               Country-wise job discovery and deployment readiness tracking for employers operating across regions.
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
               {["UAE", "Saudi Arabia", "Qatar", "Oman", "Kuwait", "India"].map((x) => (
                 <Chip key={x} label={x} sx={{ fontWeight: 900 }} />
               ))}
-            </Stack>
+            </Box>
           </Box>
 
           <Box id="trust" sx={{ p: { xs: 2.5, md: 3 }, bgcolor: "white", borderRadius: 4, border: "1px solid rgba(15,23,42,0.08)" }}>

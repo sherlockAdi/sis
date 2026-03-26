@@ -150,7 +150,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" 
 export default function AdAppShell({
   title = "SIS EHRM",
   // subtitle = "Enterprise Human Resource Management",
-  brand,
   navItems,
   navSections,
   rightSlot,
@@ -495,7 +494,7 @@ export default function AdAppShell({
       <CssBaseline />
       <AppBar position="fixed" open={isMdUp ? open : false} color="inherit" elevation={0}>
         <Toolbar sx={{ borderBottom: "1px solid rgba(2, 6, 23, 0.08)" }}>
-          {!(!isMdUp && disableMobileDrawer) ? (
+          {isMdUp ? (
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -509,9 +508,9 @@ export default function AdAppShell({
               <MenuIcon />
             </IconButton>
           ) : null}
-          <Typography variant="h6" noWrap sx={{ fontWeight: 900, mr: 2 }}>
-            {title}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+            <SisLogo height={28} />
+          </Box>
           {topBarCenter ? (
             <Box sx={{ display: { xs: "none", md: "block" }, flex: 1, minWidth: 0 }}>
               {topBarCenter}
@@ -519,7 +518,20 @@ export default function AdAppShell({
           ) : (
             <Box sx={{ flex: 1 }} />
           )}
-          {rightSlot}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {rightSlot}
+            {!isMdUp && !disableMobileDrawer ? (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                edge="end"
+                sx={{ ml: 1 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            ) : null}
+          </Box>
         </Toolbar>
       </AppBar>
 

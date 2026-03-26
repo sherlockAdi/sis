@@ -77,16 +77,16 @@ export default function EmployerZonePage() {
                 SIS Global supports employers with structured sourcing, screening, documentation, and deployment tracking — so you
                 can hire faster without losing control of compliance.
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.75 }}>
+              <Box sx={{ mt: 1.75, display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Chip label="Multi-country hiring" sx={{ fontWeight: 900 }} />
                 <Chip label="Partner network sourcing" sx={{ fontWeight: 900 }} />
                 <Chip label="Document checklist control" sx={{ fontWeight: 900 }} />
                 <Chip label="Stage-wise status tracking" sx={{ fontWeight: 900 }} />
-              </Stack>
+              </Box>
             </Box>
             <Box
               component="img"
-              src="/home/workforce-1.svg"
+              src="/assests/employee.jpeg"
               alt="Workforce"
               sx={{
                 width: "100%",

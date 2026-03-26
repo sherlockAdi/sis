@@ -140,7 +140,7 @@ export default function PublicJobsPage() {
             </Button>
           </Stack>
 
-          <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.5 }}>
+          <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", gap: 1 }}>
             {featuredCountries.map((c) => (
               <Chip
                 key={c.code}
@@ -151,7 +151,7 @@ export default function PublicJobsPage() {
                 sx={{ fontWeight: 900 }}
               />
             ))}
-          </Stack>
+          </Box>
         </Box>
 
         {error ? <Alert severity="warning">{error}</Alert> : null}
@@ -183,13 +183,13 @@ export default function PublicJobsPage() {
                       <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
                         {(r.country_name ?? "Country") + (r.category_name ? ` • ${r.category_name}` : "")}
                       </Typography>
-                      <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.25 }}>
+                      <Box sx={{ mt: 1.25, display: "flex", flexWrap: "wrap", gap: 1 }}>
                         {r.vacancy != null ? <Chip size="small" label={`${r.vacancy} vacancies`} /> : null}
                         {moneyRange(r.salary_min, r.salary_max) ? (
                           <Chip size="small" label={`Salary: ${moneyRange(r.salary_min, r.salary_max)}`} />
                         ) : null}
                         {r.duration_name ? <Chip size="small" label={r.duration_name} /> : null}
-                      </Stack>
+                      </Box>
                     </CardContent>
                   </CardActionArea>
                 </Card>

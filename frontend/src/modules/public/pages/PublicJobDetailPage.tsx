@@ -73,13 +73,13 @@ export default function PublicJobDetailPage() {
               {data.job.job_title}
             </Typography>
 
-            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.25 }}>
+            <Box sx={{ mt: 1.25, display: "flex", flexWrap: "wrap", gap: 1 }}>
               {data.job.vacancy != null ? <Chip label={`${data.job.vacancy} vacancies`} /> : null}
               {data.job.salary_min || data.job.salary_max ? (
                 <Chip label={`Salary: ${data.job.salary_min ?? ""}${data.job.salary_min && data.job.salary_max ? " - " : ""}${data.job.salary_max ?? ""}`} />
               ) : null}
               {data.job.status ? <Chip label={data.job.status} /> : null}
-            </Stack>
+            </Box>
 
             {data.job.job_description ? (
               <>

@@ -55,14 +55,6 @@ export default function PublicHeader() {
             sx={{ textTransform: "none", px: 0, gap: 1.25 }}
           >
             <SisLogo height={28} />
-            <Stack spacing={0} alignItems="flex-start" sx={{ lineHeight: 1 }}>
-              <Typography fontWeight={950} sx={{ letterSpacing: -0.2 }}>
-                SIS Global
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.72 }}>
-                Jobs • Trust • Portals
-              </Typography>
-            </Stack>
           </Button>
 
           <Box sx={{ flex: 1 }} />
@@ -164,15 +156,6 @@ export default function PublicHeader() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={1} alignItems="center">
-              {!inPublicMenu ? (
-                <IconButton
-                  color="inherit"
-                  aria-label="menu"
-                  onClick={() => navigate("/menu")}
-                >
-                  <MenuIcon />
-                </IconButton>
-              ) : null}
               <Button
                 variant="contained"
                 onClick={() => navigate("/register")}
@@ -184,6 +167,15 @@ export default function PublicHeader() {
               >
                 Register
               </Button>
+              {!inPublicMenu ? (
+                <IconButton
+                  color="inherit"
+                  aria-label="menu"
+                  onClick={() => navigate("/menu")}
+                >
+                  <MenuIcon />
+                </IconButton>
+              ) : null}
             </Stack>
           )}
         </Toolbar>
