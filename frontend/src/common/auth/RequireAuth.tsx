@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { me } from "../services/authApi";
 import { clearAuthToken, getAuthToken } from "../services/tokenStorage";
+import { withPortalBase } from "../paths";
 import { useAuth } from "./AuthContext";
 
 export default function RequireAuth() {
@@ -38,7 +39,8 @@ export default function RequireAuth() {
   if (!ready) return <div>Loading...</div>;
 
   if (!getAuthToken()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    const from = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={withPortalBase("/login")} replace state={{ from }} />;
   }
 
   return <Outlet />;

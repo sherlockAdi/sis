@@ -33,6 +33,13 @@ export type NavItem = {
   to: string;
   icon?: React.ReactNode;
   children?: NavItem[];
+  /** Optional code from DB to support grouping/logic. */
+  code?: string | null;
+};
+
+export type NavSection = {
+  heading: string;
+  items: NavItem[];
 };
 
 type AdAppShellProps = {
@@ -40,7 +47,15 @@ type AdAppShellProps = {
   subtitle?: string;
   brand?: string;
   navItems: NavItem[];
+  /** Optional sectioned menu (renders headings like "MAIN MENU", "HRM", etc.) */
+  navSections?: NavSection[] | null;
   rightSlot?: React.ReactNode;
+  /** Optional fixed bottom navigation (mobile-first candidate UX). */
+  bottomNav?: React.ReactNode;
+  /** Disable the modal drawer on mobile (use with bottomNav). */
+  disableMobileDrawer?: boolean;
+  /** Optional center content in the top bar (e.g. global search). */
+  topBarCenter?: React.ReactNode;
   children: React.ReactNode;
   /** Optional current path for selected styling; defaults to router location. */
   currentPath?: string;
@@ -51,7 +66,7 @@ type AdAppShellProps = {
   onSettingsClick?: () => void;
 };
 
-const drawerWidth = 240;
+const drawerWidth = 300;
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
@@ -135,9 +150,12 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" 
 export default function AdAppShell({
   title = "SIS EHRM",
   // subtitle = "Enterprise Human Resource Management",
-  // brand = "SIS Global",
   navItems,
+  navSections,
   rightSlot,
+  bottomNav,
+  disableMobileDrawer = false,
+  topBarCenter,
   children,
   currentPath,
   userName,
@@ -155,6 +173,12 @@ export default function AdAppShell({
 
   const effectiveOpen = isMdUp ? open : mobileOpen;
   const fallbackIcon = <DashboardIcon fontSize="small" />;
+  const twoLineClamp = {
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  } as const;
 
   const isSelected = React.useCallback(
     (item: NavItem): boolean => {
@@ -183,25 +207,19 @@ export default function AdAppShell({
         display: "flex",
         flexDirection: "column",
         bgcolor: "#ffffff",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
         borderRight: "1px solid rgba(2, 6, 23, 0.08)",
       }}
     >
-      <DrawerHeader sx={{ justifyContent: "space-between", px: 2 }}>
+      <DrawerHeader sx={{ justifyContent: effectiveOpen ? "space-between" : "center", px: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <SisLogo height={32} />
           </Box>
-          {/* <Box sx={{ minWidth: 0, display: effectiveOpen ? "block" : "none" }}>
-            <Typography variant="subtitle1" fontWeight={900} noWrap>
-              {brand}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              Connect
-            </Typography>
-          </Box> */}
         </Stack>
 
-        {isMdUp && (
+        {isMdUp && effectiveOpen && (
           <IconButton onClick={handleDrawerClose} aria-label="collapse sidebar">
             {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
@@ -227,85 +245,169 @@ export default function AdAppShell({
         </Typography>
       </Box>
 
+      <Box sx={{ px: effectiveOpen ? 2 : 1, pb: 1, display: effectiveOpen ? "block" : "none" }}>
+        {!navSections?.length ? (
+          <Typography
+            variant="overline"
+            sx={{ fontWeight: 900, color: "rgba(2,6,23,0.55)", letterSpacing: 1.2 }}
+          >
+            Main Menu
+          </Typography>
+        ) : null}
+      </Box>
+
       <List sx={{ px: 1 }}>
-        {navItems.map((item) => {
-          const key = item.to;
-          const hasChildren = Boolean(item.children?.length);
-          const isOpen = expanded[key] ?? false;
-          const selected = isSelected(item);
-
-          return (
-            <React.Fragment key={key}>
-              <ListItem disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.to}
-                  selected={selected}
-                  onClick={() => {
-                    if (hasChildren && effectiveOpen) {
-                      setExpanded((m) => ({ ...m, [key]: !isOpen }));
-                    } else if (!isMdUp) {
-                      setMobileOpen(false);
-                    }
-                  }}
-                  sx={[
-                    { minHeight: 44, px: 2, borderRadius: 999, mx: 0.5, my: 0.25 },
-                    effectiveOpen ? { justifyContent: "initial" } : { justifyContent: "center" },
-                  ]}
+        {(navSections?.length ? navSections : [{ heading: "MAIN MENU", items: navItems }]).map((section) => (
+          <Box key={section.heading} sx={{ mb: 0.75 }}>
+            {effectiveOpen ? (
+              <Box sx={{ px: 1.5, pt: 0.5, pb: 0.75 }}>
+                <Typography
+                  variant="overline"
+                  sx={{ fontWeight: 950, color: "rgba(2,6,23,0.45)", letterSpacing: 1.25 }}
                 >
-                  <ListItemIcon
-                    sx={[
-                      { minWidth: 0, justifyContent: "center" },
-                      effectiveOpen ? { mr: 2 } : { mr: "auto" },
-                    ]}
-                  >
-                    {item.icon ?? fallbackIcon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{ noWrap: true, fontSize: 14, fontWeight: 650 }}
-                    sx={[effectiveOpen ? { opacity: 1 } : { opacity: 0 }]}
-                  />
-                  {hasChildren && effectiveOpen ? (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />) : null}
-                </ListItemButton>
-              </ListItem>
+                  {section.heading}
+                </Typography>
+              </Box>
+            ) : null}
 
-              {hasChildren ? (
-                <Collapse in={effectiveOpen && isOpen} timeout="auto" unmountOnExit>
-                  <List disablePadding sx={{ pl: 1.5 }}>
-                    {(item.children ?? []).map((c) => (
-                      <ListItem key={c.to} disablePadding sx={{ display: "block" }}>
-                        <ListItemButton
-                          component={RouterLink}
-                          to={c.to}
-                          selected={activePath === c.to}
-                          onClick={() => {
-                            if (!isMdUp) setMobileOpen(false);
-                          }}
-                          sx={{
-                            minHeight: 40,
-                            px: 2,
-                            borderRadius: 999,
-                            mx: 0.5,
-                            my: 0.25,
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 0, justifyContent: "center", mr: 2 }}>
-                            {c.icon ?? fallbackIcon}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={c.label}
-                            primaryTypographyProps={{ noWrap: true, fontSize: 13, fontWeight: 600 }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Collapse>
-              ) : null}
-            </React.Fragment>
-          );
-        })}
+            {section.items.map((item) => {
+              const key = item.to;
+              const hasChildren = Boolean(item.children?.length);
+              const isOpen = expanded[key] ?? false;
+              const selected = isSelected(item);
+
+              return (
+                <React.Fragment key={key}>
+                  <ListItem disablePadding sx={{ display: "block" }}>
+                    <ListItemButton
+                      component={RouterLink}
+                      to={item.to}
+                      selected={selected}
+                      onClick={() => {
+                        if (hasChildren && effectiveOpen) {
+                          setExpanded((m) => ({ ...m, [key]: !isOpen }));
+                        } else if (!isMdUp) {
+                          setMobileOpen(false);
+                        }
+                      }}
+                      sx={[
+                        {
+                          minHeight: 44,
+                          px: 2,
+                          borderRadius: 3,
+                          mx: 0.5,
+                          my: 0.25,
+                          position: "relative",
+                          "&.Mui-selected": {
+                            bgcolor: "rgba(216,27,96,0.10)",
+                            color: "#0f172a",
+                          },
+                          "&.Mui-selected:hover": {
+                            bgcolor: "rgba(216,27,96,0.12)",
+                          },
+                          ...(effectiveOpen
+                            ? {
+                                "&.Mui-selected::before": {
+                                  content: '""',
+                                  position: "absolute",
+                                  left: 6,
+                                  top: 10,
+                                  bottom: 10,
+                                  width: 3,
+                                  borderRadius: 999,
+                                  bgcolor: "#d81b60",
+                                },
+                              }
+                            : {}),
+                          "&:hover": {
+                            bgcolor: "rgba(2,6,23,0.05)",
+                          },
+                        },
+                        effectiveOpen ? { justifyContent: "initial" } : { justifyContent: "center", px: 1.25 },
+                      ]}
+                    >
+                      <ListItemIcon
+                        sx={[
+                          { minWidth: 0, justifyContent: "center" },
+                          effectiveOpen ? { mr: 2 } : { mr: 0 },
+                          selected ? { color: "#d81b60" } : { color: "rgba(2,6,23,0.72)" },
+                        ]}
+                      >
+                        {item.icon ?? fallbackIcon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          noWrap: false,
+                          fontSize: 14,
+                          fontWeight: 650,
+                          lineHeight: 1.2,
+                          sx: twoLineClamp,
+                        }}
+                        sx={[effectiveOpen ? { opacity: 1 } : { display: "none" }]}
+                      />
+                      {hasChildren && effectiveOpen ? (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />) : null}
+                    </ListItemButton>
+                  </ListItem>
+
+                  {hasChildren ? (
+                    <Collapse in={effectiveOpen && isOpen} timeout="auto" unmountOnExit>
+                      <List disablePadding sx={{ pl: 1.5 }}>
+                        {(item.children ?? []).map((c) => (
+                          <ListItem key={c.to} disablePadding sx={{ display: "block" }}>
+                            <ListItemButton
+                              component={RouterLink}
+                              to={c.to}
+                              selected={activePath === c.to}
+                              onClick={() => {
+                                if (!isMdUp) setMobileOpen(false);
+                              }}
+                              sx={{
+                                minHeight: 40,
+                                px: 2,
+                                borderRadius: 3,
+                                mx: 0.5,
+                                my: 0.25,
+                                position: "relative",
+                                "&.Mui-selected": {
+                                  bgcolor: "rgba(59,130,246,0.10)",
+                                },
+                                "&.Mui-selected::before": {
+                                  content: '""',
+                                  position: "absolute",
+                                  left: 6,
+                                  top: 10,
+                                  bottom: 10,
+                                  width: 3,
+                                  borderRadius: 999,
+                                  bgcolor: "#3b82f6",
+                                },
+                              }}
+                            >
+                              <ListItemIcon sx={{ minWidth: 0, justifyContent: "center", mr: 2 }}>
+                                {c.icon ?? fallbackIcon}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={c.label}
+                                primaryTypographyProps={{
+                                  noWrap: false,
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  lineHeight: 1.2,
+                                  sx: twoLineClamp,
+                                }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Collapse>
+                  ) : null}
+                </React.Fragment>
+              );
+            })}
+          </Box>
+        ))}
       </List>
 
       <Box sx={{ flex: 1 }} />
@@ -313,32 +415,65 @@ export default function AdAppShell({
       <Divider />
 
       <Box sx={{ p: 1.5 }}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          alignItems="center"
-          sx={{
-            p: 1.25,
-            borderRadius: 3,
-            border: "1px solid rgba(2,6,23,0.08)",
-            bgcolor: "rgba(2,6,23,0.02)",
-          }}
-        >
-          <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
-            {(userName ?? "U").slice(0, 2).toUpperCase()}
-          </Avatar>
-          <Box sx={{ minWidth: 0, flex: 1, display: effectiveOpen ? "block" : "none" }}>
-            <Typography variant="body2" fontWeight={800} noWrap>
-              {userName ?? "User"}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {userEmail ?? ""}
-            </Typography>
-          </Box>
-          <IconButton aria-label="settings" onClick={settingsHandler} size="small">
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Stack>
+        {effectiveOpen ? (
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{
+              p: 1.25,
+              borderRadius: 3,
+              border: "1px solid rgba(2,6,23,0.08)",
+              bgcolor: "rgba(2,6,23,0.02)",
+              overflow: "hidden",
+            }}
+          >
+            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
+              {(userName ?? "U").slice(0, 2).toUpperCase()}
+            </Avatar>
+            <Box sx={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+              <Typography
+                variant="body2"
+                fontWeight={900}
+                noWrap
+                sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+              >
+                {userName ?? "User"}
+              </Typography>
+              {userEmail ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}
+                >
+                  {userEmail}
+                </Typography>
+              ) : null}
+            </Box>
+            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : (
+          <Stack
+            spacing={1}
+            alignItems="center"
+            sx={{
+              p: 1,
+              borderRadius: 3,
+              border: "1px solid rgba(2,6,23,0.08)",
+              bgcolor: "rgba(2,6,23,0.02)",
+            }}
+          >
+            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
+              {(userName ?? "U").slice(0, 2).toUpperCase()}
+            </Avatar>
+            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        )}
 
         {isMdUp && (
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
@@ -359,22 +494,44 @@ export default function AdAppShell({
       <CssBaseline />
       <AppBar position="fixed" open={isMdUp ? open : false} color="inherit" elevation={0}>
         <Toolbar sx={{ borderBottom: "1px solid rgba(2, 6, 23, 0.08)" }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={[
-              { mr: 2 },
-              isMdUp && open && { display: "none" },
-            ]}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 900 }}>
-            {title}
-          </Typography>
-          {rightSlot}
+          {isMdUp ? (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              sx={[
+                { mr: 2 },
+                isMdUp && open && { display: "none" },
+              ]}
+            >
+              <MenuIcon />
+            </IconButton>
+          ) : null}
+          <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+            <SisLogo height={28} />
+          </Box>
+          {topBarCenter ? (
+            <Box sx={{ display: { xs: "none", md: "block" }, flex: 1, minWidth: 0 }}>
+              {topBarCenter}
+            </Box>
+          ) : (
+            <Box sx={{ flex: 1 }} />
+          )}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {rightSlot}
+            {!isMdUp && !disableMobileDrawer ? (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                edge="end"
+                sx={{ ml: 1 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            ) : null}
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -382,7 +539,7 @@ export default function AdAppShell({
         <Drawer variant="permanent" open={open}>
           {drawerContent}
         </Drawer>
-      ) : (
+      ) : !disableMobileDrawer ? (
         <MuiDrawer
           open={mobileOpen}
           onClose={handleDrawerClose}
@@ -391,12 +548,33 @@ export default function AdAppShell({
         >
           {drawerContent}
         </MuiDrawer>
-      )}
+      ) : null}
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 3 } }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 2, md: 3 },
+          pb: bottomNav && !isMdUp ? "88px" : undefined,
+        }}
+      >
         <DrawerHeader />
         {children}
       </Box>
+
+      {bottomNav && !isMdUp ? (
+        <Box
+          sx={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: (t) => t.zIndex.appBar + 1,
+          }}
+        >
+          {bottomNav}
+        </Box>
+      ) : null}
     </Box>
   );
 }

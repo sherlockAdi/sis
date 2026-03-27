@@ -137,9 +137,8 @@ export class RecruitmentApplicationsController extends Controller {
     if (!candidate_id) throw httpError(404, 'Application not found');
 
     await callProc(
-      `CALL sp_rec_candidate_documents('UPSERT', NULL, :application_id, :candidate_id, :document_type_id, :file_path)`,
+      `CALL sp_rec_candidate_documents('UPSERT', NULL, :candidate_id, :document_type_id, :file_path)`,
       {
-        application_id: applicationId,
         candidate_id,
         document_type_id: documentTypeId,
         file_path

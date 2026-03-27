@@ -1,20 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chip, Stack, Typography } from "@mui/material";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification } from "../../common/ad";
+import { Box, Chip, Stack, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { AdAlertBox, AdButton, AdCard, AdDropDown, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
-import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
-import { recruitmentApi } from "../../common/services/recruitmentApi";
+import { candidateApi, type CandidateApplicationRow } from "../../common/services/candidateApi";
 
-function fileExt(name: string): string {
-  const idx = name.lastIndexOf(".");
-  if (idx < 0) return "";
-  return name.slice(idx).toLowerCase();
+function normStatus(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
 }
 
 export default function CandidateApplicationsPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<CandidateApplicationRow[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -22,11 +20,6 @@ export default function CandidateApplicationsPage() {
     message: "",
     severity: "success",
   });
-
-  const [docsOpen, setDocsOpen] = useState(false);
-  const [activeApp, setActiveApp] = useState<CandidateApplicationRow | null>(null);
-  const [docs, setDocs] = useState<CandidateApplicationDocRow[]>([]);
-  const [docsLoading, setDocsLoading] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -40,87 +33,73 @@ export default function CandidateApplicationsPage() {
     }
   };
 
-  const loadDocs = async (application_id: number) => {
-    setDocsLoading(true);
-    try {
-      setDocs(await candidateApi.applications.documents(application_id));
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load documents", severity: "error" });
-    } finally {
-      setDocsLoading(false);
-    }
-  };
-
   useEffect(() => {
     refresh();
   }, []);
 
+  const statusOptions = useMemo(() => {
+    const unique = Array.from(
+      new Set(rows.map((r) => String(r.status ?? "").trim()).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b));
+    return [{ label: "All statuses", value: "" }].concat(unique.map((s) => ({ label: s, value: s })));
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    if (!statusFilter) return rows;
+    const wanted = normStatus(statusFilter);
+    return rows.filter((r) => normStatus(r.status) === wanted);
+  }, [rows, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const applied = rows.filter((r) => normStatus(r.status) === "applied").length;
+    const draft = rows.filter((r) => normStatus(r.status) === "draft").length;
+    const other = total - applied - draft;
+    return { total, applied, draft, other };
+  }, [rows]);
+
   const cols = useMemo(
     () => [
       { field: "application_id", headerName: "App ID", width: 110 },
-      { field: "job_title", headerName: "Job", flex: 1, minWidth: 240 },
+      { field: "job_title", headerName: "Job", flex: 1, minWidth: 260 },
+      { field: "job_code", headerName: "Job Code", width: 130 },
       { field: "application_date", headerName: "Date", width: 130 },
       {
         field: "status",
         headerName: "Status",
         width: 140,
-        renderCell: (p: any) => <Chip size="small" label={String(p.value ?? "")} />,
+        renderCell: (p: any) => {
+          const v = String(p.value ?? "");
+          const k = normStatus(v);
+          const color: any = k === "applied" ? "success" : k === "draft" ? "warning" : "default";
+          return <Chip size="small" label={v} color={color} />;
+        },
       },
       {
         field: "__actions",
-        headerName: "Actions",
-        width: 190,
+        headerName: "",
+        width: 240,
         sortable: false,
         filterable: false,
         renderCell: (p: any) => {
           const r = p.row as CandidateApplicationRow;
+          const k = normStatus(r.status);
+          const isApplied = k === "applied";
           return (
-            <AdButton
-              variant="text"
-              startIcon={<UploadFileIcon fontSize="small" />}
-              onClick={() => {
-                setActiveApp(r);
-                setDocsOpen(true);
-                loadDocs(r.application_id);
-              }}
-            >
-              Documents
-            </AdButton>
+            <Stack direction="row" spacing={0.75}>
+              <AdButton variant="text" onClick={() => navigate(`/portal/candidate/applications/${r.application_id}`)}>
+                View
+              </AdButton>
+              <AdButton variant="text" onClick={() => navigate(`/portal/candidate/jobs/${r.job_id}/apply`)}>
+                {isApplied ? "View Job" : "Continue"}
+              </AdButton>
+            </Stack>
           );
         },
       },
     ],
     [],
   );
-
-  const uploadForDoc = async (doc: CandidateApplicationDocRow, file: File) => {
-    if (!activeApp) return;
-    try {
-      const now = Date.now();
-      const ext = fileExt(file.name);
-      const objectKey = `applications/${activeApp.application_id}/docs/${doc.document_type_id}/${now}${ext}`;
-
-      const presign = await recruitmentApi.files.presignUpload(objectKey);
-      const put = await fetch(presign.url, { method: "PUT", body: file });
-      if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-
-      await candidateApi.applications.upsertDocument(activeApp.application_id, doc.document_type_id, objectKey);
-      setToast({ open: true, message: "Uploaded", severity: "success" });
-      loadDocs(activeApp.application_id);
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Upload failed", severity: "error" });
-    }
-  };
-
-  const openDoc = async (doc: CandidateApplicationDocRow) => {
-    if (!doc.file_path) return;
-    try {
-      const presign = await recruitmentApi.files.presignDownload(doc.file_path);
-      window.open(presign.url, "_blank", "noopener,noreferrer");
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
-    }
-  };
 
   return (
     <Stack spacing={2.5}>
@@ -131,73 +110,53 @@ export default function CandidateApplicationsPage() {
           My Applications
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Track your job applications and upload the required documents.
+          Track your job applications.
         </Typography>
       </Stack>
 
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.25 }}>
+        {[
+          { t: "Total", v: stats.total },
+          { t: "Applied", v: stats.applied },
+          { t: "Draft", v: stats.draft },
+          { t: "Other", v: stats.other },
+        ].map((x) => (
+          <AdCard key={x.t} animate={false} contentSx={{ p: 1.5 }} sx={{ backgroundColor: "rgba(255,255,255,0.72)", borderRadius: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              {x.t}
+            </Typography>
+            <Typography variant="h6" fontWeight={950}>
+              {x.v}
+            </Typography>
+          </AdCard>
+        ))}
+      </Box>
+
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.application_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
-      </AdCard>
-
-      <AdModal
-        open={docsOpen}
-        onClose={() => setDocsOpen(false)}
-        title="Application Documents"
-        subtitle={activeApp ? `Application #${activeApp.application_id} • ${activeApp.job_title}` : undefined}
-        maxWidth="md"
-      >
-        {!activeApp ? (
-          <AdAlertBox severity="info" title="Select an application" message="Open documents from an application row." />
-        ) : (
-          <Stack spacing={1.5}>
-            {docsLoading ? <Typography>Loading...</Typography> : null}
-            {!docsLoading && !docs.length ? (
-              <AdAlertBox severity="warning" title="No required docs" message="No job documents found for this application." />
-            ) : null}
-
-            {docs.map((d) => (
-              <AdCard key={d.document_type_id} animate={false} contentSx={{ p: 1.75 }} sx={{ backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 3 }}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
-                  <Stack spacing={0.25}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography fontWeight={900}>{d.document_name}</Typography>
-                      {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
-                      {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
-                    </Stack>
-                    <Typography variant="caption" color="text.secondary">
-                      {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
-                    </Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    {d.file_path ? (
-                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => openDoc(d)}>
-                        View
-                      </AdButton>
-                    ) : null}
-
-                    <AdButton component="label" startIcon={<UploadFileIcon fontSize="small" />}>
-                      {d.file_path ? "Update" : "Upload"}
-                      <input
-                        type="file"
-                        hidden
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) uploadForDoc(d, f);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </AdButton>
-                  </Stack>
-                </Stack>
-              </AdCard>
-            ))}
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between" sx={{ mb: 1.5 }}>
+          <Box sx={{ width: { xs: "100%", md: 260 } }}>
+            <AdDropDown label="Status" options={statusOptions} value={statusFilter} onChange={(v) => setStatusFilter(String(v))} />
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <AdButton variant="secondary" onClick={() => refresh()} loading={loading}>
+              Refresh
+            </AdButton>
           </Stack>
-        )}
-      </AdModal>
+        </Stack>
+
+        <AdGrid
+          rows={filteredRows.map((r) => ({ id: r.application_id, ...r }))}
+          columns={cols as any}
+          loading={loading}
+          showToolbar
+          showExport={false}
+          disableColumnMenu
+          onRowClick={(p: any) => navigate(`/portal/candidate/applications/${p.row.application_id}`)}
+          sx={{ minHeight: 420 }}
+        />
+      </AdCard>
     </Stack>
   );
 }
-

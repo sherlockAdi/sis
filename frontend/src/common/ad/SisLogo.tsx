@@ -1,19 +1,14 @@
 import { Box } from "@mui/material";
+import bundledLogoUrl from "../../assets/sis-logo.svg?url";
 
 type SisLogoProps = {
-  /** Public path, default: `${import.meta.env.BASE_URL}sis-logo.svg` */
+  /** Image URL (string). Defaults to a bundled asset. */
   src?: string;
   /** Height in px, default: 34 */
   height?: number;
 };
 
-function defaultLogoSrc() {
-  const base = (import.meta as any).env?.BASE_URL ?? "/";
-  const normalized = typeof base === "string" && base.length ? base : "/";
-  return normalized.endsWith("/") ? `${normalized}sis-logo.svg` : `${normalized}/sis-logo.svg`;
-}
-
-export default function SisLogo({ src = defaultLogoSrc(), height = 34 }: SisLogoProps) {
+export default function SisLogo({ src = bundledLogoUrl, height = 34 }: SisLogoProps) {
   return (
     <Box
       component="img"

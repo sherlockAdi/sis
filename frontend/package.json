@@ -9,7 +9,10 @@
     "ipd": "vite --mode ipd",
     "build": "vite build --mode all",
     "build:opd": "vite build --mode opd",
-    "build:ipd": "vite build --mode ipd"
+    "build:ipd": "vite build --mode ipd",
+    "deploy:ftp": "npm run build && bash ./scripts/deploy-ftp.sh",
+    "deploy:ftp:opd": "npm run build:opd && bash ./scripts/deploy-ftp.sh",
+    "deploy:ftp:ipd": "npm run build:ipd && bash ./scripts/deploy-ftp.sh"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

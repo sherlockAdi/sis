@@ -80,22 +80,35 @@ export type JobUpsert = {
 
 export const jobsApi = {
   list: () => apiFetch<JobListRow[]>(`/jobs`, { method: "GET" }),
-  preview: (filters: {
-    country_id?: number;
-    state_id?: number;
-    city_id?: number;
-    category_id?: number;
-    status?: string;
-  }) => {
+  preview: (
+    filters: {
+      country_id?: number;
+      state_id?: number;
+      city_id?: number;
+      category_id?: number;
+      status?: string;
+    },
+    options?: { auth?: boolean },
+  ) => {
     const qs = new URLSearchParams();
     if (typeof filters.country_id === "number") qs.set("country_id", String(filters.country_id));
     if (typeof filters.state_id === "number") qs.set("state_id", String(filters.state_id));
     if (typeof filters.city_id === "number") qs.set("city_id", String(filters.city_id));
     if (typeof filters.category_id === "number") qs.set("category_id", String(filters.category_id));
     if (filters.status) qs.set("status", filters.status);
-    return apiFetch<JobListRow[]>(`/jobs-preview?${qs.toString()}`, { method: "GET" });
+    const isPublic = options?.auth === false;
+    if (isPublic) {
+      // Public site uses public endpoints (no JWT) and only returns active jobs.
+      // If `status` is present, pass it through to allow exact matching (e.g. "Open").
+      const path = `/public/jobs/preview?${qs.toString()}`;
+      return apiFetch<JobListRow[]>(path, { method: "GET", auth: false });
+    }
+    return apiFetch<JobListRow[]>(`/jobs-preview?${qs.toString()}`, { method: "GET", ...(options ?? {}) });
   },
-  get: (jobId: number) => apiFetch<JobDetail>(`/jobs/${jobId}`, { method: "GET" }),
+  get: (jobId: number, options?: { auth?: boolean }) =>
+    options?.auth === false
+      ? apiFetch<JobDetail>(`/public/jobs/${jobId}`, { method: "GET", auth: false })
+      : apiFetch<JobDetail>(`/jobs/${jobId}`, { method: "GET", ...(options ?? {}) }),
   create: (input: JobUpsert) => apiFetch<{ job_id: number }>(`/jobs`, { method: "POST", body: JSON.stringify(input) }),
   update: (jobId: number, input: Partial<JobUpsert>) =>
     apiFetch<{ updated: true }>(`/jobs/${jobId}`, { method: "PUT", body: JSON.stringify(input) }),
