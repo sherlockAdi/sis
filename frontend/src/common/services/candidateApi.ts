@@ -20,9 +20,6 @@ export type CandidateApplicationDocRow = {
   candidate_document_id: number | null;
   file_path: string | null;
   uploaded_at: string | null;
-  is_reused?: number;
-  reused_from_application_id?: number | null;
-  reused_from_uploaded_at?: string | null;
 };
 
 export const candidateApi = {

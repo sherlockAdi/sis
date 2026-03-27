@@ -158,25 +158,15 @@ export default function CandidateApplicationDetailPage() {
             >
               <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
                 {(() => {
-                  const filePath = String(d.file_path ?? "");
-                  const isPrev =
-                    Boolean(filePath) &&
-                    (Number(d.is_reused ?? 0) === 1 ||
-                      (Number.isFinite(id) && id > 0 ? !filePath.includes(`applications/${id}/docs/`) : false));
                   return (
                 <Stack spacing={0.25}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                     <Typography fontWeight={900}>{d.document_name}</Typography>
                     {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
                     {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
-                    {d.file_path && isPrev ? <Chip size="small" label="Previously uploaded" /> : null}
                   </Stack>
                   <Typography variant="caption" color="text.secondary">
-                    {isPrev && d.reused_from_uploaded_at
-                      ? `Previously uploaded at: ${d.reused_from_uploaded_at}`
-                      : d.uploaded_at
-                        ? `Uploaded at: ${d.uploaded_at}`
-                        : "Not uploaded yet"}
+                    {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
                   </Typography>
                 </Stack>
                   );

@@ -96,13 +96,12 @@ CREATE TABLE IF NOT EXISTS REC_T04_interviews (
 
 -- ============================================
 -- REC_T05_candidate_documents
--- - Stored per application so requirements can be job-specific.
+-- - Stored per candidate (not per application).
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS REC_T05_candidate_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    application_id INT,
     candidate_id INT,
     document_type_id INT,
 
@@ -110,11 +109,10 @@ CREATE TABLE IF NOT EXISTS REC_T05_candidate_documents (
 
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (application_id) REFERENCES REC_T02_applications(application_id) ON DELETE CASCADE,
     FOREIGN KEY (candidate_id) REFERENCES REC_T01_candidates(candidate_id) ON DELETE CASCADE,
     FOREIGN KEY (document_type_id) REFERENCES DOC_M01_document_types(document_type_id),
 
-    UNIQUE(application_id, document_type_id)
+    UNIQUE(candidate_id, document_type_id)
 );
 
 
@@ -323,21 +321,20 @@ DROP PROCEDURE IF EXISTS sp_rec_candidate_documents $$
 CREATE PROCEDURE sp_rec_candidate_documents(
   IN p_action VARCHAR(30),
   IN p_id INT,
-  IN p_application_id INT,
   IN p_candidate_id INT,
   IN p_document_type_id INT,
   IN p_file_path TEXT
 )
 BEGIN
-  IF p_action = 'LIST_BY_APPLICATION' THEN
-    SELECT id, application_id, candidate_id, document_type_id, file_path, uploaded_at
+  IF p_action = 'LIST_BY_CANDIDATE' THEN
+    SELECT id, NULL AS application_id, candidate_id, document_type_id, file_path, uploaded_at
     FROM REC_T05_candidate_documents
-    WHERE application_id = p_application_id
+    WHERE candidate_id = p_candidate_id
     ORDER BY uploaded_at DESC;
 
   ELSEIF p_action = 'UPSERT' THEN
-    INSERT INTO REC_T05_candidate_documents (application_id, candidate_id, document_type_id, file_path)
-    VALUES (p_application_id, p_candidate_id, p_document_type_id, p_file_path)
+    INSERT INTO REC_T05_candidate_documents (candidate_id, document_type_id, file_path)
+    VALUES (p_candidate_id, p_document_type_id, p_file_path)
     ON DUPLICATE KEY UPDATE
       file_path = VALUES(file_path),
       uploaded_at = CURRENT_TIMESTAMP;
@@ -374,8 +371,7 @@ BEGIN
   FROM JOB_T04_job_documents jd
   JOIN DOC_M01_document_types dt ON dt.document_type_id = jd.document_type_id
   LEFT JOIN REC_T05_candidate_documents cd
-    ON cd.application_id = p_application_id
-   AND cd.document_type_id = jd.document_type_id
+    ON cd.document_type_id = jd.document_type_id
    AND cd.candidate_id = v_candidate_id
   WHERE jd.job_id = v_job_id
   ORDER BY dt.document_name ASC;

@@ -29,19 +29,6 @@ type CandidateApplicationDocRow = {
   candidate_document_id: number | null;
   file_path: string | null;
   uploaded_at: string | null;
-  is_reused: 0 | 1;
-  reused_from_application_id: number | null;
-  reused_from_uploaded_at: string | null;
-};
-
-type CandidateDocumentLatestRow = {
-  file_path: string | null;
-  uploaded_at: string | null;
-};
-
-type CandidateDocReuseRow = {
-  application_id: number;
-  uploaded_at: string | null;
 };
 
 function requireUser(req: any): JwtPayload {
@@ -74,42 +61,6 @@ async function assertOwnsApplication(application_id: number, candidate_id: numbe
   const appCandidateId = appRows[0]?.candidate_id;
   if (!appCandidateId) throw httpError(404, 'Application not found');
   if (appCandidateId !== candidate_id) throw httpError(403, 'Forbidden');
-}
-
-async function prefillApplicationDocsFromCandidateHistory(application_id: number, candidate_id: number): Promise<void> {
-  const docs = await callProc<RowDataPacket & CandidateApplicationDocRow>(
-    `CALL sp_rec_application_documents(:application_id)`,
-    { application_id }
-  );
-
-  for (const d of docs) {
-    const existing = String(d.file_path ?? '').trim();
-    if (existing) continue;
-
-    const latest = await callProc<RowDataPacket & CandidateDocumentLatestRow>(
-      `SELECT file_path, uploaded_at
-       FROM REC_T05_candidate_documents
-       WHERE candidate_id = :candidate_id
-         AND document_type_id = :document_type_id
-         AND file_path IS NOT NULL
-         AND file_path <> ''
-       ORDER BY uploaded_at DESC
-       LIMIT 1`,
-      { candidate_id, document_type_id: d.document_type_id }
-    );
-    const file_path = String(latest[0]?.file_path ?? '').trim();
-    if (!file_path) continue;
-
-    await callProc(
-      `CALL sp_rec_candidate_documents('UPSERT', NULL, :application_id, :candidate_id, :document_type_id, :file_path)`,
-      {
-        application_id,
-        candidate_id,
-        document_type_id: d.document_type_id,
-        file_path
-      }
-    );
-  }
 }
 
 @Route('candidate/applications')
@@ -156,11 +107,6 @@ export class CandidateApplicationsController extends Controller {
     );
     const application_id = rows[0]?.application_id;
     if (!application_id) throw httpError(500, 'Failed to create application');
-
-    // If candidate already uploaded the same document types for any previous application,
-    // reuse those file paths for this new application so the user doesn't need to re-upload.
-    await prefillApplicationDocsFromCandidateHistory(application_id, candidate_id);
-
     return { application_id };
   }
 
@@ -177,9 +123,6 @@ export class CandidateApplicationsController extends Controller {
 
     const consent = Boolean((body as any)?.consent);
     if (!consent) throw httpError(400, 'Consent is required');
-
-    // Ensure any previously uploaded candidate documents are reused before validating.
-    await prefillApplicationDocsFromCandidateHistory(applicationId, candidate_id);
 
     const docs = await callProc<RowDataPacket & CandidateApplicationDocRow>(
       `CALL sp_rec_application_documents(:application_id)`,
@@ -219,52 +162,10 @@ export class CandidateApplicationsController extends Controller {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
     await assertOwnsApplication(applicationId, candidate_id);
-    await prefillApplicationDocsFromCandidateHistory(applicationId, candidate_id);
-
-    const docs = await callProc<RowDataPacket & Omit<CandidateApplicationDocRow, 'is_reused' | 'reused_from_application_id' | 'reused_from_uploaded_at'>>(
+    return callProc<RowDataPacket & CandidateApplicationDocRow>(
       `CALL sp_rec_application_documents(:application_id)`,
       { application_id: applicationId }
     );
-
-    const out: CandidateApplicationDocRow[] = [];
-    for (const d of docs) {
-      const file_path = String(d.file_path ?? '').trim();
-      if (!file_path) {
-        out.push({
-          ...(d as any),
-          is_reused: 0,
-          reused_from_application_id: null,
-          reused_from_uploaded_at: null
-        });
-        continue;
-      }
-
-      const prev = await callProc<RowDataPacket & CandidateDocReuseRow>(
-        `SELECT application_id, uploaded_at
-         FROM REC_T05_candidate_documents
-         WHERE candidate_id = :candidate_id
-           AND document_type_id = :document_type_id
-           AND file_path = :file_path
-           AND application_id <> :application_id
-         ORDER BY uploaded_at DESC
-         LIMIT 1`,
-        {
-          candidate_id,
-          document_type_id: d.document_type_id,
-          file_path,
-          application_id: applicationId
-        }
-      );
-      const is_reused = prev[0]?.application_id ? 1 : 0;
-      out.push({
-        ...(d as any),
-        is_reused,
-        reused_from_application_id: prev[0]?.application_id ?? null,
-        reused_from_uploaded_at: prev[0]?.uploaded_at ?? null
-      });
-    }
-
-    return out;
   }
 
   @Put('{applicationId}/documents/{documentTypeId}')
@@ -283,9 +184,8 @@ export class CandidateApplicationsController extends Controller {
     if (!file_path) throw httpError(400, 'file_path is required');
 
     await callProc(
-      `CALL sp_rec_candidate_documents('UPSERT', NULL, :application_id, :candidate_id, :document_type_id, :file_path)`,
+      `CALL sp_rec_candidate_documents('UPSERT', NULL, :candidate_id, :document_type_id, :file_path)`,
       {
-        application_id: applicationId,
         candidate_id,
         document_type_id: documentTypeId,
         file_path
