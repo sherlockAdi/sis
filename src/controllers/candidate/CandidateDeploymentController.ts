@@ -1,0 +1,118 @@
+import { Body, Controller, Get, Put, Request, Route, Security, Tags } from 'tsoa';
+import type { RowDataPacket } from 'mysql2/promise';
+import { callProc } from '../../db/proc';
+import { httpError } from '../../utils/httpErrors';
+
+type CandidateDeploymentRow = {
+  deployment_id: number;
+  application_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  phone: string | null;
+  email: string | null;
+  job_id: number;
+  job_title: string;
+  job_code: string | null;
+  current_status: string | null;
+  visa_type_id: number | null;
+  visa_type_name: string | null;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+@Route('candidate/deployment')
+@Tags('Candidate')
+export class CandidateDeploymentController extends Controller {
+  @Get()
+  @Security('jwt')
+  public async list(@Request() req: any): Promise<CandidateDeploymentRow[]> {
+    const user = (req as any).user as { user_id?: number; username?: string } | undefined;
+    if (!user?.user_id) throw httpError(401, 'Unauthorized');
+
+    const candRows = await callProc<RowDataPacket & { candidate_id: number }>(
+      `CALL sp_rec_candidates('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+      { user_id: user.user_id }
+    );
+    const candidate_id = candRows[0]?.candidate_id;
+    if (!candidate_id) throw httpError(404, 'Candidate profile not found');
+
+    return callProc<RowDataPacket & CandidateDeploymentRow>(
+      `CALL sp_dep_deployments('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
+      { candidate_id }
+    );
+  }
+
+  @Put('visa-details')
+  @Security('jwt')
+  public async upsertVisaDetails(
+    @Body()
+    body: {
+      deployment_id: number;
+      visa_type_id?: number | null;
+      visa_number?: string | null;
+      issue_date?: string | null;
+      expiry_date?: string | null;
+      passport_number?: string | null;
+      passport_issue_date?: string | null;
+      passport_expiry_date?: string | null;
+      sponsor_id?: string | null;
+      sponsor_contact?: string | null;
+      passport_file_path?: string | null;
+      visa_file_path?: string | null;
+      remarks?: string | null;
+    },
+    @Request() req: any
+  ): Promise<{ visa_detail_id: number }> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    if (!user?.user_id) throw httpError(401, 'Unauthorized');
+
+    const deployment_id = Number((body as any)?.deployment_id);
+    if (!deployment_id) throw httpError(400, 'deployment_id is required');
+
+    const candRows = await callProc<RowDataPacket & { candidate_id: number }>(
+      `CALL sp_rec_candidates('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+      { user_id: user.user_id }
+    );
+    const candidate_id = candRows[0]?.candidate_id;
+    if (!candidate_id) throw httpError(404, 'Candidate profile not found');
+
+    const depRows = await callProc<RowDataPacket & { deployment_id: number }>(
+      `CALL sp_dep_deployments('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
+      { candidate_id }
+    );
+    const allowed = depRows.some((d) => d.deployment_id === deployment_id);
+    if (!allowed) throw httpError(403, 'Access denied');
+
+    const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :remarks, :user_id)`,
+      {
+        deployment_id,
+        visa_type_id: body.visa_type_id ?? null,
+        visa_number: body.visa_number ?? null,
+        issue_date: body.issue_date ?? null,
+        expiry_date: body.expiry_date ?? null,
+        passport_number: body.passport_number ?? null,
+        passport_issue_date: body.passport_issue_date ?? null,
+        passport_expiry_date: body.passport_expiry_date ?? null,
+        sponsor_id: body.sponsor_id ?? null,
+        sponsor_contact: body.sponsor_contact ?? null,
+        passport_file_path: body.passport_file_path ?? null,
+        visa_file_path: body.visa_file_path ?? null,
+        remarks: body.remarks ?? null,
+        user_id: user.user_id,
+      }
+    );
+
+    const visa_detail_id = rows[0]?.visa_detail_id;
+    if (!visa_detail_id) throw httpError(500, 'Failed to save visa details');
+
+    // Auto-move to Visa Processing when visa details are saved
+    await callProc(
+      `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, NULL, NULL, :user_id)`,
+      { deployment_id, status: 'Visa Processing', user_id: user.user_id }
+    );
+
+    return { visa_detail_id };
+  }
+}

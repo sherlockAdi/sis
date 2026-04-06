@@ -16,6 +16,7 @@ import {
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { recruitmentApi, type ApplicationInterviewRow, type ApplicationRow } from "../../common/services/recruitmentApi";
+import { deploymentApi } from "../../common/services/deploymentApi";
 import { mastersApi, type InterviewMode } from "../../common/services/mastersApi";
 
 const statusOrder = ["Screening", "Interview", "Shortlist", "Offer", "Rejected", "On Hold", "Pending", "Scheduled", "Completed"];
@@ -211,6 +212,29 @@ export default function RecruitmentScreeningInterviewsPage() {
     }
   };
 
+  const markReady = async (applicationId?: number) => {
+    const appId = applicationId ?? activeApp?.application_id;
+    if (!appId) return;
+    try {
+      await deploymentApi.create({ application_id: appId, status: "Ready" });
+      await recruitmentApi.applications.updateStatus(appId, "Ready");
+      setToast({ open: true, message: "Marked as Ready for Deployment", severity: "success" });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update", severity: "error" });
+    }
+  };
+
+  const markNotReady = async (applicationId?: number) => {
+    const appId = applicationId ?? activeApp?.application_id;
+    if (!appId) return;
+    try {
+      await recruitmentApi.applications.updateStatus(appId, "Not Ready");
+      setToast({ open: true, message: "Marked as Not Ready", severity: "success" });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update", severity: "error" });
+    }
+  };
+
   return (
     <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
       <AdNotification
@@ -313,6 +337,26 @@ export default function RecruitmentScreeningInterviewsPage() {
                 width: 90,
                 renderCell: (p: any) => <Chip size="small" label={p.value ? String(p.value) : "Pending"} />,
               },
+              {
+                field: "__decision",
+                headerName: "Decision",
+                width: 220,
+                sortable: false,
+                filterable: false,
+                renderCell: (p: any) => {
+                  const r = p.row as any;
+                  return (
+                    <Stack direction="row" spacing={1}>
+                      <AdButton variant="text" onClick={() => markReady(r.application_id)}>
+                        Ready
+                      </AdButton>
+                      <AdButton variant="text" color="error" onClick={() => markNotReady(r.application_id)}>
+                        Not Ready
+                      </AdButton>
+                    </Stack>
+                  );
+                },
+              },
             ] as any
           }
           loading={scheduledLoading}
@@ -358,6 +402,20 @@ export default function RecruitmentScreeningInterviewsPage() {
                 <AdTextArea label="Remarks" minRows={3} value={schedule.remarks} onChange={(v) => setSchedule((s) => ({ ...s, remarks: v }))} />
               </Box>
             </Box>
+          </Stack>
+
+          <Divider />
+
+          <Stack spacing={1}>
+            <Typography fontWeight={800}>Interview Decision</Typography>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+              <AdButton variant="contained" onClick={markReady} disabled={!activeApp}>
+                Ready for Deployment
+              </AdButton>
+              <AdButton variant="outlined" color="error" onClick={markNotReady} disabled={!activeApp}>
+                Not Ready
+              </AdButton>
+            </Stack>
           </Stack>
 
           <Divider />

@@ -147,4 +147,20 @@ export class RecruitmentApplicationsController extends Controller {
 
     return { updated: true };
   }
+
+  @Put('{applicationId}/status')
+  @Security('jwt')
+  public async updateStatus(
+    @Path() applicationId: number,
+    @Body() body: { status: string }
+  ): Promise<{ updated: true }> {
+    const status = String((body as any)?.status ?? '').trim();
+    if (!status) throw httpError(400, 'status is required');
+
+    await callProc(
+      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status)`,
+      { application_id: applicationId, status }
+    );
+    return { updated: true };
+  }
 }

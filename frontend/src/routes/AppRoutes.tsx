@@ -45,6 +45,7 @@ import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
 import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import CompaniesPage from "../modules/company/CompaniesPage";
+import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
 import PublicLayout from "../modules/public/layout/PublicLayout";
 import PublicHomePage from "../modules/public/pages/PublicHomePage";
 import PublicAboutPage from "../modules/public/pages/PublicAboutPage";
@@ -264,8 +265,8 @@ export default function AppRoutes() {
             <Route path="training" element={<PlaceholderPage title="Training & LMS" />} />
             <Route path="training/*" element={<PlaceholderPage title="Training & LMS" />} />
 
-            <Route path="deployment" element={<PlaceholderPage title="Deployment Management" />} />
-            <Route path="deployment/*" element={<PlaceholderPage title="Deployment Management" />} />
+            <Route path="deployment" element={<DeploymentManagementPage />} />
+            <Route path="deployment/*" element={<DeploymentManagementPage />} />
 
             <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
             <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />
