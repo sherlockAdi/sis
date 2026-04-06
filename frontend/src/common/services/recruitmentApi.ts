@@ -83,6 +83,11 @@ export const recruitmentApi = {
     list: () => apiFetch<ApplicationRow[]>(`/recruitment/applications`, { method: "GET" }),
     create: (input: { candidate_id: number; job_id: number; application_date?: string | null; status?: string | null }) =>
       apiFetch<{ application_id: number }>(`/recruitment/applications`, { method: "POST", body: JSON.stringify(input) }),
+    updateStatus: (application_id: number, status: string) =>
+      apiFetch<{ updated: true }>(`/recruitment/applications/${application_id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      }),
     documents: (application_id: number) =>
       apiFetch<ApplicationDocRow[]>(`/recruitment/applications/${application_id}/documents`, { method: "GET" }),
     upsertDocument: (application_id: number, document_type_id: number, file_path: string) =>

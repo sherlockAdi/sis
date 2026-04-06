@@ -20,8 +20,10 @@ import PaymentCategoriesPage from "../modules/masters/PaymentCategoriesPage";
 import MenuManagementPage from "../modules/admin/MenuManagementPage";
 import JobsPage from "../modules/job/JobsPage";
 import JobsPreviewPage from "../modules/job/JobsPreviewPage";
+import JobFormPage from "../modules/job/JobFormPage";
 import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentApplicationsPage";
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
+import RecruitmentScreeningInterviewsPage from "../modules/recruitment/RecruitmentScreeningInterviewsPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
 import CandidateJobApplyPage from "../modules/candidate/CandidateJobApplyPage";
 import CandidateApplicationsPage from "../modules/candidate/CandidateApplicationsPage";
@@ -43,6 +45,7 @@ import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
 import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import CompaniesPage from "../modules/company/CompaniesPage";
+import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
 import PublicLayout from "../modules/public/layout/PublicLayout";
 import PublicHomePage from "../modules/public/pages/PublicHomePage";
 import PublicAboutPage from "../modules/public/pages/PublicAboutPage";
@@ -216,6 +219,8 @@ export default function AppRoutes() {
             <Route path="masters/payments/categories" element={<PaymentCategoriesPage />} />
             <Route path="admin/menu-management" element={<MenuManagementPage />} />
             <Route path="jobs" element={<JobsPage />} />
+            <Route path="jobs/new" element={<JobFormPage mode="create" />} />
+            <Route path="jobs/:jobId" element={<JobFormPage mode="edit" />} />
             <Route path="jobs-preview" element={<JobsPreviewPage />} />
             <Route path="recruitment/applications" element={<RecruitmentApplicationsPage />} />
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
@@ -244,7 +249,7 @@ export default function AppRoutes() {
             {/* Admin scaffolding routes (dummy pages for now, safe for dynamic Menu Management paths) */}
             <Route
               path="recruitment/job-management"
-              element={<PlaceholderPage title="Recruitment • Job Management" nextLinks={[{ label: "Jobs", to: "/portal/jobs" }]} />}
+              element={<JobsPage />}
             />
             <Route
               path="recruitment/candidate-management"
@@ -252,7 +257,7 @@ export default function AppRoutes() {
             />
             <Route
               path="recruitment/screening-interviews"
-              element={<PlaceholderPage title="Recruitment • Screening & Interviews" />}
+              element={<RecruitmentScreeningInterviewsPage />}
             />
             <Route path="trade-test" element={<PlaceholderPage title="Trade Test & Assessment" />} />
             <Route path="trade-test/*" element={<PlaceholderPage title="Trade Test & Assessment" />} />
@@ -260,8 +265,8 @@ export default function AppRoutes() {
             <Route path="training" element={<PlaceholderPage title="Training & LMS" />} />
             <Route path="training/*" element={<PlaceholderPage title="Training & LMS" />} />
 
-            <Route path="deployment" element={<PlaceholderPage title="Deployment Management" />} />
-            <Route path="deployment/*" element={<PlaceholderPage title="Deployment Management" />} />
+            <Route path="deployment" element={<DeploymentManagementPage />} />
+            <Route path="deployment/*" element={<DeploymentManagementPage />} />
 
             <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
             <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />

@@ -490,7 +490,7 @@ export default function AdAppShell({
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f6f6f8" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f6f6f8", overflowX: "hidden", maxWidth: "100%" }}>
       <CssBaseline />
       <AppBar position="fixed" open={isMdUp ? open : false} color="inherit" elevation={0}>
         <Toolbar sx={{ borderBottom: "1px solid rgba(2, 6, 23, 0.08)" }}>
@@ -554,6 +554,9 @@ export default function AdAppShell({
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
+          maxWidth: "100%",
+          overflowX: "hidden",
           p: { xs: 2, md: 3 },
           pb: bottomNav && !isMdUp ? "88px" : undefined,
         }}
