@@ -31,7 +31,7 @@ export class FilesController extends Controller {
     if (!objectKey) throw httpError(400, 'object_key is required');
 
     const expiry = Math.max(60, Math.min(Number(expiry_seconds ?? 900), 60 * 60));
-    const url = presignS3Url({
+    const url = await presignS3Url({
       method: 'PUT',
       endpoint: minioHost(),
       useSSL: env.MINIO_USE_SSL,
@@ -39,7 +39,7 @@ export class FilesController extends Controller {
       objectKey,
       accessKey: env.MINIO_ACCESS_KEY,
       secretKey: env.MINIO_SECRET_KEY,
-      region: process.env.MINIO_REGION ?? 'us-east-1',
+      region: env.MINIO_REGION,
       expiresSeconds: expiry
     });
     return { url, bucket: env.MINIO_BUCKET, object_key: objectKey, expiry_seconds: expiry };
@@ -56,7 +56,7 @@ export class FilesController extends Controller {
     if (!objectKey) throw httpError(400, 'object_key is required');
 
     const expiry = Math.max(60, Math.min(Number(expiry_seconds ?? 900), 60 * 60));
-    const url = presignS3Url({
+    const url = await presignS3Url({
       method: 'GET',
       endpoint: minioHost(),
       useSSL: env.MINIO_USE_SSL,
@@ -64,7 +64,7 @@ export class FilesController extends Controller {
       objectKey,
       accessKey: env.MINIO_ACCESS_KEY,
       secretKey: env.MINIO_SECRET_KEY,
-      region: process.env.MINIO_REGION ?? 'us-east-1',
+      region: env.MINIO_REGION,
       expiresSeconds: expiry
     });
     return { url, bucket: env.MINIO_BUCKET, object_key: objectKey, expiry_seconds: expiry };

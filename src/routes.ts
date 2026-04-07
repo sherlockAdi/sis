@@ -2671,7 +2671,7 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsDeploymentController_setStatus: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsDeploymentController_updateStatus: Record<string, TsoaRoute.ParameterSchema> = {
                 deploymentId: {"in":"path","name":"deploymentId","required":true,"dataType":"double"},
                 body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"visa_type_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}]},"status":{"dataType":"string","required":true}}},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
@@ -2679,20 +2679,20 @@ export function RegisterRoutes(app: Router) {
         app.put('/deployment/:deploymentId/status',
             authenticateMiddleware([{"jwt":[]}]),
             ...(fetchMiddlewares<RequestHandler>(DeploymentController)),
-            ...(fetchMiddlewares<RequestHandler>(DeploymentController.prototype.setStatus)),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController.prototype.updateStatus)),
 
-            async function DeploymentController_setStatus(request: ExRequest, response: ExResponse, next: any) {
+            async function DeploymentController_updateStatus(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsDeploymentController_setStatus, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsDeploymentController_updateStatus, request, response });
 
                 const controller = new DeploymentController();
 
               await templateService.apiHandler({
-                methodName: 'setStatus',
+                methodName: 'updateStatus',
                 controller,
                 response,
                 next,

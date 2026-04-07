@@ -29,6 +29,7 @@ export const env = {
   MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY ?? '',
   MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY ?? '',
   MINIO_BUCKET: process.env.MINIO_BUCKET ?? 'sis',
+  MINIO_REGION: process.env.MINIO_REGION ?? 'us-east-1',
 
   // SMTP (optional; used to email auto-created credentials)
   SMTP_HOST: process.env.SMTP_HOST ?? '',

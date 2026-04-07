@@ -116,7 +116,7 @@ export class DeploymentController extends Controller {
 
   @Put('{deploymentId}/status')
   @Security('jwt')
-  public async setStatus(
+  public async updateStatus(
     @Path() deploymentId: number,
     @Body() body: { status: string; visa_type_id?: number | null; remarks?: string | null },
     @Request() req: any
