@@ -65,6 +65,7 @@ export class DeploymentController extends Controller {
       `CALL sp_dep_deployments('LIST', NULL, NULL, NULL, NULL, NULL, NULL)`
     );
   }
+  
 
   @Get('{deploymentId}')
   @Security('jwt')
