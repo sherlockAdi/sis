@@ -238,7 +238,8 @@ CREATE PROCEDURE sp_rec_applications(
   IN p_candidate_id INT,
   IN p_job_id INT,
   IN p_application_date DATE,
-  IN p_status VARCHAR(50)
+  IN p_status VARCHAR(50),
+  IN p_partner_id INT
 )
 BEGIN
   IF p_action = 'LIST' THEN
@@ -256,6 +257,24 @@ BEGIN
     FROM REC_T02_applications a
     JOIN REC_T01_candidates c ON c.candidate_id = a.candidate_id
     JOIN JOB_T01_jobs j ON j.job_id = a.job_id
+    ORDER BY a.application_id DESC;
+
+  ELSEIF p_action = 'LIST_BY_PARTNER' THEN
+    SELECT
+      a.application_id,
+      a.candidate_id,
+      CONCAT_WS(' ', c.first_name, c.last_name) AS candidate_name,
+      c.phone,
+      c.email,
+      a.job_id,
+      j.job_title,
+      j.job_code,
+      a.application_date,
+      a.status
+    FROM REC_T02_applications a
+    JOIN REC_T01_candidates c ON c.candidate_id = a.candidate_id
+    JOIN JOB_T01_jobs j ON j.job_id = a.job_id
+    WHERE j.partner_id = p_partner_id
     ORDER BY a.application_id DESC;
 
   ELSEIF p_action = 'LIST_BY_CANDIDATE' THEN
@@ -485,6 +504,31 @@ BEGIN
   ELSE
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_rec_candidate_status_history: invalid action';
   END IF;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_rec_partner_interviews $$
+CREATE PROCEDURE sp_rec_partner_interviews(
+  IN p_partner_id INT
+)
+BEGIN
+  SELECT
+    i.interview_id,
+    i.application_id,
+    a.candidate_id,
+    CONCAT_WS(' ', c.first_name, c.last_name) AS candidate_name,
+    a.job_id,
+    j.job_title,
+    m.mode_name,
+    i.interview_date,
+    i.result,
+    i.remarks
+  FROM REC_T04_interviews i
+  JOIN REC_T02_applications a ON a.application_id = i.application_id
+  JOIN REC_T01_candidates c ON c.candidate_id = a.candidate_id
+  JOIN JOB_T01_jobs j ON j.job_id = a.job_id
+  LEFT JOIN REC_M01_interview_modes m ON m.interview_mode_id = i.interview_mode_id
+  WHERE j.partner_id = p_partner_id
+  ORDER BY i.interview_date DESC, i.interview_id DESC;
 END $$
 
 DELIMITER ;

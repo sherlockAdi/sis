@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
 
     job_description TEXT,
 
+    partner_id INT DEFAULT NULL,
+
     status VARCHAR(50) DEFAULT 'Open',
 
     created_by INT,
@@ -30,7 +32,8 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
 
     FOREIGN KEY (category_id) REFERENCES JOB_M01_job_categories(category_id),
     FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
-    FOREIGN KEY (contract_duration_id) REFERENCES JOB_M02_contract_durations(duration_id)
+    FOREIGN KEY (contract_duration_id) REFERENCES JOB_M02_contract_durations(duration_id),
+    FOREIGN KEY (partner_id) REFERENCES PART_T01_partners(partner_id)
 );
 
 
@@ -144,6 +147,7 @@ CREATE PROCEDURE sp_job_jobs(
   IN p_salary_max DECIMAL(10,2),
   IN p_job_description TEXT,
   IN p_status VARCHAR(50),
+  IN p_partner_id INT,
   IN p_created_by INT,
   IN p_remarks VARCHAR(255)
 )
@@ -163,6 +167,8 @@ BEGIN
       agg.total_vacancy AS vacancy,
       agg.salary_min AS salary_min,
       agg.salary_max AS salary_max,
+      j.partner_id,
+      p.partner_name,
       j.status,
       j.created_by,
       j.created_at
@@ -180,6 +186,45 @@ BEGIN
       GROUP BY job_id
     ) agg ON agg.job_id = j.job_id
     LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
+    ORDER BY j.job_id DESC;
+
+  ELSEIF p_action = 'LIST_BY_PARTNER' THEN
+    SELECT
+      j.job_id,
+      j.job_code,
+      j.job_title,
+      j.category_id,
+      c.category_name,
+      agg.primary_country_id AS country_id,
+      co.country_name,
+      j.contract_duration_id,
+      d.duration_name,
+      d.months,
+      agg.total_vacancy AS vacancy,
+      agg.salary_min AS salary_min,
+      agg.salary_max AS salary_max,
+      j.partner_id,
+      p.partner_name,
+      j.status,
+      j.created_by,
+      j.created_at
+    FROM JOB_T01_jobs j
+    LEFT JOIN JOB_M01_job_categories c ON c.category_id = j.category_id
+    LEFT JOIN JOB_M02_contract_durations d ON d.duration_id = j.contract_duration_id
+    LEFT JOIN (
+      SELECT
+        job_id,
+        MIN(country_id) AS primary_country_id,
+        SUM(COALESCE(vacancy,0)) AS total_vacancy,
+        MIN(salary_min) AS salary_min,
+        MAX(salary_max) AS salary_max
+      FROM JOB_T05_job_locations
+      GROUP BY job_id
+    ) agg ON agg.job_id = j.job_id
+    LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
+    WHERE j.partner_id = p_partner_id
     ORDER BY j.job_id DESC;
 
   ELSEIF p_action = 'GET' THEN
@@ -198,6 +243,8 @@ BEGIN
       agg.salary_min AS salary_min,
       agg.salary_max AS salary_max,
       j.job_description,
+      j.partner_id,
+      p.partner_name,
       j.status,
       j.created_by,
       j.created_at
@@ -215,16 +262,17 @@ BEGIN
       GROUP BY job_id
     ) agg ON agg.job_id = j.job_id
     LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
     WHERE j.job_id = p_job_id
     LIMIT 1;
 
   ELSEIF p_action = 'CREATE' THEN
     INSERT INTO JOB_T01_jobs (
       job_code, job_title, category_id, country_id, contract_duration_id,
-      vacancy, salary_min, salary_max, job_description, status, created_by
+      vacancy, salary_min, salary_max, job_description, partner_id, status, created_by
     ) VALUES (
       NULLIF(p_job_code, ''), p_job_title, p_category_id, p_country_id, p_contract_duration_id,
-      p_vacancy, p_salary_min, p_salary_max, p_job_description, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
+      p_vacancy, p_salary_min, p_salary_max, p_job_description, p_partner_id, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
     );
 
     SET @new_job_id := LAST_INSERT_ID();
@@ -252,6 +300,7 @@ BEGIN
       salary_min = COALESCE(p_salary_min, salary_min),
       salary_max = COALESCE(p_salary_max, salary_max),
       job_description = COALESCE(p_job_description, job_description),
+      partner_id = COALESCE(p_partner_id, partner_id),
       status = COALESCE(NULLIF(p_status,''), status)
     WHERE job_id = p_job_id;
     SELECT ROW_COUNT() AS affected_rows;

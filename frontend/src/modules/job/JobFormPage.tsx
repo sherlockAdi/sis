@@ -9,6 +9,8 @@ import type { ApiError } from "../../common/services/apiFetch";
 import { jobsApi } from "../../common/services/jobsApi";
 import { mastersApi, type ContractDuration, type DocumentType, type JobCategory } from "../../common/services/mastersApi";
 import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { partnersApi, type PartnerRow } from "../../common/services/partnersApi";
+import { useAuth } from "../../common/auth/AuthContext";
 
 type Form = {
   job_id?: number;
@@ -18,6 +20,7 @@ type Form = {
   contract_duration_id: string;
   status: string;
   job_description: string;
+  partner_id: string;
   documents: Record<number, { include: boolean; is_required: boolean }>;
   locations: Array<{
     country_id: string;
@@ -42,6 +45,9 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const params = useParams();
   const jobId = params.jobId ? Number(params.jobId) : null;
+  const { me } = useAuth();
+  const role = String(me?.role_code ?? "").toUpperCase();
+  const isPartner = role === "SOURCING" || role === "PARTNER";
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(mode === "edit");
@@ -58,6 +64,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<StateRow[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
+  const [partners, setPartners] = useState<PartnerRow[]>([]);
 
   const [form, setForm] = useState<Form>({
     job_code: "",
@@ -66,6 +73,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     contract_duration_id: "",
     status: "Open",
     job_description: "",
+    partner_id: "",
     documents: {},
     locations: [
       {
@@ -96,11 +104,14 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         setDurations(durs);
         setDocTypes(docs);
         setCountries(cos);
+        if (!isPartner) {
+          setPartners(await partnersApi.list(true));
+        }
       } catch {
         // ignore
       }
     })();
-  }, []);
+  }, [isPartner]);
 
   useEffect(() => {
     if (mode !== "edit" || !jobId) return;
@@ -146,6 +157,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           contract_duration_id: d.job.contract_duration_id ? String(d.job.contract_duration_id) : "",
           status: d.job.status ?? "Open",
           job_description: d.job.job_description ?? "",
+          partner_id: d.job.partner_id ? String(d.job.partner_id) : "",
           documents: docMap,
           locations: locForms,
         });
@@ -198,6 +210,16 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     () => [{ label: "— Select —", value: "" }].concat(durations.map((d) => ({ label: d.duration_name ?? `#${d.duration_id}`, value: String(d.duration_id) }))),
     [durations],
   );
+  const partnerOptions = useMemo(
+    () =>
+      [{ label: "— Select —", value: "" }].concat(
+        partners
+          .slice()
+          .sort((a, b) => String(a.partner_name ?? "").localeCompare(String(b.partner_name ?? "")))
+          .map((p) => ({ label: `${p.partner_name}${p.partner_code ? ` (${p.partner_code})` : ""}`, value: String(p.partner_id) })),
+      ),
+    [partners],
+  );
   const countryOptions = useMemo(
     () => [{ label: "— Select —", value: "" }].concat(countries.map((c) => ({ label: c.country_name, value: String(c.country_id) }))),
     [countries],
@@ -223,6 +245,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         contract_duration_id: form.contract_duration_id ? Number(form.contract_duration_id) : null,
         status: form.status || null,
         job_description: form.job_description.trim() || null,
+        partner_id: form.partner_id ? Number(form.partner_id) : null,
         documents: Object.entries(form.documents)
           .filter(([, v]) => v.include)
           .map(([document_type_id, v]) => ({ document_type_id: Number(document_type_id), is_required: v.is_required })),
@@ -244,7 +267,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       else await jobsApi.create(payload);
 
       setToast({ open: true, message: "Saved", severity: "success" });
-      setTimeout(() => navigate("/portal/jobs"), 400);
+      const target = isPartner ? "/portal/partner/job-mandates" : "/portal/jobs";
+      setTimeout(() => navigate(target), 400);
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
     } finally {
@@ -305,6 +329,14 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 onChange={(v) => setForm((f) => ({ ...f, contract_duration_id: v }))}
               />
             </Stack>
+            {!isPartner ? (
+              <AdDropDown
+                label="Partner (optional)"
+                options={partnerOptions}
+                value={form.partner_id}
+                onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}
+              />
+            ) : null}
 
             <Stack spacing={1}>
               <Stack direction="row" justifyContent="space-between" alignItems="center">

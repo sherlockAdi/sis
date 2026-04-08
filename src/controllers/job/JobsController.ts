@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, Securit
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
+import { getPartnerByUserId, getRoleCodeForUserId } from '../../services/partnerService';
 
 type JobRow = {
   job_id: number;
@@ -19,6 +20,8 @@ type JobRow = {
   salary_max: string | null;
   job_description?: string | null;
   status: string | null;
+  partner_id?: number | null;
+  partner_name?: string | null;
   created_by: number | null;
   created_at: string;
 };
@@ -59,6 +62,7 @@ type JobUpsertBody = {
   salary_max?: number | null;
   job_description?: string | null;
   status?: string | null;
+  partner_id?: number | null;
 
   requirements?: string[];
   benefits?: string[];
@@ -75,20 +79,46 @@ type JobUpsertBody = {
   }>;
 };
 
+async function getPartnerContext(user_id: number): Promise<{ partner_id: number | null; is_partner_role: boolean }> {
+  const partner = await getPartnerByUserId(user_id);
+  const roleCode = String(await getRoleCodeForUserId(user_id)).toUpperCase();
+  const is_partner_role = roleCode === 'SOURCING' || roleCode === 'PARTNER';
+  return { partner_id: partner?.partner_id ?? null, is_partner_role };
+}
+
+async function assertJobOwnedByPartner(job_id: number, partner_id: number): Promise<void> {
+  const rows = await callProc<RowDataPacket & JobRow>(
+    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    { job_id }
+  );
+  const job = rows[0];
+  if (!job) throw httpError(404, 'Job not found');
+  if (Number(job.partner_id ?? 0) !== Number(partner_id)) throw httpError(403, 'Forbidden');
+}
+
 @Route('jobs')
 @Tags('Jobs')
 export class JobsController extends Controller {
   @Get()
   @Security('jwt')
-  public async list(): Promise<JobRow[]> {
+  public async list(@Request() req: any): Promise<JobRow[]> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    const ctx = user?.user_id ? await getPartnerContext(user.user_id) : { partner_id: null, is_partner_role: false };
+    if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+    if (ctx.partner_id) {
+      return callProc<RowDataPacket & JobRow>(
+        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL)`,
+        { partner_id: ctx.partner_id }
+      );
+    }
     return callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
+      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
     );
   }
 
   @Get('{jobId}')
   @Security('jwt')
-  public async get(@Path() jobId: number): Promise<{
+  public async get(@Path() jobId: number, @Request() req: any): Promise<{
     job: JobRow;
     requirements: JobRequirement[];
     benefits: JobBenefit[];
@@ -97,11 +127,19 @@ export class JobsController extends Controller {
     status_history: JobStatusHistory[];
   }> {
     const jobRows = await callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     const job = jobRows[0];
     if (!job) throw httpError(404, 'Job not found');
+    const user = (req as any).user as { user_id?: number } | undefined;
+    if (user?.user_id) {
+      const ctx = await getPartnerContext(user.user_id);
+      if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+      if (ctx.partner_id && Number(job.partner_id ?? 0) !== Number(ctx.partner_id)) {
+        throw httpError(403, 'Forbidden');
+      }
+    }
 
     const [requirements, benefits, documents, locations, status_history] = await Promise.all([
       callProc<RowDataPacket & JobRequirement>(
@@ -137,8 +175,12 @@ export class JobsController extends Controller {
 
     if (!body.job_title?.trim()) throw httpError(400, 'job_title is required');
 
+    const ctx = await getPartnerContext(user.user_id);
+    if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+    const resolvedPartnerId = ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null);
+
     const rows = await callProc<RowDataPacket & { job_id: number }>(
-      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :created_by, NULL)`,
+      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :created_by, NULL)`,
       {
         job_code: body.job_code ?? null,
         job_title: body.job_title,
@@ -151,6 +193,7 @@ export class JobsController extends Controller {
         salary_max: null,
         job_description: body.job_description ?? null,
         status: body.status ?? null,
+        partner_id: resolvedPartnerId,
         created_by: user.user_id,
       }
     );
@@ -220,9 +263,14 @@ export class JobsController extends Controller {
 
   @Put('{jobId}')
   @Security('jwt')
-  public async update(@Path() jobId: number, @Body() body: Partial<JobUpsertBody>): Promise<{ updated: true }> {
+  public async update(@Path() jobId: number, @Body() body: Partial<JobUpsertBody>, @Request() req: any): Promise<{ updated: true }> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    const ctx = user?.user_id ? await getPartnerContext(user.user_id) : { partner_id: null, is_partner_role: false };
+    if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+    if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
+
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, NULL, NULL)`,
+      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, NULL, NULL)`,
       {
         job_id: jobId,
         job_code: body.job_code ?? null,
@@ -236,6 +284,7 @@ export class JobsController extends Controller {
         salary_max: null,
         job_description: body.job_description ?? null,
         status: body.status ?? null,
+        partner_id: ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null),
       }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');
@@ -326,10 +375,13 @@ export class JobsController extends Controller {
   ): Promise<{ updated: true }> {
     const user = (req as any).user as { user_id?: number } | undefined;
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
+    const ctx = await getPartnerContext(user.user_id);
+    if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+    if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
     if (!body?.status?.trim()) throw httpError(400, 'status is required');
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, :changed_by, :remarks)`,
+      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL, :changed_by, :remarks)`,
       {
         job_id: jobId,
         status: body.status,
@@ -343,9 +395,15 @@ export class JobsController extends Controller {
 
   @Delete('{jobId}')
   @Security('jwt')
-  public async remove(@Path() jobId: number): Promise<{ deleted: true }> {
+  public async remove(@Path() jobId: number, @Request() req: any): Promise<{ deleted: true }> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    if (user?.user_id) {
+      const ctx = await getPartnerContext(user.user_id);
+      if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
+      if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
+    }
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');

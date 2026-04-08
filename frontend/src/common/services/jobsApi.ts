@@ -15,6 +15,8 @@ export type JobListRow = {
   salary_min: string | null;
   salary_max: string | null;
   status: string | null;
+  partner_id?: number | null;
+  partner_name?: string | null;
   created_by: number | null;
   created_at: string;
 };
@@ -32,6 +34,8 @@ export type JobDetail = {
     salary_max: string | null;
     job_description: string | null;
     status: string | null;
+    partner_id?: number | null;
+    partner_name?: string | null;
   };
   requirements: Array<{ requirement_id: number; job_id: number; requirement: string }>;
   benefits: Array<{ benefit_id: number; job_id: number; benefit: string }>;
@@ -63,6 +67,7 @@ export type JobUpsert = {
   salary_max?: number | null;
   job_description?: string | null;
   status?: string | null;
+  partner_id?: number | null;
   requirements?: string[];
   benefits?: string[];
   documents?: Array<{ document_type_id: number; is_required?: boolean }>;

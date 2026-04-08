@@ -43,6 +43,7 @@ export default function JobsPage() {
     () => [
       { field: "job_code", headerName: "Code", width: 110 },
       { field: "job_title", headerName: "Title", flex: 1.2, minWidth: 160 },
+      { field: "partner_name", headerName: "Partner", flex: 0.9, minWidth: 160 },
       { field: "category_name", headerName: "Category", flex: 0.9, minWidth: 140 },
       { field: "country_name", headerName: "Country", flex: 0.9, minWidth: 140 },
       { field: "vacancy", headerName: "Vacancy", width: 90 },
@@ -99,6 +100,7 @@ export default function JobsPage() {
     () => ({
       country_name: !isMdDown,
       category_name: !isMdDown,
+      partner_name: !isMdDown,
       job_code: !isSmDown,
     }),
     [isMdDown, isSmDown],

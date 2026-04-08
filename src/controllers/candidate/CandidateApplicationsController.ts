@@ -55,7 +55,7 @@ async function getCandidateIdForUser(user_id: number, username: string): Promise
 
 async function assertOwnsApplication(application_id: number, candidate_id: number): Promise<void> {
   const appRows = await callProc<RowDataPacket & { candidate_id: number }>(
-    `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL)`,
+    `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
     { application_id }
   );
   const appCandidateId = appRows[0]?.candidate_id;
@@ -72,7 +72,7 @@ export class CandidateApplicationsController extends Controller {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
     return callProc<RowDataPacket & CandidateApplicationRow>(
-      `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL)`,
+      `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
       { candidate_id }
     );
   }
@@ -85,7 +85,7 @@ export class CandidateApplicationsController extends Controller {
     await assertOwnsApplication(applicationId, candidate_id);
 
     const rows = await callProc<RowDataPacket & CandidateApplicationRow>(
-      `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL)`,
+      `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
       { candidate_id }
     );
     const row = rows.find((r) => Number(r.application_id) === Number(applicationId));
@@ -102,7 +102,7 @@ export class CandidateApplicationsController extends Controller {
     if (!job_id) throw httpError(400, 'job_id is required');
 
     const rows = await callProc<RowDataPacket & { application_id: number }>(
-      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, NULL, :status)`,
+      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, NULL, :status, NULL)`,
       { candidate_id, job_id, status: 'Draft' }
     );
     const application_id = rows[0]?.application_id;
@@ -132,7 +132,7 @@ export class CandidateApplicationsController extends Controller {
     if (missing.length) throw httpError(400, 'Upload all required documents before applying');
 
     await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status)`,
+      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
       { application_id: applicationId, status: 'Applied' }
     );
 
@@ -148,7 +148,7 @@ export class CandidateApplicationsController extends Controller {
     if (!job_id) throw httpError(400, 'job_id is required');
 
     const rows = await callProc<RowDataPacket & { application_id: number }>(
-      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, NULL, NULL)`,
+      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, NULL, NULL, NULL)`,
       { candidate_id, job_id }
     );
     const application_id = rows[0]?.application_id;
