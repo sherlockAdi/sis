@@ -44,6 +44,9 @@ import PartnerPerformancePage from "../modules/partner/PartnerPerformancePage";
 import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
 import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
+import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
+import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
+import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
 import PublicLayout from "../modules/public/layout/PublicLayout";
@@ -238,7 +241,11 @@ export default function AppRoutes() {
             <Route path="candidate/profile/settings" element={<CandidateProfileSettingsPage />} />
             <Route path="partner/dashboard" element={<PartnerDashboardPage />} />
             <Route path="partner/job-mandates" element={<PartnerJobMandatesPage />} />
-            <Route path="partner/submit-candidate" element={<PartnerSubmitCandidatePage />} />
+            <Route path="partner/job-mandates/new" element={<JobFormPage mode="create" />} />
+            <Route path="partner/job-mandates/:jobId" element={<JobFormPage mode="edit" />} />
+            <Route path="partner/submit-candidate" element={<PartnerMySubmissionsPage />} />
+            <Route path="partner/applicants/:candidateId" element={<PartnerApplicantProfilePage />} />
+            <Route path="partner/interviews" element={<PartnerInterviewsPage />} />
             <Route path="partner/my-submissions" element={<PartnerMySubmissionsPage />} />
             <Route path="partner/performance" element={<PartnerPerformancePage />} />
             <Route path="partner/earnings" element={<PartnerEarningsPage />} />
@@ -277,8 +284,9 @@ export default function AppRoutes() {
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
 
-            <Route path="partners" element={<PlaceholderPage title="Partner Management" />} />
-            <Route path="partners/*" element={<PlaceholderPage title="Partner Management" />} />
+            <Route path="partners" element={<PartnersPage />} />
+            <Route path="partners/list" element={<PartnersPage />} />
+            <Route path="partners/*" element={<PartnersPage />} />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
             <Route path="reports/*" element={<PlaceholderPage title="Reports & Analytics" />} />

@@ -42,7 +42,7 @@ export class RecruitmentApplicationsController extends Controller {
   @Security('jwt')
   public async list(): Promise<ApplicationRow[]> {
     return callProc<RowDataPacket & ApplicationRow>(
-      `CALL sp_rec_applications('LIST', NULL, NULL, NULL, NULL, NULL)`
+      `CALL sp_rec_applications('LIST', NULL, NULL, NULL, NULL, NULL, NULL)`
     );
   }
 
@@ -52,7 +52,7 @@ export class RecruitmentApplicationsController extends Controller {
     @Body() body: { candidate_id: number; job_id: number; application_date?: string | null; status?: string | null }
   ): Promise<{ application_id: number }> {
     const rows = await callProc<RowDataPacket & { application_id: number }>(
-      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, :application_date, :status)`,
+      `CALL sp_rec_applications('CREATE', NULL, :candidate_id, :job_id, :application_date, :status, NULL)`,
       {
         candidate_id: body.candidate_id,
         job_id: body.job_id,
@@ -96,7 +96,7 @@ export class RecruitmentApplicationsController extends Controller {
 
     // Ensure application exists
     const appRows = await callProc<RowDataPacket & { application_id: number }>(
-      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL)`,
+      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
       { application_id: applicationId }
     );
     if (!appRows[0]?.application_id) throw httpError(404, 'Application not found');
@@ -130,7 +130,7 @@ export class RecruitmentApplicationsController extends Controller {
     if (!file_path) throw httpError(400, 'file_path is required');
 
     const appRows = await callProc<RowDataPacket & { candidate_id: number }>(
-      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL)`,
+      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
       { application_id: applicationId }
     );
     const candidate_id = appRows[0]?.candidate_id;
@@ -158,7 +158,7 @@ export class RecruitmentApplicationsController extends Controller {
     if (!status) throw httpError(400, 'status is required');
 
     await callProc(
-      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status)`,
+      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
       { application_id: applicationId, status }
     );
     return { updated: true };
