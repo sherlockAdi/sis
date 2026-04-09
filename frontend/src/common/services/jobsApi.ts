@@ -17,6 +17,19 @@ export type JobListRow = {
   status: string | null;
   partner_id?: number | null;
   partner_name?: string | null;
+  employment_type_id?: number | null;
+  employment_type_name?: string | null;
+  work_mode_id?: number | null;
+  work_mode_name?: string | null;
+  currency_id?: number | null;
+  currency_code?: string | null;
+  currency_name?: string | null;
+  symbol?: string | null;
+  min_education?: string | null;
+  min_experience?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_requirement?: string | null;
   created_by: number | null;
   created_at: string;
 };
@@ -36,6 +49,20 @@ export type JobDetail = {
     status: string | null;
     partner_id?: number | null;
     partner_name?: string | null;
+    employment_type_id?: number | null;
+    employment_type_name?: string | null;
+    work_mode_id?: number | null;
+    work_mode_name?: string | null;
+    currency_id?: number | null;
+    currency_code?: string | null;
+    currency_name?: string | null;
+    symbol?: string | null;
+    compensation_text?: string | null;
+    min_education?: string | null;
+    min_experience?: string | null;
+    min_age?: number | null;
+    max_age?: number | null;
+    gender_requirement?: string | null;
   };
   requirements: Array<{ requirement_id: number; job_id: number; requirement: string }>;
   benefits: Array<{ benefit_id: number; job_id: number; benefit: string }>;
@@ -54,6 +81,7 @@ export type JobDetail = {
     salary_max: string | null;
   }>;
   status_history: Array<{ id: number; job_id: number; status: string | null; remarks: string | null; changed_at: string }>;
+  languages: Array<{ id: number; job_id: number; language_id: number; language_name: string }>;
 };
 
 export type JobUpsert = {
@@ -68,19 +96,24 @@ export type JobUpsert = {
   job_description?: string | null;
   status?: string | null;
   partner_id?: number | null;
+  employment_type_id?: number | null;
+  work_mode_id?: number | null;
+  currency_id?: number | null;
+  compensation_text?: string | null;
+  min_education?: string | null;
+  min_experience?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_requirement?: string | null;
+  language_ids?: number[];
   requirements?: string[];
   benefits?: string[];
   documents?: Array<{ document_type_id: number; is_required?: boolean }>;
-  locations?: Array<{
+  location?: {
     country_id?: number | null;
     state_id?: number | null;
     city_id?: number | null;
-    vacancy?: number | null;
-    salary_min?: number | null;
-    salary_max?: number | null;
-    requirements?: string[];
-    benefits?: string[];
-  }>;
+  };
 };
 
 export const jobsApi = {

@@ -22,7 +22,20 @@ export type CandidateApplicationDocRow = {
   uploaded_at: string | null;
 };
 
+export type CandidateDocumentRow = {
+  id: number;
+  application_id: number | null;
+  candidate_id: number;
+  document_type_id: number;
+  document_name: string | null;
+  file_path: string | null;
+  uploaded_at: string | null;
+};
+
 export const candidateApi = {
+  documents: {
+    list: () => apiFetch<CandidateDocumentRow[]>(`/candidate/documents`, { method: "GET" }),
+  },
   applications: {
     list: () => apiFetch<CandidateApplicationRow[]>(`/candidate/applications`, { method: "GET" }),
     get: (application_id: number) =>

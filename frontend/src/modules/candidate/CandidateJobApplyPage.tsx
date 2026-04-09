@@ -28,6 +28,30 @@ function moneyRange(min: string | null, max: string | null) {
   return a || b;
 }
 
+function latestDocs(rows: CandidateApplicationDocRow[]): CandidateApplicationDocRow[] {
+  const byType = new Map<number, CandidateApplicationDocRow>();
+  for (const row of rows) {
+    const key = row.document_type_id;
+    const existing = byType.get(key);
+    if (!existing) {
+      byType.set(key, row);
+      continue;
+    }
+    const aTime = existing.uploaded_at ? new Date(existing.uploaded_at).getTime() : 0;
+    const bTime = row.uploaded_at ? new Date(row.uploaded_at).getTime() : 0;
+    if (bTime > aTime) {
+      byType.set(key, row);
+      continue;
+    }
+    if (bTime === aTime) {
+      const aId = existing.candidate_document_id ?? 0;
+      const bId = row.candidate_document_id ?? 0;
+      if (bId > aId) byType.set(key, row);
+    }
+  }
+  return Array.from(byType.values());
+}
+
 export default function CandidateJobApplyPage() {
   const navigate = useNavigate();
   const { jobId } = useParams();
@@ -87,7 +111,8 @@ export default function CandidateJobApplyPage() {
   const loadDocs = async (application_id: number) => {
     setDocsLoading(true);
     try {
-      setDocs(await candidateApi.applications.documents(application_id));
+      const rows = await candidateApi.applications.documents(application_id);
+      setDocs(latestDocs(rows));
     } catch (e: any) {
       setDocs([]);
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load documents", severity: "error" });

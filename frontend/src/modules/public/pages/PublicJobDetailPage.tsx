@@ -90,6 +90,80 @@ export default function PublicJobDetailPage() {
               {data.job.status ? <Chip label={data.job.status} /> : null}
             </Box>
 
+            <>
+              <Divider sx={{ my: 2.5 }} />
+              <Typography fontWeight={950}>Job Overview</Typography>
+              <Stack spacing={0.75} sx={{ mt: 1 }}>
+                {data.job.job_code ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Job Code: {data.job.job_code}
+                  </Typography>
+                ) : null}
+                {data.job.category_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Category: {data.job.category_name}
+                  </Typography>
+                ) : null}
+                {data.job.employment_type_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Employment Type: {data.job.employment_type_name}
+                  </Typography>
+                ) : null}
+                {data.job.work_mode_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Work Mode: {data.job.work_mode_name}
+                  </Typography>
+                ) : null}
+                {data.job.duration_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Contract Duration: {data.job.duration_name}
+                  </Typography>
+                ) : null}
+                {data.locations?.[0]?.country_name || data.locations?.[0]?.state_name || data.locations?.[0]?.city_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Location: {[data.locations?.[0]?.city_name, data.locations?.[0]?.state_name, data.locations?.[0]?.country_name]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </Typography>
+                ) : null}
+                {data.job.currency_code || data.job.currency_name ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Currency: {data.job.currency_code ?? data.job.currency_name}
+                  </Typography>
+                ) : null}
+                {data.job.compensation_text ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "pre-wrap" }}>
+                    Compensation: {data.job.compensation_text}
+                  </Typography>
+                ) : null}
+                {data.job.min_education ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Minimum Education: {data.job.min_education}
+                  </Typography>
+                ) : null}
+                {data.job.min_experience ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Minimum Experience: {data.job.min_experience}
+                  </Typography>
+                ) : null}
+                {data.job.min_age != null || data.job.max_age != null ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Age Range: {data.job.min_age ?? "—"} - {data.job.max_age ?? "—"}
+                  </Typography>
+                ) : null}
+                {data.job.gender_requirement ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Gender: {data.job.gender_requirement}
+                  </Typography>
+                ) : null}
+                {data.languages?.length ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Languages: {data.languages.map((l) => l.language_name).join(", ")}
+                  </Typography>
+                ) : null}
+              </Stack>
+            </>
+
             {data.job.job_description ? (
               <>
                 <Divider sx={{ my: 2.5 }} />
