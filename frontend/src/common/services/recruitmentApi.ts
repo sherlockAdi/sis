@@ -61,6 +61,8 @@ export const recruitmentApi = {
         `/recruitment/candidates`,
         { method: "POST", body: JSON.stringify(input) },
       ),
+    update: (candidate_id: number, input: Partial<Omit<CandidateRow, "candidate_id" | "candidate_code" | "created_at">>) =>
+      apiFetch<{ updated: true }>(`/recruitment/candidates/${candidate_id}`, { method: "PUT", body: JSON.stringify(input) }),
   },
   public: {
     candidateSignup: (input: {

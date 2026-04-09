@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Card, CardContent, Stack, Step, StepLabel, Stepper, Typography } from "@mui/material";
-import { AdButton, AdDropDown, AdNotification, AdTextArea } from "../../common/ad";
+import { Box, Card, CardContent, Divider, Stack, Step, StepLabel, Stepper, Typography } from "@mui/material";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import dayjs, { type Dayjs } from "dayjs";
+import { AdButton, AdDatePicker, AdDropDown, AdNotification, AdTextArea, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
 import { mastersApi, type VisaType } from "../../common/services/mastersApi";
@@ -78,6 +81,16 @@ export default function CandidateProfileDeploymentPage() {
     }
   };
 
+  const openFile = async (path?: string | null) => {
+    if (!path) return;
+    try {
+      const presign = await recruitmentApi.files.presignDownload(path);
+      window.open(presign.url, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
+    }
+  };
+
   const saveVisa = async () => {
     if (!activeDeployment) return;
     try {
@@ -151,37 +164,118 @@ export default function CandidateProfileDeploymentPage() {
           <Card variant="outlined" sx={{ borderRadius: 4 }}>
             <CardContent>
               <Stack spacing={2}>
-                <Typography fontWeight={950}>Visa Details</Typography>
-                <AdDropDown
-                  label="Visa Type"
-                  options={visaOptions}
-                  value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
-                  onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
-                />
-                <AdTextArea label="Visa Number" minRows={1} value={visaForm.visa_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, visa_number: v }))} />
-                <AdTextArea label="Issue Date" minRows={1} value={visaForm.issue_date ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, issue_date: v }))} />
-                <AdTextArea label="Expiry Date" minRows={1} value={visaForm.expiry_date ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, expiry_date: v }))} />
-                <AdTextArea label="Passport Number" minRows={1} value={visaForm.passport_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))} />
-                <AdTextArea label="Passport Issue Date" minRows={1} value={visaForm.passport_issue_date ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, passport_issue_date: v }))} />
-                <AdTextArea label="Passport Expiry Date" minRows={1} value={visaForm.passport_expiry_date ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, passport_expiry_date: v }))} />
-                <AdTextArea label="Sponsor ID" minRows={1} value={visaForm.sponsor_id ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))} />
-                <AdTextArea label="Sponsor Contact" minRows={1} value={visaForm.sponsor_contact ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))} />
-                <AdTextArea label="Remarks" minRows={2} value={visaForm.remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))} />
+                <Box>
+                  <Typography fontWeight={800} sx={{ mb: 0.5 }}>
+                    Visa Information
+                  </Typography>
+                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" } }}>
+                    <AdDropDown
+                      label="Visa Type"
+                      options={visaOptions}
+                      value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
+                    />
+                    <AdTextBox
+                      label="Visa Number"
+                      size="small"
+                      value={visaForm.visa_number ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_number: v }))}
+                    />
+                    <AdDatePicker
+                      label="Visa Issue Date"
+                      value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdDatePicker
+                      label="Visa Expiry Date"
+                      value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                  </Box>
+                </Box>
 
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }}>
-                  <AdButton component="label" variant="outlined" disabled={uploading.passport}>
-                    Upload Passport Image
-                    <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
-                  </AdButton>
-                  <AdButton component="label" variant="outlined" disabled={uploading.visa}>
-                    Upload Visa Image
-                    <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
-                  </AdButton>
-                </Stack>
+                <Divider />
 
-                <Stack direction="row" justifyContent="flex-end">
-                  <AdButton onClick={saveVisa}>Save</AdButton>
-                </Stack>
+                <Box>
+                  <Typography fontWeight={800} sx={{ mb: 0.5 }}>
+                    Passport Details
+                  </Typography>
+                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
+                    <AdTextBox
+                      label="Passport Number"
+                      size="small"
+                      value={visaForm.passport_number ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))}
+                    />
+                    <AdDatePicker
+                      label="Passport Issue Date"
+                      value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdDatePicker
+                      label="Passport Expiry Date"
+                      value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                <Box>
+                  <Typography fontWeight={800} sx={{ mb: 0.5 }}>
+                    Sponsorship & Additional Info
+                  </Typography>
+                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
+                    <AdTextBox
+                      label="Sponsor ID"
+                      size="small"
+                      value={visaForm.sponsor_id ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))}
+                    />
+                    <AdTextBox
+                      label="Sponsor Contact"
+                      size="small"
+                      value={visaForm.sponsor_contact ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))}
+                    />
+                    <AdTextArea
+                      label="Remarks"
+                      minRows={1}
+                      value={visaForm.remarks ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))}
+                    />
+                  </Box>
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={800} sx={{ mb: 0.5 }}>
+                    Documents
+                  </Typography>
+                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
+                    <Stack spacing={1} alignItems="flex-start">
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport}>
+                        Upload Passport
+                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
+                        View
+                      </AdButton>
+                    </Stack>
+                    <Stack spacing={1} alignItems="flex-start">
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa}>
+                        Upload Visa
+                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
+                        View
+                      </AdButton>
+                    </Stack>
+                    <Stack spacing={1} alignItems="flex-end" justifyContent="flex-start">
+                      <AdButton onClick={saveVisa}>Save</AdButton>
+                    </Stack>
+                  </Box>
+                </Box>
               </Stack>
             </CardContent>
           </Card>

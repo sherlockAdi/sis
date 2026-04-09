@@ -58,6 +58,7 @@ export default function RecruitmentScreeningInterviewsPage() {
   const [scheduledRows, setScheduledRows] = useState<Array<{
     interview_id: number;
     application_id: number;
+    candidate_id: number;
     candidate_name: string;
     job_title: string;
     mode_name: string | null;
@@ -79,6 +80,7 @@ export default function RecruitmentScreeningInterviewsPage() {
           return list.map((item) => ({
             interview_id: item.interview_id,
             application_id: app.application_id,
+            candidate_id: app.candidate_id,
             candidate_name: app.candidate_name,
             job_title: app.job_title,
             mode_name: item.mode_name,
@@ -186,6 +188,14 @@ export default function RecruitmentScreeningInterviewsPage() {
     [isLgDown, isMdDown],
   );
 
+  const appStatusById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const r of rows) {
+      map.set(r.application_id, String(r.status ?? ""));
+    }
+    return map;
+  }, [rows]);
+
   const scheduleInterview = async () => {
     if (!activeApp) return;
     const interview_mode_id = schedule.mode_id ? Number(schedule.mode_id) : 0;
@@ -212,13 +222,18 @@ export default function RecruitmentScreeningInterviewsPage() {
     }
   };
 
-  const markReady = async (applicationId?: number) => {
+  const markReady = async (applicationId?: number, candidateId?: number) => {
     const appId = applicationId ?? activeApp?.application_id;
     if (!appId) return;
     try {
       await deploymentApi.create({ application_id: appId, status: "Ready" });
       await recruitmentApi.applications.updateStatus(appId, "Ready");
-      setToast({ open: true, message: "Marked as Ready for Deployment", severity: "success" });
+      const candId = candidateId ?? activeApp?.candidate_id;
+      if (candId) {
+        await recruitmentApi.candidates.update(candId, { status: "Shortlisted" });
+      }
+      setToast({ open: true, message: "Shortlisted and marked Ready for Deployment", severity: "success" });
+      refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update", severity: "error" });
     }
@@ -230,6 +245,7 @@ export default function RecruitmentScreeningInterviewsPage() {
     try {
       await recruitmentApi.applications.updateStatus(appId, "Not Ready");
       setToast({ open: true, message: "Marked as Not Ready", severity: "success" });
+      refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update", severity: "error" });
     }
@@ -345,9 +361,12 @@ export default function RecruitmentScreeningInterviewsPage() {
                 filterable: false,
                 renderCell: (p: any) => {
                   const r = p.row as any;
+                  const status = String(appStatusById.get(r.application_id) ?? "");
+                  const isShortlisted = status.toLowerCase().includes("shortlist") || status.toLowerCase() === "ready";
+                  if (isShortlisted) return <Chip size="small" label="Shortlisted" color="success" />;
                   return (
                     <Stack direction="row" spacing={1}>
-                      <AdButton variant="contained" onClick={() => markReady(r.application_id)}>
+                      <AdButton variant="contained" onClick={() => markReady(r.application_id, r.candidate_id)}>
                         Shortlisted
                       </AdButton>
                       <AdButton variant="outlined" color="error" onClick={() => markNotReady(r.application_id)}>
@@ -409,7 +428,11 @@ export default function RecruitmentScreeningInterviewsPage() {
           <Stack spacing={1}>
             <Typography fontWeight={800}>Interview Decision</Typography>
             <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-              <AdButton variant="contained" onClick={markReady} disabled={!activeApp}>
+              <AdButton
+                variant="contained"
+                onClick={markReady}
+                disabled={!activeApp || String(activeApp?.status ?? "").toLowerCase().includes("shortlist") || String(activeApp?.status ?? "").toLowerCase() === "ready"}
+              >
                 Shortlisted
               </AdButton>
               <AdButton variant="outlined" color="error" onClick={markNotReady} disabled={!activeApp}>

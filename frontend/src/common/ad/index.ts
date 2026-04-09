@@ -14,6 +14,7 @@ export { AdCheckBox } from "../components/ad/AdCheckBox";
 export { AdDropDown} from "../components/ad/AdDropDown";
 export { AdDropDownMulti } from "../components/ad/AdDropDownMulti";
 export { AdDateTimePicker } from "../components/ad/AdDateTimePicker";
+export { AdDatePicker } from "../components/ad/AdDatePicker";
 export { AdSearchBox } from "../components/ad/AdSearchBox";
 export { AdFilter } from "../components/ad/AdFilter";
 export { AdSlider } from "../components/ad/AdSlider";
