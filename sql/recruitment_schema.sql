@@ -346,10 +346,28 @@ CREATE PROCEDURE sp_rec_candidate_documents(
 )
 BEGIN
   IF p_action = 'LIST_BY_CANDIDATE' THEN
-    SELECT id, NULL AS application_id, candidate_id, document_type_id, file_path, uploaded_at
-    FROM REC_T05_candidate_documents
-    WHERE candidate_id = p_candidate_id
-    ORDER BY uploaded_at DESC;
+    SELECT
+      cd.id,
+      NULL AS application_id,
+      cd.candidate_id,
+      cd.document_type_id,
+      dt.document_name,
+      cd.file_path,
+      cd.uploaded_at
+    FROM (
+      SELECT cd1.*
+      FROM REC_T05_candidate_documents cd1
+      JOIN (
+        SELECT candidate_id, document_type_id, MAX(id) AS max_id
+        FROM REC_T05_candidate_documents
+        WHERE candidate_id = p_candidate_id
+        GROUP BY candidate_id, document_type_id
+      ) latest
+        ON latest.max_id = cd1.id
+    ) cd
+    JOIN DOC_M01_document_types dt ON dt.document_type_id = cd.document_type_id
+    WHERE cd.candidate_id = p_candidate_id
+    ORDER BY dt.document_name ASC;
 
   ELSEIF p_action = 'UPSERT' THEN
     INSERT INTO REC_T05_candidate_documents (candidate_id, document_type_id, file_path)
@@ -389,7 +407,17 @@ BEGIN
     cd.uploaded_at
   FROM JOB_T04_job_documents jd
   JOIN DOC_M01_document_types dt ON dt.document_type_id = jd.document_type_id
-  LEFT JOIN REC_T05_candidate_documents cd
+  LEFT JOIN (
+    SELECT cd1.*
+    FROM REC_T05_candidate_documents cd1
+    JOIN (
+      SELECT candidate_id, document_type_id, MAX(id) AS max_id
+      FROM REC_T05_candidate_documents
+      WHERE candidate_id = v_candidate_id
+      GROUP BY candidate_id, document_type_id
+    ) latest
+      ON latest.max_id = cd1.id
+  ) cd
     ON cd.document_type_id = jd.document_type_id
    AND cd.candidate_id = v_candidate_id
   WHERE jd.job_id = v_job_id

@@ -347,11 +347,11 @@ export default function RecruitmentScreeningInterviewsPage() {
                   const r = p.row as any;
                   return (
                     <Stack direction="row" spacing={1}>
-                      <AdButton variant="text" onClick={() => markReady(r.application_id)}>
-                        Ready
+                      <AdButton variant="contained" onClick={() => markReady(r.application_id)}>
+                        Shortlisted
                       </AdButton>
-                      <AdButton variant="text" color="error" onClick={() => markNotReady(r.application_id)}>
-                        Not Ready
+                      <AdButton variant="outlined" color="error" onClick={() => markNotReady(r.application_id)}>
+                        Rejected
                       </AdButton>
                     </Stack>
                   );
@@ -410,10 +410,10 @@ export default function RecruitmentScreeningInterviewsPage() {
             <Typography fontWeight={800}>Interview Decision</Typography>
             <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
               <AdButton variant="contained" onClick={markReady} disabled={!activeApp}>
-                Ready for Deployment
+                Shortlisted
               </AdButton>
               <AdButton variant="outlined" color="error" onClick={markNotReady} disabled={!activeApp}>
-                Not Ready
+                Rejected
               </AdButton>
             </Stack>
           </Stack>

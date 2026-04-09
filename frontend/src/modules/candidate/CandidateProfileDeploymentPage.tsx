@@ -116,23 +116,36 @@ export default function CandidateProfileDeploymentPage() {
           </Typography>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Typography fontWeight={950}>Pipeline</Typography>
-            <Box sx={{ mt: 2 }}>
-              <Stepper activeStep={activeIndex(activeDeployment?.current_status)} alternativeLabel>
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            </Box>
-            <Typography variant="body2" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.85 }}>
-              {loading ? "Loading deployment data..." : activeDeployment ? `Current stage: ${activeDeployment.current_status}` : "No deployment found yet."}
-            </Typography>
-          </CardContent>
-        </Card>
+        {activeDeployment ? (
+          <Card variant="outlined" sx={{ borderRadius: 4 }}>
+            <CardContent>
+              <Typography fontWeight={950}>Pipeline</Typography>
+              <Box sx={{ mt: 2 }}>
+                <Stepper activeStep={activeIndex(activeDeployment?.current_status)} alternativeLabel>
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.85 }}>
+                {loading ? "Loading deployment data..." : `Current stage: ${activeDeployment.current_status}`}
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!activeDeployment && !loading ? (
+          <Card variant="outlined" sx={{ borderRadius: 4 }}>
+            <CardContent>
+              <Typography fontWeight={950}>Not Deployed Yet</Typography>
+              <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.8 }}>
+                You don’t have any deployment record yet. Once your application reaches the deployment stage, details will appear here.
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : null}
 
         {activeDeployment ? (
           <Card variant="outlined" sx={{ borderRadius: 4 }}>

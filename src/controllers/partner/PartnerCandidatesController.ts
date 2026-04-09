@@ -20,11 +20,12 @@ type PartnerCandidateRow = {
   created_at: string;
 };
 
-type CandidateDocumentRow = {
+type PartnerCandidateDocumentRow = {
   id: number;
   application_id: number | null;
   candidate_id: number;
   document_type_id: number;
+  document_name?: string | null;
   file_path: string | null;
   uploaded_at: string | null;
 };
@@ -39,7 +40,7 @@ type PartnerApplicationRow = {
 export class PartnerCandidatesController extends Controller {
   @Get('{candidateId}')
   @Security('jwt')
-  public async get(@Path() candidateId: number, @Request() req: any): Promise<{ candidate: PartnerCandidateRow; documents: CandidateDocumentRow[] }> {
+  public async get(@Path() candidateId: number, @Request() req: any): Promise<{ candidate: PartnerCandidateRow; documents: PartnerCandidateDocumentRow[] }> {
     const user = (req as any).user as { user_id?: number } | undefined;
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
 
@@ -61,7 +62,7 @@ export class PartnerCandidatesController extends Controller {
     const candidate = candRows[0];
     if (!candidate) throw httpError(404, 'Candidate not found');
 
-    const documents = await callProc<RowDataPacket & CandidateDocumentRow>(
+    const documents = await callProc<RowDataPacket & PartnerCandidateDocumentRow>(
       `CALL sp_rec_candidate_documents('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL)`,
       { candidate_id: candidateId }
     );

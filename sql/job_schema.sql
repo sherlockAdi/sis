@@ -24,6 +24,15 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
     job_description TEXT,
 
     partner_id INT DEFAULT NULL,
+    employment_type_id INT DEFAULT NULL,
+    work_mode_id INT DEFAULT NULL,
+    compensation_text TEXT,
+    currency_id INT DEFAULT NULL,
+    min_education VARCHAR(150),
+    min_experience VARCHAR(150),
+    min_age INT DEFAULT NULL,
+    max_age INT DEFAULT NULL,
+    gender_requirement VARCHAR(50),
 
     status VARCHAR(50) DEFAULT 'Open',
 
@@ -33,7 +42,10 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
     FOREIGN KEY (category_id) REFERENCES JOB_M01_job_categories(category_id),
     FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
     FOREIGN KEY (contract_duration_id) REFERENCES JOB_M02_contract_durations(duration_id),
-    FOREIGN KEY (partner_id) REFERENCES PART_T01_partners(partner_id)
+    FOREIGN KEY (partner_id) REFERENCES PART_T01_partners(partner_id),
+    FOREIGN KEY (employment_type_id) REFERENCES JOB_M03_employment_types(employment_type_id),
+    FOREIGN KEY (work_mode_id) REFERENCES JOB_M04_work_modes(work_mode_id),
+    FOREIGN KEY (currency_id) REFERENCES PAY_M02_currencies(currency_id)
 );
 
 
@@ -125,6 +137,19 @@ CREATE TABLE IF NOT EXISTS JOB_T06_job_status_history (
     FOREIGN KEY (job_id) REFERENCES JOB_T01_jobs(job_id) ON DELETE CASCADE
 );
 
+-- ============================================
+-- JOB_T07_job_languages
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS JOB_T07_job_languages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    language_id INT NOT NULL,
+
+    FOREIGN KEY (job_id) REFERENCES JOB_T01_jobs(job_id) ON DELETE CASCADE,
+    FOREIGN KEY (language_id) REFERENCES REC_M03_languages(language_id),
+    UNIQUE(job_id, language_id)
+);
 
 -- ============================================
 -- Stored Procedures
@@ -148,6 +173,15 @@ CREATE PROCEDURE sp_job_jobs(
   IN p_job_description TEXT,
   IN p_status VARCHAR(50),
   IN p_partner_id INT,
+  IN p_employment_type_id INT,
+  IN p_work_mode_id INT,
+  IN p_currency_id INT,
+  IN p_compensation_text TEXT,
+  IN p_min_education VARCHAR(150),
+  IN p_min_experience VARCHAR(150),
+  IN p_min_age INT,
+  IN p_max_age INT,
+  IN p_gender_requirement VARCHAR(50),
   IN p_created_by INT,
   IN p_remarks VARCHAR(255)
 )
@@ -159,22 +193,38 @@ BEGIN
       j.job_title,
       j.category_id,
       c.category_name,
-      agg.primary_country_id AS country_id,
+      COALESCE(agg.primary_country_id, j.country_id) AS country_id,
       co.country_name,
       j.contract_duration_id,
       d.duration_name,
       d.months,
-      agg.total_vacancy AS vacancy,
-      agg.salary_min AS salary_min,
-      agg.salary_max AS salary_max,
+      COALESCE(agg.total_vacancy, j.vacancy) AS vacancy,
+      COALESCE(agg.salary_min, j.salary_min) AS salary_min,
+      COALESCE(agg.salary_max, j.salary_max) AS salary_max,
       j.partner_id,
       p.partner_name,
+      j.employment_type_id,
+      et.type_name AS employment_type_name,
+      j.work_mode_id,
+      wm.mode_name AS work_mode_name,
+      j.currency_id,
+      cur.currency_code,
+      cur.currency_name,
+      cur.symbol,
+      j.min_education,
+      j.min_experience,
+      j.min_age,
+      j.max_age,
+      j.gender_requirement,
       j.status,
       j.created_by,
       j.created_at
     FROM JOB_T01_jobs j
     LEFT JOIN JOB_M01_job_categories c ON c.category_id = j.category_id
     LEFT JOIN JOB_M02_contract_durations d ON d.duration_id = j.contract_duration_id
+    LEFT JOIN JOB_M03_employment_types et ON et.employment_type_id = j.employment_type_id
+    LEFT JOIN JOB_M04_work_modes wm ON wm.work_mode_id = j.work_mode_id
+    LEFT JOIN PAY_M02_currencies cur ON cur.currency_id = j.currency_id
     LEFT JOIN (
       SELECT
         job_id,
@@ -185,7 +235,7 @@ BEGIN
       FROM JOB_T05_job_locations
       GROUP BY job_id
     ) agg ON agg.job_id = j.job_id
-    LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN LOC_M01_countries co ON co.country_id = COALESCE(agg.primary_country_id, j.country_id)
     LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
     ORDER BY j.job_id DESC;
 
@@ -196,22 +246,38 @@ BEGIN
       j.job_title,
       j.category_id,
       c.category_name,
-      agg.primary_country_id AS country_id,
+      COALESCE(agg.primary_country_id, j.country_id) AS country_id,
       co.country_name,
       j.contract_duration_id,
       d.duration_name,
       d.months,
-      agg.total_vacancy AS vacancy,
-      agg.salary_min AS salary_min,
-      agg.salary_max AS salary_max,
+      COALESCE(agg.total_vacancy, j.vacancy) AS vacancy,
+      COALESCE(agg.salary_min, j.salary_min) AS salary_min,
+      COALESCE(agg.salary_max, j.salary_max) AS salary_max,
       j.partner_id,
       p.partner_name,
+      j.employment_type_id,
+      et.type_name AS employment_type_name,
+      j.work_mode_id,
+      wm.mode_name AS work_mode_name,
+      j.currency_id,
+      cur.currency_code,
+      cur.currency_name,
+      cur.symbol,
+      j.min_education,
+      j.min_experience,
+      j.min_age,
+      j.max_age,
+      j.gender_requirement,
       j.status,
       j.created_by,
       j.created_at
     FROM JOB_T01_jobs j
     LEFT JOIN JOB_M01_job_categories c ON c.category_id = j.category_id
     LEFT JOIN JOB_M02_contract_durations d ON d.duration_id = j.contract_duration_id
+    LEFT JOIN JOB_M03_employment_types et ON et.employment_type_id = j.employment_type_id
+    LEFT JOIN JOB_M04_work_modes wm ON wm.work_mode_id = j.work_mode_id
+    LEFT JOIN PAY_M02_currencies cur ON cur.currency_id = j.currency_id
     LEFT JOIN (
       SELECT
         job_id,
@@ -222,7 +288,7 @@ BEGIN
       FROM JOB_T05_job_locations
       GROUP BY job_id
     ) agg ON agg.job_id = j.job_id
-    LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN LOC_M01_countries co ON co.country_id = COALESCE(agg.primary_country_id, j.country_id)
     LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
     WHERE j.partner_id = p_partner_id
     ORDER BY j.job_id DESC;
@@ -234,23 +300,40 @@ BEGIN
       j.job_title,
       j.category_id,
       c.category_name,
-      agg.primary_country_id AS country_id,
+      COALESCE(agg.primary_country_id, j.country_id) AS country_id,
       co.country_name,
       j.contract_duration_id,
       d.duration_name,
       d.months,
-      agg.total_vacancy AS vacancy,
-      agg.salary_min AS salary_min,
-      agg.salary_max AS salary_max,
+      COALESCE(agg.total_vacancy, j.vacancy) AS vacancy,
+      COALESCE(agg.salary_min, j.salary_min) AS salary_min,
+      COALESCE(agg.salary_max, j.salary_max) AS salary_max,
       j.job_description,
       j.partner_id,
       p.partner_name,
+      j.employment_type_id,
+      et.type_name AS employment_type_name,
+      j.work_mode_id,
+      wm.mode_name AS work_mode_name,
+      j.currency_id,
+      cur.currency_code,
+      cur.currency_name,
+      cur.symbol,
+      j.compensation_text,
+      j.min_education,
+      j.min_experience,
+      j.min_age,
+      j.max_age,
+      j.gender_requirement,
       j.status,
       j.created_by,
       j.created_at
     FROM JOB_T01_jobs j
     LEFT JOIN JOB_M01_job_categories c ON c.category_id = j.category_id
     LEFT JOIN JOB_M02_contract_durations d ON d.duration_id = j.contract_duration_id
+    LEFT JOIN JOB_M03_employment_types et ON et.employment_type_id = j.employment_type_id
+    LEFT JOIN JOB_M04_work_modes wm ON wm.work_mode_id = j.work_mode_id
+    LEFT JOIN PAY_M02_currencies cur ON cur.currency_id = j.currency_id
     LEFT JOIN (
       SELECT
         job_id,
@@ -261,7 +344,7 @@ BEGIN
       FROM JOB_T05_job_locations
       GROUP BY job_id
     ) agg ON agg.job_id = j.job_id
-    LEFT JOIN LOC_M01_countries co ON co.country_id = agg.primary_country_id
+    LEFT JOIN LOC_M01_countries co ON co.country_id = COALESCE(agg.primary_country_id, j.country_id)
     LEFT JOIN PART_T01_partners p ON p.partner_id = j.partner_id
     WHERE j.job_id = p_job_id
     LIMIT 1;
@@ -269,10 +352,14 @@ BEGIN
   ELSEIF p_action = 'CREATE' THEN
     INSERT INTO JOB_T01_jobs (
       job_code, job_title, category_id, country_id, contract_duration_id,
-      vacancy, salary_min, salary_max, job_description, partner_id, status, created_by
+      vacancy, salary_min, salary_max, job_description, partner_id, employment_type_id,
+      work_mode_id, currency_id, compensation_text, min_education, min_experience,
+      min_age, max_age, gender_requirement, status, created_by
     ) VALUES (
       NULLIF(p_job_code, ''), p_job_title, p_category_id, p_country_id, p_contract_duration_id,
-      p_vacancy, p_salary_min, p_salary_max, p_job_description, p_partner_id, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
+      p_vacancy, p_salary_min, p_salary_max, p_job_description, p_partner_id, p_employment_type_id,
+      p_work_mode_id, p_currency_id, p_compensation_text, p_min_education, p_min_experience,
+      p_min_age, p_max_age, p_gender_requirement, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
     );
 
     SET @new_job_id := LAST_INSERT_ID();
@@ -301,6 +388,15 @@ BEGIN
       salary_max = COALESCE(p_salary_max, salary_max),
       job_description = COALESCE(p_job_description, job_description),
       partner_id = COALESCE(p_partner_id, partner_id),
+      employment_type_id = COALESCE(p_employment_type_id, employment_type_id),
+      work_mode_id = COALESCE(p_work_mode_id, work_mode_id),
+      currency_id = COALESCE(p_currency_id, currency_id),
+      compensation_text = COALESCE(p_compensation_text, compensation_text),
+      min_education = COALESCE(p_min_education, min_education),
+      min_experience = COALESCE(p_min_experience, min_experience),
+      min_age = COALESCE(p_min_age, min_age),
+      max_age = COALESCE(p_max_age, max_age),
+      gender_requirement = COALESCE(p_gender_requirement, gender_requirement),
       status = COALESCE(NULLIF(p_status,''), status)
     WHERE job_id = p_job_id;
     SELECT ROW_COUNT() AS affected_rows;
@@ -563,6 +659,35 @@ BEGIN
   END IF;
 END $$
 
+DROP PROCEDURE IF EXISTS sp_job_languages $$
+CREATE PROCEDURE sp_job_languages(
+  IN p_action VARCHAR(30),
+  IN p_id INT,
+  IN p_job_id INT,
+  IN p_language_id INT
+)
+BEGIN
+  IF p_action = 'LIST_BY_JOB' THEN
+    SELECT l.id, l.job_id, l.language_id, m.language_name
+    FROM JOB_T07_job_languages l
+    JOIN REC_M03_languages m ON m.language_id = l.language_id
+    WHERE l.job_id = p_job_id
+    ORDER BY m.language_name ASC;
+
+  ELSEIF p_action = 'CREATE' THEN
+    INSERT INTO JOB_T07_job_languages (job_id, language_id)
+    VALUES (p_job_id, p_language_id)
+    ON DUPLICATE KEY UPDATE language_id = VALUES(language_id);
+    SELECT LAST_INSERT_ID() AS id;
+
+  ELSEIF p_action = 'DELETE_BY_JOB' THEN
+    DELETE FROM JOB_T07_job_languages WHERE job_id = p_job_id;
+    SELECT ROW_COUNT() AS affected_rows;
+
+  ELSE
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_job_languages: invalid action';
+  END IF;
+END $$
 DROP PROCEDURE IF EXISTS sp_job_jobs_search $$
 CREATE PROCEDURE sp_job_jobs_search(
   IN p_country_id INT,
@@ -578,25 +703,26 @@ BEGIN
     j.job_title,
     j.category_id,
     c.category_name,
-    MIN(l.country_id) AS country_id,
-    MIN(co.country_name) AS country_name,
+    COALESCE(MIN(l.country_id), j.country_id) AS country_id,
+    COALESCE(MIN(co.country_name), co2.country_name) AS country_name,
     j.contract_duration_id,
     d.duration_name,
     d.months,
-    SUM(COALESCE(l.vacancy,0)) AS vacancy,
-    MIN(l.salary_min) AS salary_min,
-    MAX(l.salary_max) AS salary_max,
+    COALESCE(SUM(COALESCE(l.vacancy,0)), j.vacancy) AS vacancy,
+    COALESCE(MIN(l.salary_min), j.salary_min) AS salary_min,
+    COALESCE(MAX(l.salary_max), j.salary_max) AS salary_max,
     j.status,
     j.created_by,
     j.created_at
   FROM JOB_T01_jobs j
   LEFT JOIN JOB_M01_job_categories c ON c.category_id = j.category_id
   LEFT JOIN JOB_M02_contract_durations d ON d.duration_id = j.contract_duration_id
-  JOIN JOB_T05_job_locations l ON l.job_id = j.job_id
+  LEFT JOIN JOB_T05_job_locations l ON l.job_id = j.job_id
   LEFT JOIN LOC_M01_countries co ON co.country_id = l.country_id
+  LEFT JOIN LOC_M01_countries co2 ON co2.country_id = j.country_id
   WHERE (p_category_id IS NULL OR j.category_id = p_category_id)
     AND (p_status IS NULL OR p_status = '' OR j.status = p_status)
-    AND (p_country_id IS NULL OR l.country_id = p_country_id)
+    AND (p_country_id IS NULL OR COALESCE(l.country_id, j.country_id) = p_country_id)
     AND (p_state_id IS NULL OR l.state_id = p_state_id)
     AND (p_city_id IS NULL OR l.city_id = p_city_id)
   GROUP BY

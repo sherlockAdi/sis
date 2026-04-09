@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdDropDown, AdModal, AdNotification, AdPagingGrid, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { recruitmentApi, type CandidateRow } from "../../common/services/recruitmentApi";
 import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
@@ -130,38 +129,7 @@ export default function RecruitmentCandidatesPage() {
         width: 130,
         renderCell: (p: any) => <Chip size="small" label={String(p.value ?? "")} />,
       },
-      {
-        field: "__actions",
-        headerName: "Actions",
-        width: 160,
-        sortable: false,
-        filterable: false,
-        renderCell: (p: any) => {
-          const r = p.row as CandidateRow;
-          return (
-            <AdButton
-              variant="text"
-              startIcon={<EditIcon fontSize="small" />}
-              onClick={() => {
-                setForm({
-                  candidate_id: r.candidate_id,
-                  first_name: r.first_name ?? "",
-                  last_name: r.last_name ?? "",
-                  phone: r.phone ?? "",
-                  email: r.email ?? "",
-                  passport_number: "",
-                  country_id: "",
-                  state_id: "",
-                  city_id: "",
-                });
-                setModalOpen(true);
-              }}
-            >
-              Edit
-            </AdButton>
-          );
-        },
-      },
+      // Removed edit action (read-only list)
     ],
     [],
   );
@@ -227,7 +195,15 @@ export default function RecruitmentCandidatesPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.candidate_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdPagingGrid
+          rows={rows.map((r) => ({ id: r.candidate_id, ...r }))}
+          columns={cols as any}
+          loading={loading}
+          showExport={false}
+          disableColumnMenu
+          height={520}
+          defaultPageSize={10}
+        />
       </AdCard>
 
       <AdModal open={modalOpen} onClose={() => setModalOpen(false)} title="Register Candidate" maxWidth="md">

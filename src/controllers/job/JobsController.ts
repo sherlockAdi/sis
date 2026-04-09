@@ -22,6 +22,20 @@ type JobRow = {
   status: string | null;
   partner_id?: number | null;
   partner_name?: string | null;
+  employment_type_id?: number | null;
+  employment_type_name?: string | null;
+  work_mode_id?: number | null;
+  work_mode_name?: string | null;
+  currency_id?: number | null;
+  currency_code?: string | null;
+  currency_name?: string | null;
+  symbol?: string | null;
+  compensation_text?: string | null;
+  min_education?: string | null;
+  min_experience?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_requirement?: string | null;
   created_by: number | null;
   created_at: string;
 };
@@ -50,6 +64,7 @@ type JobStatusHistory = {
   changed_by: number | null;
   changed_at: string;
 };
+type JobLanguage = { id: number; job_id: number; language_id: number; language_name: string };
 
 type JobUpsertBody = {
   job_code?: string | null;
@@ -63,20 +78,25 @@ type JobUpsertBody = {
   job_description?: string | null;
   status?: string | null;
   partner_id?: number | null;
+  employment_type_id?: number | null;
+  work_mode_id?: number | null;
+  currency_id?: number | null;
+  compensation_text?: string | null;
+  min_education?: string | null;
+  min_experience?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_requirement?: string | null;
+  language_ids?: number[];
 
   requirements?: string[];
   benefits?: string[];
   documents?: Array<{ document_type_id: number; is_required?: boolean }>;
-  locations?: Array<{
+  location?: {
     country_id?: number | null;
     state_id?: number | null;
     city_id?: number | null;
-    vacancy?: number | null;
-    salary_min?: number | null;
-    salary_max?: number | null;
-    requirements?: string[];
-    benefits?: string[];
-  }>;
+  };
 };
 
 async function getPartnerContext(user_id: number): Promise<{ partner_id: number | null; is_partner_role: boolean }> {
@@ -88,7 +108,7 @@ async function getPartnerContext(user_id: number): Promise<{ partner_id: number 
 
 async function assertJobOwnedByPartner(job_id: number, partner_id: number): Promise<void> {
   const rows = await callProc<RowDataPacket & JobRow>(
-    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
     { job_id }
   );
   const job = rows[0];
@@ -107,12 +127,12 @@ export class JobsController extends Controller {
     if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
     if (ctx.partner_id) {
       return callProc<RowDataPacket & JobRow>(
-        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL)`,
+        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { partner_id: ctx.partner_id }
       );
     }
     return callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
+      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
     );
   }
 
@@ -125,9 +145,10 @@ export class JobsController extends Controller {
     documents: JobDocument[];
     locations: JobLocation[];
     status_history: JobStatusHistory[];
+    languages: JobLanguage[];
   }> {
     const jobRows = await callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     const job = jobRows[0];
@@ -141,7 +162,7 @@ export class JobsController extends Controller {
       }
     }
 
-    const [requirements, benefits, documents, locations, status_history] = await Promise.all([
+    const [requirements, benefits, documents, locations, status_history, languages] = await Promise.all([
       callProc<RowDataPacket & JobRequirement>(
         `CALL sp_job_requirements('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
@@ -162,9 +183,13 @@ export class JobsController extends Controller {
         `CALL sp_job_status_history('LIST_BY_JOB', NULL, :job_id, NULL, NULL, NULL)`,
         { job_id: jobId }
       ),
+      callProc<RowDataPacket & JobLanguage>(
+        `CALL sp_job_languages('LIST_BY_JOB', NULL, :job_id, NULL)`,
+        { job_id: jobId }
+      ),
     ]);
 
-    return { job, requirements, benefits, documents, locations, status_history };
+    return { job, requirements, benefits, documents, locations, status_history, languages };
   }
 
   @Post()
@@ -180,20 +205,28 @@ export class JobsController extends Controller {
     const resolvedPartnerId = ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null);
 
     const rows = await callProc<RowDataPacket & { job_id: number }>(
-      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :created_by, NULL)`,
+      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :min_experience, :min_age, :max_age, :gender_requirement, :created_by, NULL)`,
       {
         job_code: body.job_code ?? null,
         job_title: body.job_title,
         category_id: body.category_id ?? null,
-        // keep backward-compat, but primary country is derived from locations
         country_id: body.country_id ?? null,
         contract_duration_id: body.contract_duration_id ?? null,
-        vacancy: null,
-        salary_min: null,
-        salary_max: null,
+        vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
+        salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
+        salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
         job_description: body.job_description ?? null,
         status: body.status ?? null,
         partner_id: resolvedPartnerId,
+        employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
+        work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
+        currency_id: typeof body.currency_id === 'number' ? body.currency_id : null,
+        compensation_text: body.compensation_text ?? null,
+        min_education: body.min_education ?? null,
+        min_experience: body.min_experience ?? null,
+        min_age: typeof body.min_age === 'number' ? body.min_age : null,
+        max_age: typeof body.max_age === 'number' ? body.max_age : null,
+        gender_requirement: body.gender_requirement ?? null,
         created_by: user.user_id,
       }
     );
@@ -204,7 +237,6 @@ export class JobsController extends Controller {
     const documents = (body.documents ?? []).filter((d) => typeof d?.document_type_id === 'number');
     const globalRequirements = (body.requirements ?? []).map((s) => String(s).trim()).filter(Boolean);
     const globalBenefits = (body.benefits ?? []).map((s) => String(s).trim()).filter(Boolean);
-    const locations = (body.locations ?? []).filter((l) => l && (l.country_id || l.state_id || l.city_id));
     for (const d of documents) {
       await callProc(`CALL sp_job_documents('CREATE', NULL, :job_id, :document_type_id, :is_required)`, {
         job_id,
@@ -213,48 +245,51 @@ export class JobsController extends Controller {
       });
     }
 
-    if (locations.length === 0) {
-      for (const r of globalRequirements) {
-        await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, NULL, :requirement)`, { job_id, requirement: r });
-      }
-      for (const b of globalBenefits) {
-        await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, NULL, :benefit)`, { job_id, benefit: b });
-      }
-      return { job_id };
-    }
-
-    for (const l of locations) {
+    const loc = body.location ?? null;
+    if (loc && (loc.country_id || loc.state_id || loc.city_id)) {
       const locRows = await callProc<RowDataPacket & { id: number }>(
         `CALL sp_job_locations('CREATE', NULL, :job_id, :country_id, :state_id, :city_id, :vacancy, :salary_min, :salary_max)`,
         {
           job_id,
-          country_id: l.country_id ?? null,
-          state_id: l.state_id ?? null,
-          city_id: l.city_id ?? null,
-          vacancy: l.vacancy ?? null,
-          salary_min: typeof l.salary_min === 'number' ? l.salary_min : null,
-          salary_max: typeof l.salary_max === 'number' ? l.salary_max : null
+          country_id: loc.country_id ?? null,
+          state_id: loc.state_id ?? null,
+          city_id: loc.city_id ?? null,
+          vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
+          salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
+          salary_max: typeof body.salary_max === 'number' ? body.salary_max : null
         }
       );
       const location_id = locRows[0]?.id;
       if (!location_id) throw httpError(500, 'Failed to create job location');
 
-      const reqs = (l.requirements ?? globalRequirements).map((s) => String(s).trim()).filter(Boolean);
-      const bens = (l.benefits ?? globalBenefits).map((s) => String(s).trim()).filter(Boolean);
-
-      for (const r of reqs) {
+      for (const r of globalRequirements) {
         await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, :location_id, :requirement)`, {
           job_id,
           location_id,
           requirement: r
         });
       }
-      for (const b of bens) {
+      for (const b of globalBenefits) {
         await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, :location_id, :benefit)`, {
           job_id,
           location_id,
           benefit: b
         });
+      }
+    } else {
+      for (const r of globalRequirements) {
+        await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, NULL, :requirement)`, { job_id, requirement: r });
+      }
+      for (const b of globalBenefits) {
+        await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, NULL, :benefit)`, { job_id, benefit: b });
+      }
+    }
+
+    const languageIds = (body.language_ids ?? []).filter((x) => typeof x === 'number') as number[];
+    if (languageIds.length) {
+      await callProc(`CALL sp_job_languages('DELETE_BY_JOB', NULL, :job_id, NULL)`, { job_id });
+      for (const language_id of languageIds) {
+        await callProc(`CALL sp_job_languages('CREATE', NULL, :job_id, :language_id)`, { job_id, language_id });
       }
     }
 
@@ -270,84 +305,77 @@ export class JobsController extends Controller {
     if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, NULL, NULL)`,
+      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :min_experience, :min_age, :max_age, :gender_requirement, NULL, NULL)`,
       {
         job_id: jobId,
         job_code: body.job_code ?? null,
         job_title: body.job_title ?? null,
         category_id: typeof body.category_id === 'number' ? body.category_id : null,
-        // keep backward-compat, but primary country is derived from locations
         country_id: typeof body.country_id === 'number' ? body.country_id : null,
         contract_duration_id: typeof body.contract_duration_id === 'number' ? body.contract_duration_id : null,
-        vacancy: null,
-        salary_min: null,
-        salary_max: null,
+        vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
+        salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
+        salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
         job_description: body.job_description ?? null,
         status: body.status ?? null,
         partner_id: ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null),
+        employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
+        work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
+        currency_id: typeof body.currency_id === 'number' ? body.currency_id : null,
+        compensation_text: body.compensation_text ?? null,
+        min_education: body.min_education ?? null,
+        min_experience: body.min_experience ?? null,
+        min_age: typeof body.min_age === 'number' ? body.min_age : null,
+        max_age: typeof body.max_age === 'number' ? body.max_age : null,
+        gender_requirement: body.gender_requirement ?? null,
       }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');
 
-    if (Array.isArray(body.locations)) {
-      const globalRequirements = (body.requirements ?? []).map((s) => String(s).trim()).filter(Boolean);
-      const globalBenefits = (body.benefits ?? []).map((s) => String(s).trim()).filter(Boolean);
+    const globalRequirements = (body.requirements ?? []).map((s) => String(s).trim()).filter(Boolean);
+    const globalBenefits = (body.benefits ?? []).map((s) => String(s).trim()).filter(Boolean);
 
-      await callProc(`CALL sp_job_requirements('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
-      await callProc(`CALL sp_job_benefits('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
-      await callProc(`CALL sp_job_locations('DELETE_BY_JOB', NULL, :job_id, NULL, NULL, NULL, NULL, NULL, NULL)`, { job_id: jobId });
+    await callProc(`CALL sp_job_requirements('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
+    await callProc(`CALL sp_job_benefits('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
+    await callProc(`CALL sp_job_locations('DELETE_BY_JOB', NULL, :job_id, NULL, NULL, NULL, NULL, NULL, NULL)`, { job_id: jobId });
 
-      const locs = body.locations.filter((l) => l && (l.country_id || l.state_id || l.city_id));
-      for (const l of locs) {
-        const locRows = await callProc<RowDataPacket & { id: number }>(
-          `CALL sp_job_locations('CREATE', NULL, :job_id, :country_id, :state_id, :city_id, :vacancy, :salary_min, :salary_max)`,
-          {
-            job_id: jobId,
-            country_id: l.country_id ?? null,
-            state_id: l.state_id ?? null,
-            city_id: l.city_id ?? null,
-            vacancy: l.vacancy ?? null,
-            salary_min: typeof l.salary_min === 'number' ? l.salary_min : null,
-            salary_max: typeof l.salary_max === 'number' ? l.salary_max : null
-          }
-        );
-        const location_id = locRows[0]?.id;
-        if (!location_id) throw httpError(500, 'Failed to create job location');
-
-        const reqs = (l.requirements ?? globalRequirements).map((s) => String(s).trim()).filter(Boolean);
-        const bens = (l.benefits ?? globalBenefits).map((s) => String(s).trim()).filter(Boolean);
-
-        for (const r of reqs) {
-          await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, :location_id, :requirement)`, {
-            job_id: jobId,
-            location_id,
-            requirement: r
-          });
+    const loc = body.location ?? null;
+    if (loc && (loc.country_id || loc.state_id || loc.city_id)) {
+      const locRows = await callProc<RowDataPacket & { id: number }>(
+        `CALL sp_job_locations('CREATE', NULL, :job_id, :country_id, :state_id, :city_id, :vacancy, :salary_min, :salary_max)`,
+        {
+          job_id: jobId,
+          country_id: loc.country_id ?? null,
+          state_id: loc.state_id ?? null,
+          city_id: loc.city_id ?? null,
+          vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
+          salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
+          salary_max: typeof body.salary_max === 'number' ? body.salary_max : null
         }
-        for (const b of bens) {
-          await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, :location_id, :benefit)`, {
-            job_id: jobId,
-            location_id,
-            benefit: b
-          });
-        }
+      );
+      const location_id = locRows[0]?.id;
+      if (!location_id) throw httpError(500, 'Failed to create job location');
+
+      for (const r of globalRequirements) {
+        await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, :location_id, :requirement)`, {
+          job_id: jobId,
+          location_id,
+          requirement: r
+        });
+      }
+      for (const b of globalBenefits) {
+        await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, :location_id, :benefit)`, {
+          job_id: jobId,
+          location_id,
+          benefit: b
+        });
       }
     } else {
-      // Backwards-compatible: requirements/benefits stored globally when locations aren't supplied.
-      if (Array.isArray(body.requirements)) {
-        await callProc(`CALL sp_job_requirements('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
-        const requirements = body.requirements.map((s) => String(s).trim()).filter(Boolean);
-        for (const r of requirements) {
-          await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, NULL, :requirement)`, { job_id: jobId, requirement: r });
-        }
+      for (const r of globalRequirements) {
+        await callProc(`CALL sp_job_requirements('CREATE', NULL, :job_id, NULL, :requirement)`, { job_id: jobId, requirement: r });
       }
-
-      if (Array.isArray(body.benefits)) {
-        await callProc(`CALL sp_job_benefits('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
-        const benefits = body.benefits.map((s) => String(s).trim()).filter(Boolean);
-        for (const b of benefits) {
-          await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, NULL, :benefit)`, { job_id: jobId, benefit: b });
-        }
+      for (const b of globalBenefits) {
+        await callProc(`CALL sp_job_benefits('CREATE', NULL, :job_id, NULL, :benefit)`, { job_id: jobId, benefit: b });
       }
     }
 
@@ -360,6 +388,13 @@ export class JobsController extends Controller {
           document_type_id: d.document_type_id,
           is_required: d.is_required ?? true
         });
+      }
+    }
+
+    if (Array.isArray(body.language_ids)) {
+      await callProc(`CALL sp_job_languages('DELETE_BY_JOB', NULL, :job_id, NULL)`, { job_id: jobId });
+      for (const language_id of body.language_ids.filter((x) => typeof x === 'number') as number[]) {
+        await callProc(`CALL sp_job_languages('CREATE', NULL, :job_id, :language_id)`, { job_id: jobId, language_id });
       }
     }
 
@@ -381,7 +416,7 @@ export class JobsController extends Controller {
     if (!body?.status?.trim()) throw httpError(400, 'status is required');
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL, :changed_by, :remarks)`,
+      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :changed_by, :remarks)`,
       {
         job_id: jobId,
         status: body.status,
@@ -403,7 +438,7 @@ export class JobsController extends Controller {
       if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
     }
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');
