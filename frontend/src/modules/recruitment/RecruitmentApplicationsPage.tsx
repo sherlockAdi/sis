@@ -6,6 +6,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import dayjs, { type Dayjs } from "dayjs";
 import { AdAlertBox, AdButton, AdCard, AdDateTimePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
+import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
 import { recruitmentApi, type ApplicationDocRow, type ApplicationInterviewRow, type ApplicationRow } from "../../common/services/recruitmentApi";
 import { mastersApi, type InterviewMode } from "../../common/services/mastersApi";
 
@@ -15,8 +16,37 @@ function fileExt(name: string): string {
   return name.slice(idx).toLowerCase();
 }
 
+function normalizeStatus(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function isShortlistedStatus(value: string | null | undefined): boolean {
+  const status = normalizeStatus(value);
+  return status.includes("shortlist") || status === "ready";
+}
+
+function isInterviewStatus(value: string | null | undefined): boolean {
+  return normalizeStatus(value).includes("interview");
+}
+
+function displayStatus(value: string | null | undefined): string {
+  if (isShortlistedStatus(value)) return "Shortlisted";
+  if (isInterviewStatus(value)) return "Interview";
+  return String(value ?? "").trim() || "-";
+}
+
+function isRejectedStatus(value: string | null | undefined): boolean {
+  return normalizeStatus(value).includes("reject");
+}
+
+type ApplicationViewRow = ApplicationRow & {
+  partner_id: number | null;
+  partner_name: string | null;
+};
+
 export default function RecruitmentApplicationsPage() {
   const [rows, setRows] = useState<ApplicationRow[]>([]);
+  const [jobs, setJobs] = useState<JobListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -39,12 +69,31 @@ export default function RecruitmentApplicationsPage() {
     date: null,
     remarks: "",
   });
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   const refresh = async () => {
     setLoading(true);
     setError(null);
     try {
-      setRows(await recruitmentApi.applications.list());
+      const [applicationsResult, jobsResult] = await Promise.allSettled([
+        recruitmentApi.applications.list(),
+        jobsApi.list(),
+      ]);
+
+      if (applicationsResult.status === "fulfilled") {
+        setRows(applicationsResult.value);
+      } else {
+        throw applicationsResult.reason;
+      }
+
+      if (jobsResult.status === "fulfilled") {
+        setJobs(jobsResult.value);
+      } else {
+        setJobs([]);
+        setToast({ open: true, message: (jobsResult.reason as ApiError)?.message ?? "Failed to load job filter data", severity: "error" });
+      }
     } catch (e: any) {
       setError((e as ApiError)?.message ?? "Failed to load applications");
     } finally {
@@ -92,22 +141,51 @@ export default function RecruitmentApplicationsPage() {
     () => [
       { field: "application_id", headerName: "App ID", width: 100 },
       { field: "candidate_name", headerName: "Candidate", flex: 1, minWidth: 180 },
+      { field: "partner_name", headerName: "Partner", flex: 1, minWidth: 180 },
       { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
       { field: "application_date", headerName: "Date", width: 130 },
       {
         field: "status",
         headerName: "Status",
         width: 140,
-        renderCell: (p: any) => <Chip size="small" label={String(p.value ?? "")} />,
+        renderCell: (p: any) => {
+          const label = displayStatus(p.value);
+          const color = isShortlistedStatus(p.value) ? "success" : isInterviewStatus(p.value) ? "info" : "default";
+          return <Chip size="small" label={label} color={color as any} />;
+        },
       },
       {
         field: "__actions",
         headerName: "Actions",
-        width: 260,
+        width: 460,
         sortable: false,
         filterable: false,
         renderCell: (p: any) => {
-          const r = p.row as ApplicationRow;
+          const r = p.row as ApplicationViewRow;
+          const shortlisted = isShortlistedStatus(r.status);
+          const interviewStage = isInterviewStatus(r.status);
+          const rejected = isRejectedStatus(r.status);
+
+          const rejectApplication = async () => {
+            try {
+              await recruitmentApi.applications.updateStatus(r.application_id, "Rejected");
+              setToast({ open: true, message: "Application rejected", severity: "success" });
+              refresh();
+            } catch (e: any) {
+              setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to reject application", severity: "error" });
+            }
+          };
+
+          const markReadyForDeployment = async () => {
+            try {
+              await recruitmentApi.applications.updateStatus(r.application_id, "Ready");
+              setToast({ open: true, message: "Marked ready for deployment", severity: "success" });
+              refresh();
+            } catch (e: any) {
+              setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark ready", severity: "error" });
+            }
+          };
+
           return (
             <Stack direction="row" spacing={1}>
               <AdButton
@@ -121,18 +199,49 @@ export default function RecruitmentApplicationsPage() {
               >
                 Documents
               </AdButton>
-              <AdButton
-                variant="text"
-                startIcon={<EventAvailableIcon fontSize="small" />}
-                onClick={() => {
-                  setActiveApp(r);
-                  setInterviewsOpen(true);
-                  setSchedule({ mode_id: "", date: null, remarks: "" });
-                  loadInterviews(r.application_id);
-                }}
-              >
-                Interview
-              </AdButton>
+              {shortlisted ? (
+                <AdButton
+                  variant="text"
+                  startIcon={<EventAvailableIcon fontSize="small" />}
+                  onClick={() => {
+                    setActiveApp(r);
+                    setInterviewsOpen(true);
+                    setSchedule({ mode_id: "", date: null, remarks: "" });
+                    loadInterviews(r.application_id);
+                  }}
+                >
+                  Interview
+                </AdButton>
+              ) : (
+                <AdButton
+                  variant="contained"
+                  onClick={async () => {
+                    try {
+                      await recruitmentApi.applications.updateStatus(r.application_id, "Shortlist");
+                      setToast({ open: true, message: "Application shortlisted", severity: "success" });
+                      refresh();
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to shortlist", severity: "error" });
+                    }
+                  }}
+                >
+                  Shortlist
+                </AdButton>
+              )}
+
+              {interviewStage ? (
+                <AdButton variant="contained" color="success" onClick={markReadyForDeployment}>
+                  Ready to Deploy
+                </AdButton>
+              ) : null}
+
+              {!rejected ? (
+                <AdButton variant="outlined" color="error" onClick={rejectApplication}>
+                  Reject
+                </AdButton>
+              ) : null}
+
+              {rejected ? <Chip size="small" label="Rejected" color="error" /> : null}
             </Stack>
           );
         },
@@ -193,13 +302,85 @@ export default function RecruitmentApplicationsPage() {
         interview_date,
         remarks: schedule.remarks.trim() || null,
       });
+      await recruitmentApi.applications.updateStatus(activeApp.application_id, "Interview");
       setToast({ open: true, message: "Interview scheduled", severity: "success" });
       loadInterviews(activeApp.application_id);
       setSchedule({ mode_id: "", date: null, remarks: "" });
+      refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to schedule interview", severity: "error" });
     }
   };
+
+  const enrichedRows: ApplicationViewRow[] = useMemo(() => {
+    const jobById = new Map<number, JobListRow>(jobs.map((job) => [job.job_id, job]));
+    return rows.map((row) => {
+      const job = jobById.get(row.job_id);
+      return {
+        ...row,
+        partner_id: job?.partner_id ?? null,
+        partner_name: job?.partner_name ?? null,
+      };
+    });
+  }, [rows, jobs]);
+
+  const partnerOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const row of enrichedRows) {
+      if (row.partner_id == null) continue;
+      seen.set(String(row.partner_id), row.partner_name?.trim() || `Partner #${row.partner_id}`);
+    }
+    return [{ label: "All Partners", value: "" }].concat(
+      Array.from(seen.entries()).map(([value, label]) => ({ label, value }))
+    );
+  }, [enrichedRows]);
+
+  const jobOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    const partnerFilter = selectedPartnerId ? Number(selectedPartnerId) : null;
+    for (const row of enrichedRows) {
+      if (partnerFilter != null && row.partner_id !== partnerFilter) continue;
+      const label = [row.job_title, row.job_code ? `(${row.job_code})` : ""].filter(Boolean).join(" ").trim();
+      seen.set(String(row.job_id), label || `Job #${row.job_id}`);
+    }
+    return [{ label: "All Jobs", value: "" }].concat(Array.from(seen.entries()).map(([value, label]) => ({ label, value })));
+  }, [enrichedRows, selectedPartnerId]);
+
+  const statusOptions = useMemo(() => {
+    const present = new Set<string>();
+    for (const row of enrichedRows) {
+      const status = displayStatus(row.status);
+      if (status && status !== "-") present.add(status);
+    }
+
+    const ordered = ["Shortlisted", "Interview", "Applied", "Pending", "On Hold", "Rejected", "Completed", "Not Ready", "Ready"];
+    const items = ordered.filter((status) => present.has(status)).map((status) => ({ label: status, value: status }));
+    const extra = Array.from(present).filter((status) => !ordered.includes(status)).sort().map((status) => ({ label: status, value: status }));
+    return [{ label: "All Status", value: "" }].concat(items, extra);
+  }, [enrichedRows]);
+
+  const filteredRows = useMemo(() => {
+    return enrichedRows.filter((row) => {
+      if (selectedPartnerId && String(row.partner_id ?? "") !== selectedPartnerId) return false;
+      if (selectedJobId && String(row.job_id) !== selectedJobId) return false;
+      if (!selectedStatus) return true;
+      const status = normalizeStatus(row.status);
+      if (selectedStatus === "Shortlisted") return isShortlistedStatus(row.status);
+      if (selectedStatus === "Interview") return isInterviewStatus(row.status);
+      return status === normalizeStatus(selectedStatus) || status.includes(normalizeStatus(selectedStatus));
+    });
+  }, [enrichedRows, selectedPartnerId, selectedJobId, selectedStatus]);
+
+  useEffect(() => {
+    if (!selectedPartnerId) return;
+    const stillValid = jobOptions.some((opt) => opt.value === selectedJobId);
+    if (!stillValid) setSelectedJobId("");
+  }, [jobOptions, selectedJobId, selectedPartnerId]);
+
+  const currentActiveApp = useMemo(() => {
+    if (!activeApp) return null;
+    return enrichedRows.find((row) => row.application_id === activeApp.application_id) ?? (activeApp as ApplicationViewRow);
+  }, [activeApp, enrichedRows]);
 
   return (
     <Stack spacing={2.5}>
@@ -214,10 +395,52 @@ export default function RecruitmentApplicationsPage() {
         </Typography>
       </Stack>
 
+      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
+        <Stack spacing={1.5}>
+          <Typography fontWeight={900}>Filters</Typography>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+            <AdDropDown
+              label="Partner"
+              options={partnerOptions}
+              value={selectedPartnerId}
+              onChange={(v) => {
+                setSelectedPartnerId(String(v));
+                setSelectedJobId("");
+              }}
+            />
+            <AdDropDown
+              label="Job"
+              options={jobOptions}
+              value={selectedJobId}
+              onChange={(v) => setSelectedJobId(String(v))}
+              disabled={!jobOptions.length || (jobOptions.length === 1 && jobOptions[0]?.value === "")}
+            />
+            <AdDropDown
+              label="Status"
+              options={statusOptions}
+              value={selectedStatus}
+              onChange={(v) => setSelectedStatus(String(v))}
+            />
+            <Stack justifyContent="flex-end" sx={{ minWidth: { xs: "100%", md: 140 } }}>
+              <AdButton
+                variant="outlined"
+                onClick={() => {
+                  setSelectedPartnerId("");
+                  setSelectedJobId("");
+                  setSelectedStatus("");
+                }}
+              >
+                Clear
+              </AdButton>
+            </Stack>
+          </Stack>
+        </Stack>
+      </AdCard>
+
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.application_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdGrid rows={filteredRows.map((r) => ({ id: r.application_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
       </AdCard>
 
       <AdModal
@@ -284,10 +507,10 @@ export default function RecruitmentApplicationsPage() {
         open={interviewsOpen}
         onClose={() => setInterviewsOpen(false)}
         title="Schedule Interview"
-        subtitle={activeApp ? `${activeApp.candidate_name} • ${activeApp.job_title}` : undefined}
+        subtitle={currentActiveApp ? `${currentActiveApp.candidate_name} • ${currentActiveApp.job_title}` : undefined}
         maxWidth="md"
       >
-        {!activeApp ? (
+        {!currentActiveApp ? (
           <AdAlertBox severity="info" title="Select an application" message="Open interview scheduling from an application row." />
         ) : (
           <Stack spacing={2}>
@@ -311,7 +534,20 @@ export default function RecruitmentApplicationsPage() {
                   onChange={(v: string) => setSchedule((s) => ({ ...s, remarks: v }))}
                   minRows={3}
                 />
-                <Stack direction="row" justifyContent="flex-end">
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="flex-end">
+                  <AdButton variant="outlined" color="error" onClick={async () => {
+                    if (!currentActiveApp) return;
+                    try {
+                      await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Rejected");
+                      setToast({ open: true, message: "Application rejected", severity: "success" });
+                      refresh();
+                      setInterviewsOpen(false);
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to reject application", severity: "error" });
+                    }
+                  }}>
+                    Reject
+                  </AdButton>
                   <AdButton variant="contained" onClick={scheduleInterview}>
                     Schedule
                   </AdButton>
@@ -345,6 +581,48 @@ export default function RecruitmentApplicationsPage() {
                   </Stack>
                 </AdCard>
               ))}
+
+              {currentActiveApp && isInterviewStatus(currentActiveApp.status) ? (
+                <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.85)" }} contentSx={{ p: 1.75 }}>
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
+                    <Typography fontWeight={900}>Interview decision</Typography>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                      <AdButton
+                        variant="contained"
+                        color="success"
+                        onClick={async () => {
+                          try {
+                            await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Ready");
+                            setToast({ open: true, message: "Marked ready for deployment", severity: "success" });
+                            refresh();
+                            setInterviewsOpen(false);
+                          } catch (e: any) {
+                            setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark ready", severity: "error" });
+                          }
+                        }}
+                      >
+                        Ready to Deploy
+                      </AdButton>
+                      <AdButton
+                        variant="outlined"
+                        color="error"
+                        onClick={async () => {
+                          try {
+                            await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Rejected");
+                            setToast({ open: true, message: "Application rejected", severity: "success" });
+                            refresh();
+                            setInterviewsOpen(false);
+                          } catch (e: any) {
+                            setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to reject application", severity: "error" });
+                          }
+                        }}
+                      >
+                        Reject
+                      </AdButton>
+                    </Stack>
+                  </Stack>
+                </AdCard>
+              ) : null}
             </Stack>
           </Stack>
         )}
