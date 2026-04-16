@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from "
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdModal, AdNotification } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdDropDown, AdModal, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { jobsApi, type JobDetail, type JobListRow } from "../../common/services/jobsApi";
 import { mastersApi, type JobCategory } from "../../common/services/mastersApi";
@@ -398,9 +398,7 @@ export default function JobsPreviewPage() {
             <Divider />
 
             {detail.job.job_description ? (
-              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                {detail.job.job_description}
-              </Typography>
+              <AdRichTextContent html={detail.job.job_description} />
             ) : (
               <Typography variant="body2" color="text.secondary">
                 No description.

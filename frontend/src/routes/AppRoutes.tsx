@@ -23,6 +23,7 @@ import JobsPreviewPage from "../modules/job/JobsPreviewPage";
 import JobFormPage from "../modules/job/JobFormPage";
 import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentApplicationsPage";
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
+import RecruitmentCandidateFormPage from "../modules/recruitment/RecruitmentCandidateFormPage";
 import RecruitmentScreeningInterviewsPage from "../modules/recruitment/RecruitmentScreeningInterviewsPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
 import CandidateJobApplyPage from "../modules/candidate/CandidateJobApplyPage";
@@ -69,6 +70,7 @@ import PartnerZoneLandingPage from "../modules/public/pages/partner/PartnerZoneL
 import PartnerBenefitsPage from "../modules/public/pages/partner/PartnerBenefitsPage";
 import PartnerHowItWorksPage from "../modules/public/pages/partner/PartnerHowItWorksPage";
 import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/PartnerSubmitCandidatesPage";
+import PartnerFormPage from "../modules/partners/PartnerFormPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
 import { useAuth } from "../common/auth/AuthContext";
 
@@ -227,6 +229,8 @@ export default function AppRoutes() {
             <Route path="jobs-preview" element={<JobsPreviewPage />} />
             <Route path="recruitment/applications" element={<RecruitmentApplicationsPage />} />
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
+            <Route path="recruitment/candidates/new" element={<RecruitmentCandidateFormPage mode="create" />} />
+            <Route path="recruitment/candidates/:candidateId" element={<RecruitmentCandidateFormPage mode="edit" />} />
             <Route path="candidate/home" element={<CandidateHomePage />} />
             <Route path="candidate/jobs" element={<CandidateJobsPage />} />
             <Route path="candidate/jobs/:jobId/apply" element={<CandidateJobApplyPage />} />
@@ -286,6 +290,8 @@ export default function AppRoutes() {
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />
+            <Route path="partners/new" element={<PartnerFormPage mode="create" />} />
+            <Route path="partners/:partnerId" element={<PartnerFormPage mode="edit" />} />
             <Route path="partners/*" element={<PartnersPage />} />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />

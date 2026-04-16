@@ -7,8 +7,6 @@ import {
   AdAlertBox,
   AdButton,
   AdCheckBox,
-  AdDropDown,
-  AdModal,
   AdNotification,
   AdTextBox,
   SisLogo,
@@ -16,16 +14,7 @@ import {
 import { login, me, requestLoginOtp, verifyLoginOtp } from "../../common/services/authApi";
 import type { ApiError } from "../../common/services/apiFetch";
 import { getRememberMe, setAuthToken } from "../../common/services/tokenStorage";
-import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { withPortalBase } from "../../common/paths";
-import {
-  listPublicCities,
-  listPublicCountries,
-  listPublicStates,
-  type CityRow,
-  type Country,
-  type StateRow,
-} from "../../common/services/locationApi";
 
 type PortalKey = "candidate" | "administrator" | "employer" | "sourcing";
 
@@ -195,110 +184,6 @@ export default function AuthLogin() {
       setError(apiErr?.message ?? "Login failed");
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const [signupOpen, setSignupOpen] = useState(false);
-  const [signupSubmitting, setSignupSubmitting] = useState(false);
-  const [signup, setSignup] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    email: "",
-    passport_number: "",
-    country_id: "",
-    state_id: "",
-    city_id: "",
-  });
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [states, setStates] = useState<StateRow[]>([]);
-  const [cities, setCities] = useState<CityRow[]>([]);
-
-  const countryOptions = useMemo(
-    () =>
-      [{ label: "— Select —", value: "" }].concat(
-        countries.map((c) => ({ label: c.country_name, value: String(c.country_id) })),
-      ),
-    [countries],
-  );
-  const stateOptions = useMemo(
-    () => [{ label: "— Select —", value: "" }].concat(states.map((s) => ({ label: s.state_name, value: String(s.state_id) }))),
-    [states],
-  );
-  const cityOptions = useMemo(
-    () => [{ label: "— Select —", value: "" }].concat(cities.map((c) => ({ label: c.city_name, value: String(c.city_id) }))),
-    [cities],
-  );
-
-  useEffect(() => {
-    (async () => {
-      try {
-        setCountries(await listPublicCountries());
-      } catch {
-        setCountries([]);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!signup.country_id) {
-      setStates([]);
-      setCities([]);
-      return;
-    }
-    (async () => {
-      try {
-        setStates(await listPublicStates(Number(signup.country_id)));
-      } catch {
-        setStates([]);
-      }
-    })();
-  }, [signup.country_id]);
-
-  useEffect(() => {
-    if (!signup.state_id) {
-      setCities([]);
-      return;
-    }
-    (async () => {
-      try {
-        setCities(await listPublicCities(Number(signup.state_id)));
-      } catch {
-        setCities([]);
-      }
-    })();
-  }, [signup.state_id]);
-
-  const submitSignup = async () => {
-    try {
-      if (!signup.email.trim()) throw new Error("Email is required");
-      setSignupSubmitting(true);
-      const res = await recruitmentApi.public.candidateSignup({
-        first_name: signup.first_name.trim() || null,
-        last_name: signup.last_name.trim() || null,
-        phone: signup.phone.trim() || null,
-        email: signup.email.trim(),
-        passport_number: signup.passport_number.trim() || null,
-        country_id: signup.country_id ? Number(signup.country_id) : null,
-        state_id: signup.state_id ? Number(signup.state_id) : null,
-        city_id: signup.city_id ? Number(signup.city_id) : null,
-      });
-      setToast({
-        open: true,
-        severity: res.emailed ? "success" : "warning",
-        message: res.emailed
-          ? "Signup successful. Credentials have been emailed."
-          : `Signup successful. Username: ${res.username} (email not sent)`,
-      });
-      setSignupOpen(false);
-    } catch (e: any) {
-      setToast({
-        open: true,
-        severity: "error",
-        message: (e as ApiError)?.message ?? e?.message ?? "Signup failed",
-      });
-    } finally {
-      setSignupSubmitting(false);
     }
   };
 
@@ -585,7 +470,7 @@ export default function AuthLogin() {
                   )}
 
                   {showCandidateSignup && (
-                    <AdButton variant="text" onClick={() => setSignupOpen(true)}>
+                    <AdButton variant="text" onClick={() => navigate("/register")}>
                       Candidate Sign Up
                     </AdButton>
                   )}
@@ -601,58 +486,6 @@ export default function AuthLogin() {
         </Box>
       </Box>
 
-      <AdModal
-        open={signupOpen}
-        onClose={() => setSignupOpen(false)}
-        title="Candidate Sign Up"
-        subtitle="Create your account — credentials will be emailed to you."
-        maxWidth="md"
-        actions={
-          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
-            <AdButton variant="text" onClick={() => setSignupOpen(false)}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={submitSignup} loading={signupSubmitting}>
-              Create Account
-            </AdButton>
-          </Stack>
-        }
-      >
-        <Stack spacing={2}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdTextBox label="First Name" value={signup.first_name} onChange={(v) => setSignup((s) => ({ ...s, first_name: v }))} />
-            <AdTextBox label="Last Name" value={signup.last_name} onChange={(v) => setSignup((s) => ({ ...s, last_name: v }))} />
-          </Stack>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdTextBox label="Phone" value={signup.phone} onChange={(v) => setSignup((s) => ({ ...s, phone: v }))} />
-            <AdTextBox label="Email" required value={signup.email} onChange={(v) => setSignup((s) => ({ ...s, email: v }))} />
-          </Stack>
-          <AdTextBox label="Passport Number" value={signup.passport_number} onChange={(v) => setSignup((s) => ({ ...s, passport_number: v }))} />
-
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <AdDropDown
-              label="Country"
-              options={countryOptions}
-              value={signup.country_id}
-              onChange={(v) => setSignup((s) => ({ ...s, country_id: String(v), state_id: "", city_id: "" }))}
-            />
-            <AdDropDown
-              label="State"
-              options={stateOptions}
-              disabled={!signup.country_id}
-              value={signup.state_id}
-              onChange={(v) => setSignup((s) => ({ ...s, state_id: String(v), city_id: "" }))}
-            />
-            <AdDropDown
-              label="City"
-              options={cityOptions}
-              disabled={!signup.state_id}
-              value={signup.city_id}
-              onChange={(v) => setSignup((s) => ({ ...s, city_id: String(v) }))}
-            />
-          </Stack>
-        </Stack>
-      </AdModal>
     </Box>
   );
 }

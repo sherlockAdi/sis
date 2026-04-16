@@ -15,10 +15,24 @@ type PartnerRow = {
   phone: string | null;
   email: string | null;
   address: string | null;
+  country_id?: number | null;
+  country_name?: string | null;
+  state_id?: number | null;
+  state_name?: string | null;
+  city_id?: number | null;
+  city_name?: string | null;
+  alt_partner_name?: string | null;
+  alt_phone?: string | null;
+  organisation_name?: string | null;
+  address2?: string | null;
+  pin?: string | null;
+  landline?: string | null;
   user_id: number | null;
   username?: string | null;
   status: 0 | 1;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string | null;
 };
 
 function randomPassword(len = 10): string {
@@ -35,7 +49,7 @@ export class PartnersController extends Controller {
   @Security('jwt')
   public async list(@Query() include_inactive?: boolean): Promise<PartnerRow[]> {
     return callProc<RowDataPacket & PartnerRow>(
-      `CALL sp_partners('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :include_inactive)`,
+      `CALL sp_partners('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :include_inactive)`,
       { include_inactive: include_inactive === true }
     );
   }
@@ -44,7 +58,7 @@ export class PartnersController extends Controller {
   @Security('jwt')
   public async get(@Path() partnerId: number): Promise<PartnerRow> {
     const rows = await callProc<RowDataPacket & PartnerRow>(
-      `CALL sp_partners('GET', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_partners('GET', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { partner_id: partnerId }
     );
     const partner = rows[0];
@@ -57,25 +71,46 @@ export class PartnersController extends Controller {
   public async create(
     @Body()
     body: {
+      partner_code?: string | null;
       partner_name: string;
       contact_name?: string | null;
       phone?: string | null;
       email?: string | null;
       address?: string | null;
+      country_id?: number | null;
+      state_id?: number | null;
+      city_id?: number | null;
+      alt_partner_name?: string | null;
+      alt_phone?: string | null;
+      organisation_name?: string | null;
+      address2?: string | null;
+      pin?: string | null;
+      landline?: string | null;
       status?: boolean | null;
     }
   ): Promise<{ partner_id: number; user_id: number; username: string; emailed: boolean }> {
+    const partner_code = String(body.partner_code ?? '').trim();
     const partner_name = String(body.partner_name ?? '').trim();
     if (!partner_name) throw httpError(400, 'partner_name is required');
 
     const rows = await callProc<RowDataPacket & { partner_id: number }>(
-      `CALL sp_partners('CREATE', NULL, :partner_name, :contact_name, :phone, :email, :address, NULL, :status, NULL)`,
+      `CALL sp_partners('CREATE', NULL, :partner_code, :partner_name, :contact_name, :phone, :email, :address, :country_id, :state_id, :city_id, :alt_partner_name, :alt_phone, :organisation_name, :address2, :pin, :landline, NULL, :status, NULL)`,
       {
+        partner_code: partner_code || null,
         partner_name,
         contact_name: body.contact_name ?? null,
         phone: body.phone ?? null,
         email: body.email ?? null,
         address: body.address ?? null,
+        country_id: typeof body.country_id === 'number' ? body.country_id : null,
+        state_id: typeof body.state_id === 'number' ? body.state_id : null,
+        city_id: typeof body.city_id === 'number' ? body.city_id : null,
+        alt_partner_name: body.alt_partner_name ?? null,
+        alt_phone: body.alt_phone ?? null,
+        organisation_name: body.organisation_name ?? null,
+        address2: body.address2 ?? null,
+        pin: body.pin ?? null,
+        landline: body.landline ?? null,
         status: typeof body.status === 'boolean' ? body.status : true
       }
     );
@@ -83,7 +118,7 @@ export class PartnersController extends Controller {
     if (!partner_id) throw httpError(500, 'Failed to create partner');
 
     const partnerRows = await callProc<RowDataPacket & PartnerRow>(
-      `CALL sp_partners('GET', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_partners('GET', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { partner_id }
     );
     const partner = partnerRows[0];
@@ -131,7 +166,7 @@ export class PartnersController extends Controller {
     if (!user_id) throw httpError(500, 'Failed to create partner user');
 
     await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_partners('SET_USER', :partner_id, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL)`,
+      `CALL sp_partners('SET_USER', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL)`,
       { partner_id, user_id }
     );
 
@@ -173,23 +208,43 @@ export class PartnersController extends Controller {
     @Path() partnerId: number,
     @Body()
     body: {
+      partner_code?: string | null;
       partner_name?: string | null;
       contact_name?: string | null;
       phone?: string | null;
       email?: string | null;
       address?: string | null;
+      country_id?: number | null;
+      state_id?: number | null;
+      city_id?: number | null;
+      alt_partner_name?: string | null;
+      alt_phone?: string | null;
+      organisation_name?: string | null;
+      address2?: string | null;
+      pin?: string | null;
+      landline?: string | null;
       status?: boolean | null;
     }
   ): Promise<{ updated: true }> {
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_partners('UPDATE', :partner_id, :partner_name, :contact_name, :phone, :email, :address, NULL, :status, NULL)`,
+      `CALL sp_partners('UPDATE', :partner_id, :partner_code, :partner_name, :contact_name, :phone, :email, :address, :country_id, :state_id, :city_id, :alt_partner_name, :alt_phone, :organisation_name, :address2, :pin, :landline, NULL, :status, NULL)`,
       {
         partner_id: partnerId,
+        partner_code: String(body.partner_code ?? '').trim() || null,
         partner_name: body.partner_name ?? null,
         contact_name: body.contact_name ?? null,
         phone: body.phone ?? null,
         email: body.email ?? null,
         address: body.address ?? null,
+        country_id: typeof body.country_id === 'number' ? body.country_id : null,
+        state_id: typeof body.state_id === 'number' ? body.state_id : null,
+        city_id: typeof body.city_id === 'number' ? body.city_id : null,
+        alt_partner_name: body.alt_partner_name ?? null,
+        alt_phone: body.alt_phone ?? null,
+        organisation_name: body.organisation_name ?? null,
+        address2: body.address2 ?? null,
+        pin: body.pin ?? null,
+        landline: body.landline ?? null,
         status: typeof body.status === 'boolean' ? body.status : null
       }
     );
@@ -201,8 +256,8 @@ export class PartnersController extends Controller {
   @Security('jwt')
   public async disable(@Path() partnerId: number): Promise<{ disabled: true }> {
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_partners('UPDATE', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL)`,
-      { partner_id: partnerId, status: false }
+      `CALL sp_partners('DELETE', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      { partner_id: partnerId }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Partner not found');
     return { disabled: true };

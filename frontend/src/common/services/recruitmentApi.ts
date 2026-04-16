@@ -7,8 +7,39 @@ export type CandidateRow = {
   last_name: string | null;
   phone: string | null;
   email: string | null;
+  passport_number: string | null;
+  country_id: number | null;
+  country_name?: string | null;
+  state_id: number | null;
+  state_name?: string | null;
+  city_id: number | null;
+  city_name?: string | null;
+  father_name?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  pincode?: string | null;
+  dob?: string | null;
+  gender?: string | null;
+  skills?: string | null;
+  education?: string | null;
+  experience?: string | null;
+  industry_type?: string | null;
+  resume_file_path?: string | null;
+  passport_expiry_date?: string | null;
+  passport_file_path?: string | null;
+  aadhar_number?: string | null;
+  aadhar_file_path?: string | null;
+  pan_number?: string | null;
+  pan_file_path?: string | null;
+  voter_id_number?: string | null;
+  voter_id_file_path?: string | null;
+  profile_photo_file_path?: string | null;
+  languages_known?: string | null;
   status: string | null;
+  user_id: number | null;
   created_at: string;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 };
 
 export type ApplicationRow = {
@@ -46,6 +77,7 @@ export type ApplicationInterviewRow = {
 export const recruitmentApi = {
   candidates: {
     list: () => apiFetch<CandidateRow[]>(`/recruitment/candidates`, { method: "GET" }),
+    get: (candidate_id: number) => apiFetch<CandidateRow>(`/recruitment/candidates/${candidate_id}`, { method: "GET" }),
     create: (input: {
       first_name?: string | null;
       last_name?: string | null;
@@ -55,14 +87,41 @@ export const recruitmentApi = {
       country_id?: number | null;
       state_id?: number | null;
       city_id?: number | null;
+      father_name?: string | null;
+      address1?: string | null;
+      address2?: string | null;
+      pincode?: string | null;
+      dob?: string | null;
+      gender?: string | null;
+      skills?: string | null;
+      education?: string | null;
+      experience?: string | null;
+      industry_type?: string | null;
+      resume_file_path?: string | null;
+      passport_expiry_date?: string | null;
+      passport_file_path?: string | null;
+      aadhar_number?: string | null;
+      aadhar_file_path?: string | null;
+      pan_number?: string | null;
+      pan_file_path?: string | null;
+      voter_id_number?: string | null;
+      voter_id_file_path?: string | null;
+      profile_photo_file_path?: string | null;
+      languages_known?: string | null;
       status?: string | null;
     }) =>
       apiFetch<{ candidate_id: number; user_id: number; username: string; emailed: boolean }>(
         `/recruitment/candidates`,
         { method: "POST", body: JSON.stringify(input) },
       ),
-    update: (candidate_id: number, input: Partial<Omit<CandidateRow, "candidate_id" | "candidate_code" | "created_at">>) =>
+    update: (
+      candidate_id: number,
+      input: Partial<
+        Omit<CandidateRow, "candidate_id" | "candidate_code" | "created_at" | "updated_at" | "deleted_at" | "country_name" | "state_name" | "city_name">
+      >,
+    ) =>
       apiFetch<{ updated: true }>(`/recruitment/candidates/${candidate_id}`, { method: "PUT", body: JSON.stringify(input) }),
+    disable: (candidate_id: number) => apiFetch<{ disabled: true }>(`/recruitment/candidates/${candidate_id}`, { method: "DELETE" }),
   },
   public: {
     candidateSignup: (input: {
@@ -74,6 +133,22 @@ export const recruitmentApi = {
       country_id?: number | null;
       state_id?: number | null;
       city_id?: number | null;
+      father_name?: string | null;
+      address1?: string | null;
+      address2?: string | null;
+      pincode?: string | null;
+      dob?: string | null;
+      gender?: string | null;
+      skills?: string | null;
+      education?: string | null;
+      experience?: string | null;
+      industry_type?: string | null;
+      passport_expiry_date?: string | null;
+      aadhar_number?: string | null;
+      pan_number?: string | null;
+      voter_id_number?: string | null;
+      languages_known?: string | null;
+      status?: string | null;
     }) =>
       apiFetch<{ candidate_id: number; username: string; emailed: boolean }>(`/public/candidate-signup`, {
         method: "POST",

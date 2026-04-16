@@ -16,6 +16,53 @@ type CandidateRow = {
   email: string | null;
 };
 
+type CandidateProfileBody = {
+  father_name?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  pincode?: string | null;
+  dob?: string | null;
+  gender?: string | null;
+  skills?: string | null;
+  education?: string | null;
+  experience?: string | null;
+  industry_type?: string | null;
+  passport_expiry_date?: string | null;
+  aadhar_number?: string | null;
+  pan_number?: string | null;
+  voter_id_number?: string | null;
+  languages_known?: string | null;
+};
+
+function toNull(value: string | null | undefined): string | null {
+  const v = String(value ?? '').trim();
+  return v ? v : null;
+}
+
+async function upsertCandidateProfile(candidate_id: number, body: CandidateProfileBody): Promise<void> {
+  await callProc<RowDataPacket & { affected_rows: number }>(
+    `CALL sp_rec_candidate_profiles('UPSERT', :candidate_id, :father_name, :address1, :address2, :pincode, :dob, :gender, :skills, :education, :experience, :industry_type, NULL, :passport_expiry_date, NULL, :aadhar_number, NULL, :pan_number, NULL, :voter_id_number, NULL, NULL, :languages_known)`,
+    {
+      candidate_id,
+      father_name: toNull(body.father_name),
+      address1: toNull(body.address1),
+      address2: toNull(body.address2),
+      pincode: toNull(body.pincode),
+      dob: body.dob ?? null,
+      gender: toNull(body.gender),
+      skills: toNull(body.skills),
+      education: toNull(body.education),
+      experience: toNull(body.experience),
+      industry_type: toNull(body.industry_type),
+      passport_expiry_date: body.passport_expiry_date ?? null,
+      aadhar_number: toNull(body.aadhar_number),
+      pan_number: toNull(body.pan_number),
+      voter_id_number: toNull(body.voter_id_number),
+      languages_known: toNull(body.languages_known),
+    }
+  );
+}
+
 function randomPassword(len = 10): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#%*';
   let out = '';
@@ -38,6 +85,21 @@ export class PublicCandidateSignupController extends Controller {
       country_id?: number | null;
       state_id?: number | null;
       city_id?: number | null;
+      father_name?: string | null;
+      address1?: string | null;
+      address2?: string | null;
+      pincode?: string | null;
+      dob?: string | null;
+      gender?: string | null;
+      skills?: string | null;
+      education?: string | null;
+      experience?: string | null;
+      industry_type?: string | null;
+      passport_expiry_date?: string | null;
+      aadhar_number?: string | null;
+      pan_number?: string | null;
+      voter_id_number?: string | null;
+      languages_known?: string | null;
     }
   ): Promise<{ candidate_id: number; username: string; emailed: boolean }> {
     const email = String(body.email ?? '').trim();
@@ -59,6 +121,8 @@ export class PublicCandidateSignupController extends Controller {
 
     const candidate_id = created[0]?.candidate_id;
     if (!candidate_id) throw httpError(500, 'Failed to create candidate');
+
+    await upsertCandidateProfile(candidate_id, body);
 
     const candidateRows = await callProc<RowDataPacket & CandidateRow>(
       `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,

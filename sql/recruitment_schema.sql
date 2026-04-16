@@ -24,11 +24,35 @@ CREATE TABLE IF NOT EXISTS REC_T01_candidates (
     state_id INT,
     city_id INT,
 
+    father_name VARCHAR(150),
+    address1 VARCHAR(255),
+    address2 VARCHAR(255),
+    pincode VARCHAR(20),
+    dob DATE,
+    gender VARCHAR(20),
+    skills TEXT,
+    education VARCHAR(150),
+    experience VARCHAR(150),
+    industry_type VARCHAR(150),
+    resume_file_path TEXT,
+    passport_expiry_date DATE,
+    passport_file_path TEXT,
+    aadhar_number VARCHAR(50),
+    aadhar_file_path TEXT,
+    pan_number VARCHAR(50),
+    pan_file_path TEXT,
+    voter_id_number VARCHAR(50),
+    voter_id_file_path TEXT,
+    profile_photo_file_path TEXT,
+    languages_known TEXT,
+
     status VARCHAR(50) DEFAULT 'New',
 
     user_id INT DEFAULT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
 
     FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
     FOREIGN KEY (state_id) REFERENCES LOC_M02_states(state_id),
@@ -170,13 +194,37 @@ BEGIN
       st.state_name,
       c.city_id,
       ci.city_name,
+      c.father_name,
+      c.address1,
+      c.address2,
+      c.pincode,
+      c.dob,
+      c.gender,
+      c.skills,
+      c.education,
+      c.experience,
+      c.industry_type,
+      c.resume_file_path,
+      c.passport_expiry_date,
+      c.passport_file_path,
+      c.aadhar_number,
+      c.aadhar_file_path,
+      c.pan_number,
+      c.pan_file_path,
+      c.voter_id_number,
+      c.voter_id_file_path,
+      c.profile_photo_file_path,
+      c.languages_known,
       c.status,
       c.user_id,
-      c.created_at
+      c.created_at,
+      c.updated_at,
+      c.deleted_at
     FROM REC_T01_candidates c
     LEFT JOIN LOC_M01_countries co ON co.country_id = c.country_id
     LEFT JOIN LOC_M02_states st ON st.state_id = c.state_id
     LEFT JOIN LOC_M03_cities ci ON ci.city_id = c.city_id
+    WHERE c.deleted_at IS NULL
     ORDER BY c.candidate_id DESC;
 
   ELSEIF p_action = 'GET' THEN
@@ -188,10 +236,18 @@ BEGIN
   ELSEIF p_action = 'CREATE' THEN
     INSERT INTO REC_T01_candidates (
       candidate_code, first_name, last_name, phone, email, passport_number,
-      country_id, state_id, city_id, status, user_id
+      country_id, state_id, city_id, father_name, address1, address2, pincode, dob, gender,
+      skills, education, experience, industry_type, resume_file_path, passport_expiry_date,
+      passport_file_path, aadhar_number, aadhar_file_path, pan_number, pan_file_path,
+      voter_id_number, voter_id_file_path, profile_photo_file_path, languages_known,
+      status, user_id
     ) VALUES (
       NULL, p_first_name, p_last_name, p_phone, p_email, p_passport_number,
-      p_country_id, p_state_id, p_city_id, COALESCE(NULLIF(p_status,''), 'New'), p_user_id
+      p_country_id, p_state_id, p_city_id, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL,
+      COALESCE(NULLIF(p_status,''), 'New'), p_user_id
     );
     SET @new_id := LAST_INSERT_ID();
     UPDATE REC_T01_candidates
@@ -211,7 +267,8 @@ BEGIN
       state_id = COALESCE(p_state_id, state_id),
       city_id = COALESCE(p_city_id, city_id),
       status = COALESCE(NULLIF(p_status,''), status),
-      user_id = COALESCE(p_user_id, user_id)
+      user_id = COALESCE(p_user_id, user_id),
+      updated_at = CURRENT_TIMESTAMP
     WHERE candidate_id = p_candidate_id;
     SELECT ROW_COUNT() AS affected_rows;
 
@@ -222,11 +279,72 @@ BEGIN
     SELECT ROW_COUNT() AS affected_rows;
 
   ELSEIF p_action = 'DELETE' THEN
-    DELETE FROM REC_T01_candidates WHERE candidate_id = p_candidate_id;
+    UPDATE REC_T01_candidates
+    SET status = 'Inactive', deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+    WHERE candidate_id = p_candidate_id;
     SELECT ROW_COUNT() AS affected_rows;
 
   ELSE
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_rec_candidates: invalid action';
+  END IF;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_rec_candidate_profiles $$
+CREATE PROCEDURE sp_rec_candidate_profiles(
+  IN p_action VARCHAR(30),
+  IN p_candidate_id INT,
+  IN p_father_name VARCHAR(150),
+  IN p_address1 VARCHAR(255),
+  IN p_address2 VARCHAR(255),
+  IN p_pincode VARCHAR(20),
+  IN p_dob DATE,
+  IN p_gender VARCHAR(20),
+  IN p_skills TEXT,
+  IN p_education VARCHAR(150),
+  IN p_experience VARCHAR(150),
+  IN p_industry_type VARCHAR(150),
+  IN p_resume_file_path TEXT,
+  IN p_passport_expiry_date DATE,
+  IN p_passport_file_path TEXT,
+  IN p_aadhar_number VARCHAR(50),
+  IN p_aadhar_file_path TEXT,
+  IN p_pan_number VARCHAR(50),
+  IN p_pan_file_path TEXT,
+  IN p_voter_id_number VARCHAR(50),
+  IN p_voter_id_file_path TEXT,
+  IN p_profile_photo_file_path TEXT,
+  IN p_languages_known TEXT
+)
+BEGIN
+  IF p_action = 'UPSERT' THEN
+    UPDATE REC_T01_candidates
+    SET
+      father_name = COALESCE(p_father_name, father_name),
+      address1 = COALESCE(p_address1, address1),
+      address2 = COALESCE(p_address2, address2),
+      pincode = COALESCE(p_pincode, pincode),
+      dob = COALESCE(p_dob, dob),
+      gender = COALESCE(p_gender, gender),
+      skills = COALESCE(p_skills, skills),
+      education = COALESCE(p_education, education),
+      experience = COALESCE(p_experience, experience),
+      industry_type = COALESCE(p_industry_type, industry_type),
+      resume_file_path = COALESCE(p_resume_file_path, resume_file_path),
+      passport_expiry_date = COALESCE(p_passport_expiry_date, passport_expiry_date),
+      passport_file_path = COALESCE(p_passport_file_path, passport_file_path),
+      aadhar_number = COALESCE(p_aadhar_number, aadhar_number),
+      aadhar_file_path = COALESCE(p_aadhar_file_path, aadhar_file_path),
+      pan_number = COALESCE(p_pan_number, pan_number),
+      pan_file_path = COALESCE(p_pan_file_path, pan_file_path),
+      voter_id_number = COALESCE(p_voter_id_number, voter_id_number),
+      voter_id_file_path = COALESCE(p_voter_id_file_path, voter_id_file_path),
+      profile_photo_file_path = COALESCE(p_profile_photo_file_path, profile_photo_file_path),
+      languages_known = COALESCE(p_languages_known, languages_known),
+      updated_at = CURRENT_TIMESTAMP
+    WHERE candidate_id = p_candidate_id;
+    SELECT ROW_COUNT() AS affected_rows;
+  ELSE
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_rec_candidate_profiles: invalid action';
   END IF;
 END $$
 

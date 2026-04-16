@@ -4,7 +4,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Alert, Box, Chip, Divider, Stack, Typography } from "@mui/material";
-import { AdButton, AdCard, AdCheckBox, AdNotification } from "../../common/ad";
+import { AdButton, AdCard, AdCheckBox, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
 import { jobsApi, type JobDetail } from "../../common/services/jobsApi";
@@ -230,9 +230,9 @@ export default function CandidateJobApplyPage() {
                 <Divider />
                 <Box>
                   <Typography fontWeight={950}>Job Description</Typography>
-                  <Typography variant="body2" sx={{ mt: 0.75, color: "text.secondary", whiteSpace: "pre-wrap" }}>
-                    {job.job.job_description}
-                  </Typography>
+                  <Box sx={{ mt: 0.75 }}>
+                    <AdRichTextContent html={job.job.job_description} />
+                  </Box>
                 </Box>
               </>
             ) : null}

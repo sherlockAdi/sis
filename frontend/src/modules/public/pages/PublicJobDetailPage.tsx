@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Alert, Box, Button, Chip, Container, Divider, Stack, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { AdRichTextContent } from "../../../common/ad";
 import { jobsApi, type JobDetail } from "../../../common/services/jobsApi";
 import { getAuthToken } from "../../../common/services/tokenStorage";
 
@@ -132,9 +133,14 @@ export default function PublicJobDetailPage() {
                   </Typography>
                 ) : null}
                 {data.job.compensation_text ? (
-                  <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "pre-wrap" }}>
-                    Compensation: {data.job.compensation_text}
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      Compensation:
+                    </Typography>
+                    <Box sx={{ mt: 0.75 }}>
+                      <AdRichTextContent html={data.job.compensation_text} />
+                    </Box>
+                  </Box>
                 ) : null}
                 {data.job.min_education ? (
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -168,9 +174,9 @@ export default function PublicJobDetailPage() {
               <>
                 <Divider sx={{ my: 2.5 }} />
                 <Typography fontWeight={950}>Job Description</Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", whiteSpace: "pre-wrap" }}>
-                  {data.job.job_description}
-                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <AdRichTextContent html={data.job.job_description} />
+                </Box>
               </>
             ) : null}
 

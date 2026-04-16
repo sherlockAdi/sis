@@ -1,44 +1,25 @@
--- ============================================
--- Partner Transactions Schema + Procedures
--- NOTE: API must access DB via procedures only.
--- ============================================
+-- Partner panel expansion: locations, extra contact fields, soft delete metadata
 
--- ============================================
--- PART_T01_partners
--- ============================================
+ALTER TABLE PART_T01_partners
+  ADD COLUMN country_id INT DEFAULT NULL,
+  ADD COLUMN state_id INT DEFAULT NULL,
+  ADD COLUMN city_id INT DEFAULT NULL,
+  ADD COLUMN alt_partner_name VARCHAR(150) DEFAULT NULL,
+  ADD COLUMN alt_phone VARCHAR(20) DEFAULT NULL,
+  ADD COLUMN organisation_name VARCHAR(150) DEFAULT NULL,
+  ADD COLUMN address2 VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN pin VARCHAR(20) DEFAULT NULL,
+  ADD COLUMN landline VARCHAR(30) DEFAULT NULL,
+  ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;
 
-CREATE TABLE IF NOT EXISTS PART_T01_partners (
-    partner_id INT AUTO_INCREMENT PRIMARY KEY,
-    partner_code VARCHAR(20) UNIQUE,
-    partner_name VARCHAR(150) NOT NULL,
-    contact_name VARCHAR(100),
-    phone VARCHAR(20),
-    email VARCHAR(150),
-    address VARCHAR(255),
-    country_id INT DEFAULT NULL,
-    state_id INT DEFAULT NULL,
-    city_id INT DEFAULT NULL,
-    alt_partner_name VARCHAR(150),
-    alt_phone VARCHAR(20),
-    organisation_name VARCHAR(150),
-    address2 VARCHAR(255),
-    pin VARCHAR(20),
-    landline VARCHAR(30),
-    user_id INT DEFAULT NULL,
-    status BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-
-    FOREIGN KEY (user_id) REFERENCES AUTH_U04_users(user_id),
+ALTER TABLE PART_T01_partners
+  ADD CONSTRAINT fk_partners_country
     FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
+  ADD CONSTRAINT fk_partners_state
     FOREIGN KEY (state_id) REFERENCES LOC_M02_states(state_id),
-    FOREIGN KEY (city_id) REFERENCES LOC_M03_cities(city_id)
-);
-
--- ============================================
--- Stored Procedures
--- ============================================
+  ADD CONSTRAINT fk_partners_city
+    FOREIGN KEY (city_id) REFERENCES LOC_M03_cities(city_id);
 
 DELIMITER $$
 
@@ -218,10 +199,7 @@ BEGIN
 
   ELSEIF p_action = 'DELETE' THEN
     UPDATE PART_T01_partners
-    SET
-      status = FALSE,
-      deleted_at = CURRENT_TIMESTAMP,
-      updated_at = CURRENT_TIMESTAMP
+    SET status = FALSE, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
     WHERE partner_id = p_partner_id;
     SELECT ROW_COUNT() AS affected_rows;
 
