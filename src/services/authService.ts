@@ -183,6 +183,75 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, saltRounds);
 }
 
+async function resolveCandidateRoleId(): Promise<number> {
+  const roleRows = await callProc<RowDataPacket & { role_id: number }>(
+    `CALL sp_roles_get_by_code(:role_code)`,
+    { role_code: 'CANDIDATE' }
+  );
+
+  let role_id = roleRows[0]?.role_id;
+  if (!role_id) {
+    const inserted = await callProc<RowDataPacket & { role_id: number }>(
+      `CALL sp_roles_create(:role_name, :role_code, :description, :status)`,
+      { role_name: 'Candidate', role_code: 'CANDIDATE', description: 'Candidate portal role', status: true }
+    );
+    role_id = inserted[0]?.role_id;
+  }
+
+  if (!role_id) throw httpError(500, 'Failed to resolve candidate role');
+  return role_id;
+}
+
+export async function registerUser(body: {
+  first_name?: string | null;
+  last_name?: string | null;
+  username: string;
+  email?: string | null;
+  phone?: string | null;
+  password: string;
+}): Promise<{ token: string; user_id: number; username: string }> {
+  const first_name = String(body.first_name ?? '').trim() || null;
+  const last_name = String(body.last_name ?? '').trim() || null;
+  const username = String(body.username ?? '').trim();
+  const email = String(body.email ?? '').trim() || null;
+  const phone = String(body.phone ?? '').trim() || null;
+  const password = String(body.password ?? '');
+
+  if (!username) throw httpError(400, 'username is required');
+  if (!password) throw httpError(400, 'password is required');
+
+  const role_id = await resolveCandidateRoleId();
+  const password_hash = await hashPassword(password);
+
+  try {
+    const rows = await callProc<RowDataPacket & { user_id: number }>(
+      `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
+      {
+        role_id,
+        first_name,
+        last_name,
+        username,
+        email,
+        phone,
+        password_hash,
+        status: true
+      }
+    );
+
+    const user_id = rows[0]?.user_id;
+    if (!user_id) throw httpError(500, 'Failed to create user');
+
+    return {
+      token: signToken({ user_id, role_id, username }),
+      user_id,
+      username
+    };
+  } catch (e: any) {
+    if (e?.code === 'ER_DUP_ENTRY') throw httpError(409, 'username/email already exists');
+    throw e;
+  }
+}
+
 export async function bootstrapFirstAdmin(username: string, password: string): Promise<{ token: string }> {
   if (!env.ALLOW_BOOTSTRAP) throw httpError(403, 'Bootstrap disabled (set ALLOW_BOOTSTRAP=true)');
 
