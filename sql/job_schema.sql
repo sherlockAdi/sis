@@ -48,6 +48,37 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
     FOREIGN KEY (currency_id) REFERENCES PAY_M02_currencies(currency_id)
 );
 
+CREATE TABLE
+IF NOT EXISTS JOB_T05_job_locations
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+
+    country_id INT,
+    state_id INT,
+    city_id INT,
+
+    vacancy INT,
+    salary_min DECIMAL
+(10,2),
+    salary_max DECIMAL
+(10,2),
+
+    FOREIGN KEY
+(job_id) REFERENCES JOB_T01_jobs
+(job_id) ON
+DELETE CASCADE,
+    FOREIGN KEY (country_id)
+REFERENCES LOC_M01_countries
+(country_id),
+    FOREIGN KEY
+(state_id) REFERENCES LOC_M02_states
+(state_id),
+    FOREIGN KEY
+(city_id) REFERENCES LOC_M03_cities
+(city_id)
+);
+
 
 -- ============================================
 -- JOB_T02_job_requirements
@@ -101,23 +132,7 @@ CREATE TABLE IF NOT EXISTS JOB_T04_job_documents (
 -- JOB_T05_job_locations
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS JOB_T05_job_locations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    job_id INT NOT NULL,
 
-    country_id INT,
-    state_id INT,
-    city_id INT,
-
-    vacancy INT,
-    salary_min DECIMAL(10,2),
-    salary_max DECIMAL(10,2),
-
-    FOREIGN KEY (job_id) REFERENCES JOB_T01_jobs(job_id) ON DELETE CASCADE,
-    FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
-    FOREIGN KEY (state_id) REFERENCES LOC_M02_states(state_id),
-    FOREIGN KEY (city_id) REFERENCES LOC_M03_cities(city_id)
-);
 
 
 -- ============================================
