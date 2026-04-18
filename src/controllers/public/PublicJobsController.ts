@@ -2,6 +2,7 @@ import { Controller, Get, Path, Query, Route, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
+import { decodeBase64Text } from '../../utils/base64Text';
 
 type PublicJobPreviewRow = {
   job_id: number;
@@ -37,6 +38,7 @@ type PublicJobRow = {
   salary_min: string | null;
   salary_max: string | null;
   job_description?: string | null;
+  compensation_text?: string | null;
   status: string | null;
   created_by: number | null;
   created_at: string;
@@ -67,6 +69,14 @@ type PublicJobLocation = {
   salary_min: string | null;
   salary_max: string | null;
 };
+
+function decodePublicJobTextFields(job: PublicJobRow): PublicJobRow {
+  return {
+    ...job,
+    job_description: decodeBase64Text(job.job_description),
+    compensation_text: decodeBase64Text(job.compensation_text),
+  };
+}
 
 @Route('public/jobs')
 @Tags('Public')
@@ -146,6 +156,6 @@ export class PublicJobsController extends Controller {
       )
     ]);
 
-    return { job, requirements, benefits, documents, job_specific_documents, locations };
+    return { job: decodePublicJobTextFields(job), requirements, benefits, documents, job_specific_documents, locations };
   }
 }

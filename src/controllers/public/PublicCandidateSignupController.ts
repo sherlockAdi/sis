@@ -101,7 +101,7 @@ export class PublicCandidateSignupController extends Controller {
       voter_id_number?: string | null;
       languages_known?: string | null;
     }
-  ): Promise<{ candidate_id: number; username: string; emailed: boolean }> {
+  ): Promise<{ candidate_id: number; username: string; emailed: boolean; user_id: number | null; user_created: boolean; auth_error?: string | null }> {
     const email = String(body.email ?? '').trim();
     if (!email) throw httpError(400, 'email is required');
 
@@ -146,40 +146,49 @@ export class PublicCandidateSignupController extends Controller {
       );
       role_id = r[0]?.role_id;
     }
-    if (!role_id) throw httpError(500, 'Failed to resolve candidate role');
-
     const plainPassword = randomPassword(10);
     const password_hash = await hashPassword(plainPassword);
 
-    let user_id: number | undefined;
-    try {
-      const userRows = await callProc<RowDataPacket & { user_id: number }>(
-        `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
-        {
-          role_id,
-          first_name: candidate.first_name ?? null,
-          last_name: candidate.last_name ?? null,
-          username,
-          email: candidate.email ?? null,
-          phone: candidate.phone ?? null,
-          password_hash,
-          status: true
+    let user_id: number | null = null;
+    let user_created = false;
+    let auth_error: string | null = null;
+    if (role_id) {
+      try {
+        const userRows = await callProc<RowDataPacket & { user_id: number }>(
+          `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
+          {
+            role_id,
+            first_name: candidate.first_name ?? null,
+            last_name: candidate.last_name ?? null,
+            username,
+            email: candidate.email ?? null,
+            phone: candidate.phone ?? null,
+            password_hash,
+            status: true
+          }
+        );
+        user_id = userRows[0]?.user_id ?? null;
+        user_created = Boolean(user_id);
+      } catch (e: any) {
+        if (e?.code === 'ER_DUP_ENTRY') {
+          auth_error = 'User already exists for this username/email';
+        } else {
+          auth_error = String(e?.message ?? 'Failed to create user');
         }
-      );
-      user_id = userRows[0]?.user_id;
-    } catch (e: any) {
-      if (e?.code === 'ER_DUP_ENTRY') throw httpError(409, 'User already exists for this username/email');
-      throw e;
+      }
+    } else {
+      auth_error = 'Candidate role is not configured';
     }
-    if (!user_id) throw httpError(500, 'Failed to create user');
 
-    await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
-      { candidate_id, user_id }
-    );
+    if (user_created && user_id) {
+      await callProc<RowDataPacket & { affected_rows: number }>(
+        `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+        { candidate_id, user_id }
+      );
+    }
 
     let emailed = false;
-    if (candidate.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (user_created && candidate.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
       try {
         await sendSmtpMail(
           {
@@ -207,6 +216,6 @@ export class PublicCandidateSignupController extends Controller {
       }
     }
 
-    return { candidate_id, username, emailed };
+    return { candidate_id, username, emailed, user_id, user_created, auth_error };
   }
 }

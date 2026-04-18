@@ -88,7 +88,7 @@ export class PartnersController extends Controller {
       landline?: string | null;
       status?: boolean | null;
     }
-  ): Promise<{ partner_id: number; user_id: number; username: string; emailed: boolean }> {
+  ): Promise<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null }> {
     const partner_code = String(body.partner_code ?? '').trim();
     const partner_name = String(body.partner_name ?? '').trim();
     if (!partner_name) throw httpError(400, 'partner_name is required');
@@ -138,40 +138,49 @@ export class PartnersController extends Controller {
       );
       role_id = r[0]?.role_id;
     }
-    if (!role_id) throw httpError(500, 'Failed to resolve partner role');
-
     const plainPassword = randomPassword(10);
     const password_hash = await hashPassword(plainPassword);
 
-    let user_id: number | undefined;
-    try {
-      const userRows = await callProc<RowDataPacket & { user_id: number }>(
-        `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
-        {
-          role_id,
-          first_name: null,
-          last_name: null,
-          username,
-          email: partner.email ?? null,
-          phone: partner.phone ?? null,
-          password_hash,
-          status: true
+    let user_id: number | null = null;
+    let user_created = false;
+    let auth_error: string | null = null;
+    if (role_id) {
+      try {
+        const userRows = await callProc<RowDataPacket & { user_id: number }>(
+          `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
+          {
+            role_id,
+            first_name: null,
+            last_name: null,
+            username,
+            email: partner.email ?? null,
+            phone: partner.phone ?? null,
+            password_hash,
+            status: true
+          }
+        );
+        user_id = userRows[0]?.user_id ?? null;
+        user_created = Boolean(user_id);
+      } catch (e: any) {
+        if (e?.code === 'ER_DUP_ENTRY') {
+          auth_error = 'User already exists for this username/email';
+        } else {
+          auth_error = String(e?.message ?? 'Failed to create user');
         }
-      );
-      user_id = userRows[0]?.user_id;
-    } catch (e: any) {
-      if (e?.code === 'ER_DUP_ENTRY') throw httpError(409, 'User already exists for this username/email');
-      throw e;
+      }
+    } else {
+      auth_error = 'Partner role is not configured';
     }
-    if (!user_id) throw httpError(500, 'Failed to create partner user');
 
-    await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_partners('SET_USER', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL)`,
-      { partner_id, user_id }
-    );
+    if (user_created && user_id) {
+      await callProc<RowDataPacket & { affected_rows: number }>(
+        `CALL sp_partners('SET_USER', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL)`,
+        { partner_id, user_id }
+      );
+    }
 
     let emailed = false;
-    if (partner.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (user_created && partner.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
       try {
         await sendSmtpMail(
           {
@@ -199,7 +208,7 @@ export class PartnersController extends Controller {
       }
     }
 
-    return { partner_id, user_id, username, emailed };
+    return { partner_id, user_id, username, emailed, user_created, auth_error };
   }
 
   @Put('{partnerId}')

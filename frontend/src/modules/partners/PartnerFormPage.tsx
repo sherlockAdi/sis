@@ -208,8 +208,10 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         setToast({ open: true, message: "Partner updated", severity: "success" });
       } else {
         const created = await partnersApi.create(payload);
-        const emailMsg = created.emailed ? "Credentials emailed." : "Email not sent (check SMTP).";
-        setToast({ open: true, message: `Partner created. Username: ${created.username}. ${emailMsg}`, severity: "success" });
+        const authMsg = created.user_created
+          ? `Partner created. Username: ${created.username}. ${created.emailed ? "Credentials emailed." : "Email not sent (check SMTP)." }`
+          : `Partner created, but the login account could not be created right now${created.auth_error ? `: ${created.auth_error}` : ""}.`;
+        setToast({ open: true, message: authMsg, severity: "success" });
       }
 
       navigate("/portal/partners");

@@ -241,7 +241,8 @@ VALUES
   ('Document Types', 'ADM_SET_DOC_TYPES', @m_settings, '/masters/documents/types', 'description', 114, TRUE),
   ('Notification Settings', 'ADM_SET_NOTIF', @m_settings, '/settings/notifications', 'settings', 115, TRUE),
   ('Integration Settings', 'ADM_SET_INTEG', @m_settings, '/settings/integrations', 'settings', 116, TRUE),
-  ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 117, TRUE)
+  ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 117, TRUE),
+  ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 118, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

@@ -3,6 +3,7 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import { getPartnerByUserId, getRoleCodeForUserId } from '../../services/partnerService';
+import { decodeBase64Text, encodeBase64Text } from '../../utils/base64Text';
 
 type JobRow = {
   job_id: number;
@@ -126,6 +127,14 @@ async function assertJobOwnedByPartner(job_id: number, partner_id: number): Prom
   if (Number(job.partner_id ?? 0) !== Number(partner_id)) throw httpError(403, 'Forbidden');
 }
 
+function decodeJobTextFields(job: JobRow): JobRow {
+  return {
+    ...job,
+    job_description: decodeBase64Text(job.job_description),
+    compensation_text: decodeBase64Text(job.compensation_text),
+  };
+}
+
 @Route('jobs')
 @Tags('Jobs')
 export class JobsController extends Controller {
@@ -204,7 +213,7 @@ export class JobsController extends Controller {
       ),
     ]);
 
-    return { job, requirements, benefits, documents, job_specific_documents, locations, status_history, languages };
+    return { job: decodeJobTextFields(job), requirements, benefits, documents, job_specific_documents, locations, status_history, languages };
   }
 
   @Post()
@@ -230,13 +239,13 @@ export class JobsController extends Controller {
         vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
         salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
         salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
-        job_description: body.job_description ?? null,
+        job_description: encodeBase64Text(body.job_description),
         status: body.status ?? null,
         partner_id: resolvedPartnerId,
         employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
         work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
         currency_id: typeof body.currency_id === 'number' ? body.currency_id : null,
-        compensation_text: body.compensation_text ?? null,
+        compensation_text: encodeBase64Text(body.compensation_text),
         min_education: body.min_education ?? null,
         min_experience: body.min_experience ?? null,
         min_age: typeof body.min_age === 'number' ? body.min_age : null,
@@ -341,13 +350,13 @@ export class JobsController extends Controller {
         vacancy: typeof body.vacancy === 'number' ? body.vacancy : null,
         salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
         salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
-        job_description: body.job_description ?? null,
+        job_description: encodeBase64Text(body.job_description),
         status: body.status ?? null,
         partner_id: ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null),
         employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
         work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
         currency_id: typeof body.currency_id === 'number' ? body.currency_id : null,
-        compensation_text: body.compensation_text ?? null,
+        compensation_text: encodeBase64Text(body.compensation_text),
         min_education: body.min_education ?? null,
         min_experience: body.min_experience ?? null,
         min_age: typeof body.min_age === 'number' ? body.min_age : null,

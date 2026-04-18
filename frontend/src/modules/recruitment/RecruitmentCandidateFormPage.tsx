@@ -371,6 +371,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
       const candidate = form.candidate_id
         ? { candidate_id: form.candidate_id }
         : await recruitmentApi.candidates.create(payload);
+      const createdCandidate = form.candidate_id ? null : candidate;
 
       const targetCandidateId = candidate.candidate_id;
       const uploaded = await uploadSelectedFiles(targetCandidateId);
@@ -385,10 +386,15 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
       };
 
       await recruitmentApi.candidates.update(targetCandidateId, finalPayload);
+      const authMsg = form.candidate_id
+        ? "Candidate updated"
+        : createdCandidate?.user_created
+          ? `Candidate created. Username: ${createdCandidate.username}${createdCandidate.emailed ? " (Password emailed)" : " (Password not emailed)"}.`
+          : `Candidate created, but the login account could not be created right now${createdCandidate?.auth_error ? `: ${createdCandidate.auth_error}` : ""}.`;
       setToast({
         open: true,
         severity: "success",
-        message: form.candidate_id ? "Candidate updated" : `Candidate created. Username: ${(candidate as any).username ?? "generated"}`,
+        message: authMsg,
       });
 
       navigate(`/portal/recruitment/candidates/${targetCandidateId}`);
