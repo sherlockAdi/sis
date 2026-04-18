@@ -4,7 +4,7 @@ import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import { env } from '../../config/env';
 import { sendSmtpMail } from '../../utils/smtpClient';
-import { hashPassword } from '../../services/authService';
+import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { credentialsEmailText } from '../../utils/emailTemplates';
 
 type PartnerRow = {
@@ -88,10 +88,14 @@ export class PartnersController extends Controller {
       landline?: string | null;
       status?: boolean | null;
     }
-  ): Promise<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null }> {
+  ): Promise<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
     const partner_code = String(body.partner_code ?? '').trim();
     const partner_name = String(body.partner_name ?? '').trim();
     if (!partner_name) throw httpError(400, 'partner_name is required');
+    const email = String(body.email ?? '').trim();
+    if (email) {
+      if (await findExistingUserByUsernameOrEmail('', email)) throw httpError(409, 'Email already registered');
+    }
 
     const rows = await callProc<RowDataPacket & { partner_id: number }>(
       `CALL sp_partners('CREATE', NULL, :partner_code, :partner_name, :contact_name, :phone, :email, :address, :country_id, :state_id, :city_id, :alt_partner_name, :alt_phone, :organisation_name, :address2, :pin, :landline, NULL, :status, NULL)`,
@@ -143,6 +147,7 @@ export class PartnersController extends Controller {
 
     let user_id: number | null = null;
     let user_created = false;
+    const existing_user_used = false;
     let auth_error: string | null = null;
     if (role_id) {
       try {
@@ -170,13 +175,6 @@ export class PartnersController extends Controller {
       }
     } else {
       auth_error = 'Partner role is not configured';
-    }
-
-    if (user_created && user_id) {
-      await callProc<RowDataPacket & { affected_rows: number }>(
-        `CALL sp_partners('SET_USER', :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL)`,
-        { partner_id, user_id }
-      );
     }
 
     let emailed = false;
@@ -208,7 +206,7 @@ export class PartnersController extends Controller {
       }
     }
 
-    return { partner_id, user_id, username, emailed, user_created, auth_error };
+    return { partner_id, user_id, username, emailed, user_created, existing_user_used, auth_error };
   }
 
   @Put('{partnerId}')

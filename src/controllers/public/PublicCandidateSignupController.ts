@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Route, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
-import { hashPassword } from '../../services/authService';
+import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
@@ -101,9 +101,10 @@ export class PublicCandidateSignupController extends Controller {
       voter_id_number?: string | null;
       languages_known?: string | null;
     }
-  ): Promise<{ candidate_id: number; username: string; emailed: boolean; user_id: number | null; user_created: boolean; auth_error?: string | null }> {
+  ): Promise<{ candidate_id: number; username: string; emailed: boolean; user_id: number | null; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
     const email = String(body.email ?? '').trim();
     if (!email) throw httpError(400, 'email is required');
+    if (await findExistingUserByUsernameOrEmail('', email)) throw httpError(409, 'Email already registered');
 
     const created = await callProc<RowDataPacket & { candidate_id: number }>(
       `CALL sp_rec_candidates('CREATE', NULL, :first_name, :last_name, :phone, :email, :passport_number, :country_id, :state_id, :city_id, 'New', NULL)`,
@@ -151,6 +152,7 @@ export class PublicCandidateSignupController extends Controller {
 
     let user_id: number | null = null;
     let user_created = false;
+    const existing_user_used = false;
     let auth_error: string | null = null;
     if (role_id) {
       try {
@@ -178,13 +180,6 @@ export class PublicCandidateSignupController extends Controller {
       }
     } else {
       auth_error = 'Candidate role is not configured';
-    }
-
-    if (user_created && user_id) {
-      await callProc<RowDataPacket & { affected_rows: number }>(
-        `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
-        { candidate_id, user_id }
-      );
     }
 
     let emailed = false;
@@ -216,6 +211,6 @@ export class PublicCandidateSignupController extends Controller {
       }
     }
 
-    return { candidate_id, username, emailed, user_id, user_created, auth_error };
+    return { candidate_id, username, emailed, user_id, user_created, existing_user_used, auth_error };
   }
 }

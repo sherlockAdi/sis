@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Post, Put, Path, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
-import { hashPassword } from '../../services/authService';
+import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
@@ -153,7 +153,10 @@ export class RecruitmentCandidatesController extends Controller {
       status?: string | null;
       user_id?: number | null;
     }
-  ): Promise<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null }> {
+  ): Promise<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
+    const existingUser = body.email ? await findExistingUserByUsernameOrEmail('', body.email) : null;
+    if (existingUser) throw httpError(409, 'Email already registered');
+
     const created = await callProc<RowDataPacket & { candidate_id: number }>(
       `CALL sp_rec_candidates('CREATE', NULL, :first_name, :last_name, :phone, :email, :passport_number, :country_id, :state_id, :city_id, :status, NULL)`,
       {
@@ -202,6 +205,7 @@ export class RecruitmentCandidatesController extends Controller {
 
     let user_id: number | null = null;
     let user_created = false;
+    const existing_user_used = false;
     let auth_error: string | null = null;
     if (role_id) {
       try {
@@ -229,14 +233,6 @@ export class RecruitmentCandidatesController extends Controller {
       }
     } else {
       auth_error = 'Candidate role is not configured';
-    }
-
-    // Link candidate -> user only when auth user creation succeeds.
-    if (user_created && user_id) {
-      await callProc<RowDataPacket & { affected_rows: number }>(
-        `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
-        { candidate_id, user_id }
-      );
     }
 
     // Email credentials (best-effort)
@@ -269,7 +265,7 @@ export class RecruitmentCandidatesController extends Controller {
       }
     }
 
-    return { candidate_id, user_id, username, emailed, user_created, auth_error };
+    return { candidate_id, user_id, username, emailed, user_created, existing_user_used, auth_error };
   }
 
   @Put('{candidateId}')

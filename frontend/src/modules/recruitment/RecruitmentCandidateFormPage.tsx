@@ -390,7 +390,9 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
         ? "Candidate updated"
         : createdCandidate?.user_created
           ? `Candidate created. Username: ${createdCandidate.username}${createdCandidate.emailed ? " (Password emailed)" : " (Password not emailed)"}.`
-          : `Candidate created, but the login account could not be created right now${createdCandidate?.auth_error ? `: ${createdCandidate.auth_error}` : ""}.`;
+          : createdCandidate?.existing_user_used
+            ? `Candidate created. Existing login account linked: ${createdCandidate.username}.`
+            : `Candidate created, but the login account could not be created right now${createdCandidate?.auth_error ? `: ${createdCandidate.auth_error}` : ""}.`;
       setToast({
         open: true,
         severity: "success",

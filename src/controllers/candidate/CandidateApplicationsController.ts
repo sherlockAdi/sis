@@ -3,8 +3,14 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import type { JwtPayload } from '../../security/jwt';
+import { getCandidateProfileMissingFields, type CandidateProfileLike } from '../../utils/candidateProfileCompleteness';
 
 type CandidateRow = {
+  candidate_id: number;
+  user_id: number | null;
+};
+
+type CandidateProfileRow = CandidateProfileLike & {
   candidate_id: number;
   user_id: number | null;
 };
@@ -54,6 +60,21 @@ async function getCandidateIdForUser(user_id: number, username: string): Promise
   );
 }
 
+async function getCandidateProfileForUser(user_id: number, username: string): Promise<CandidateProfileRow> {
+  const rows = await callProc<RowDataPacket & CandidateProfileRow>(
+    `CALL sp_rec_candidates('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+    { user_id }
+  );
+  const candidate = rows[0] as CandidateProfileRow | undefined;
+  if (!candidate) {
+    throw httpError(
+      404,
+      `Candidate profile not found. Link this user to a candidate (user_id=${user_id}, username=${username}) via sp_rec_candidates('SET_USER', ...).`
+    );
+  }
+  return candidate;
+}
+
 async function assertOwnsApplication(application_id: number, candidate_id: number): Promise<void> {
   const appRows = await callProc<RowDataPacket & { candidate_id: number }>(
     `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
@@ -62,6 +83,39 @@ async function assertOwnsApplication(application_id: number, candidate_id: numbe
   const appCandidateId = appRows[0]?.candidate_id;
   if (!appCandidateId) throw httpError(404, 'Application not found');
   if (appCandidateId !== candidate_id) throw httpError(403, 'Forbidden');
+}
+
+async function assertCandidateProfileComplete(candidate_id: number): Promise<void> {
+  const candidateRows = await callProc<RowDataPacket & CandidateProfileRow>(
+    `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    { candidate_id }
+  );
+  const candidate = candidateRows[0] as CandidateProfileRow | undefined;
+  if (!candidate) throw httpError(404, 'Candidate profile not found');
+  const missingFields = getCandidateProfileMissingFields(candidate);
+  if (missingFields.length) {
+    throw httpError(400, `Complete your profile before applying. Missing: ${missingFields.join(', ')}`);
+  }
+}
+
+function hasProfileDocument(candidate: CandidateProfileLike, documentName: string): boolean {
+  const name = String(documentName ?? '').toLowerCase();
+  const rules: Array<{ keys: string[]; value: unknown }> = [
+    { keys: ['resume', 'cv'], value: candidate.resume_file_path },
+    { keys: ['passport'], value: candidate.passport_file_path },
+    { keys: ['aadhar', 'aadhaar'], value: candidate.aadhar_file_path },
+    { keys: ['pan'], value: candidate.pan_file_path },
+    { keys: ['voter'], value: candidate.voter_id_file_path },
+    { keys: ['photo', 'profile image', 'profile photo'], value: candidate.profile_photo_file_path },
+  ];
+
+  return rules.some((rule) => rule.keys.some((key) => name.includes(key)) && Boolean(String(rule.value ?? '').trim()));
+}
+
+function isDocumentSatisfied(candidate: CandidateProfileLike, doc: CandidateApplicationDocRow): boolean {
+  if (String(doc.file_path ?? '').trim()) return true;
+  if (doc.document_type_id != null && hasProfileDocument(candidate, doc.document_name)) return true;
+  return false;
 }
 
 @Route('candidate/applications')
@@ -99,6 +153,7 @@ export class CandidateApplicationsController extends Controller {
   public async start(@Request() req: any, @Body() body: { job_id: number }): Promise<{ application_id: number }> {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
+    await assertCandidateProfileComplete(candidate_id);
     const job_id = Number((body as any)?.job_id);
     if (!job_id) throw httpError(400, 'job_id is required');
 
@@ -121,16 +176,26 @@ export class CandidateApplicationsController extends Controller {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
     await assertOwnsApplication(applicationId, candidate_id);
+    await assertCandidateProfileComplete(candidate_id);
 
     const consent = Boolean((body as any)?.consent);
     if (!consent) throw httpError(400, 'Consent is required');
 
+    const candidate = await getCandidateProfileForUser(user.user_id, user.username);
     const docs = await callProc<RowDataPacket & CandidateApplicationDocRow>(
       `CALL sp_rec_application_documents(:application_id)`,
       { application_id: applicationId }
     );
-    const missing = docs.filter((d) => Number(d.job_is_required) === 1 && !String(d.file_path ?? '').trim());
-    if (missing.length) throw httpError(400, 'Upload all required documents before applying');
+    const missing = docs.filter((d) => Number(d.job_is_required) === 1 && !isDocumentSatisfied(candidate, d));
+    if (missing.length) {
+      const missingLabels = missing.map((d) => d.document_name).filter(Boolean);
+      throw httpError(
+        400,
+        missingLabels.length
+          ? `Upload all required documents before applying: ${missingLabels.join(', ')}`
+          : 'Upload all required documents before applying'
+      );
+    }
 
     await callProc<RowDataPacket & { affected_rows: number }>(
       `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
@@ -145,6 +210,7 @@ export class CandidateApplicationsController extends Controller {
   public async apply(@Request() req: any, @Body() body: { job_id: number }): Promise<{ application_id: number }> {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
+    await assertCandidateProfileComplete(candidate_id);
     const job_id = Number((body as any)?.job_id);
     if (!job_id) throw httpError(400, 'job_id is required');
 

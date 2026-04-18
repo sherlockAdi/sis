@@ -34,6 +34,20 @@ export type CandidateDocumentRow = {
 };
 
 export const candidateApi = {
+  profile: {
+    me: () =>
+      apiFetch<CandidateRow & { profile_complete: boolean; missing_fields: string[] }>(`/candidate/profile`, {
+        method: "GET",
+      }),
+    update: (
+      input: Partial<
+        Omit<
+          CandidateRow,
+          "candidate_id" | "candidate_code" | "created_at" | "updated_at" | "deleted_at" | "country_name" | "state_name" | "city_name"
+        >
+      >,
+    ) => apiFetch<{ updated: true }>(`/candidate/profile`, { method: "PUT", body: JSON.stringify(input) }),
+  },
   documents: {
     list: () => apiFetch<CandidateDocumentRow[]>(`/candidate/documents`, { method: "GET" }),
   },

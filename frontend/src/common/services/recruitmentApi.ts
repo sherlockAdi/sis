@@ -110,7 +110,7 @@ export const recruitmentApi = {
       languages_known?: string | null;
       status?: string | null;
     }) =>
-      apiFetch<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null }>(
+      apiFetch<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }>(
         `/recruitment/candidates`,
         { method: "POST", body: JSON.stringify(input) },
       ),
@@ -150,7 +150,7 @@ export const recruitmentApi = {
       languages_known?: string | null;
       status?: string | null;
     }) =>
-      apiFetch<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null }>(`/public/candidate-signup`, {
+      apiFetch<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }>(`/public/candidate-signup`, {
         method: "POST",
         body: JSON.stringify(input),
         auth: false,

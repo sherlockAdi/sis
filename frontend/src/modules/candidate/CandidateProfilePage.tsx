@@ -3,6 +3,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router-dom";
 
 const tiles = [
+  { t: "Complete Profile", d: "Fill personal info and upload documents", to: "/portal/candidate/profile/settings" },
   { t: "My Documents", d: "Upload and track verification", to: "/portal/candidate/profile/documents" },
   { t: "Trade Test", d: "Assigned tests and work videos", to: "/portal/candidate/profile/trade-test" },
   { t: "Deployment Status", d: "Visa → travel → joining tracker", to: "/portal/candidate/profile/deployment" },
@@ -46,4 +47,3 @@ export default function CandidateProfilePage() {
     </Container>
   );
 }
-

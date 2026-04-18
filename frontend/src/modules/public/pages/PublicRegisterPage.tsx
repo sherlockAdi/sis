@@ -84,7 +84,7 @@ export default function PublicRegisterPage() {
   const [cities, setCities] = useState<CityRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signup, setSignup] = useState<{ candidate_id: number; username: string; emailed: boolean; user_created: boolean; auth_error?: string | null } | null>(null);
+  const [signup, setSignup] = useState<{ candidate_id: number; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -215,11 +215,17 @@ export default function PublicRegisterPage() {
           {signup ? (
             <Alert severity="success" sx={{ mb: 2 }}>
               Registration received. Username: <b>{signup.username}</b>
-              {signup.user_created ? (signup.emailed ? " (Password emailed)" : " (Password not emailed)") : " (Profile saved, login account pending)"}
+              {signup.user_created
+                ? signup.emailed
+                  ? " (Password emailed)"
+                  : " (Password not emailed)"
+                : signup.existing_user_used
+                  ? " (Existing login account linked)"
+                  : " (Profile saved, login account pending)"}
             </Alert>
           ) : null}
 
-          {signup && !signup.user_created ? (
+          {signup && !signup.user_created && !signup.existing_user_used ? (
             <Alert severity="warning" sx={{ mb: 2 }}>
               {signup.auth_error ?? "Profile saved, but the login account could not be created right now. Please contact support."}
             </Alert>
