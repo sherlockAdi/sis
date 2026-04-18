@@ -189,6 +189,11 @@ export default function JobsPreviewPage() {
     };
   }, [detail]);
 
+  const allDocuments = useMemo(
+    () => [...(detail?.documents ?? []), ...(detail?.job_specific_documents ?? [])],
+    [detail],
+  );
+
   const filterChips = useMemo(() => {
     const labelOf = (opts: Array<{ label: string; value: string }>, v?: number) => {
       if (!v) return "";
@@ -450,14 +455,14 @@ export default function JobsPreviewPage() {
             <Stack spacing={1}>
               <Typography fontWeight={900}>Documents</Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {detail.documents.map((d) => (
+              {allDocuments.map((d: any) => (
                   <Chip
-                    key={d.id}
+                    key={`doc-${d.id}-${d.document_type_id ?? d.job_specific_document_id ?? "x"}`}
                     size="small"
                     label={`${d.document_name}${Number(d.is_required) ? " (Required)" : ""}`}
                   />
                 ))}
-                {!detail.documents.length ? (
+                {!allDocuments.length ? (
                   <Typography variant="body2" color="text.secondary">
                     No documents.
                   </Typography>

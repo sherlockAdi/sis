@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Checkbox, Divider, FormControlLabel, Stack, Typography } from "@mui/material";
+import { Box, Checkbox, Divider, FormControlLabel, IconButton, Stack, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AdAlertBox,
@@ -58,6 +60,7 @@ type Form = {
   language_ids: string[];
   benefitsText: string;
   documents: Record<number, { include: boolean; is_required: boolean }>;
+  job_specific_documents: Array<{ id?: number; document_name: string; is_required: boolean }>;
 };
 
 function lines(s: string): string[] {
@@ -122,6 +125,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     language_ids: [],
     benefitsText: "",
     documents: {},
+    job_specific_documents: [],
   });
 
   useEffect(() => {
@@ -202,6 +206,11 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           language_ids: (d.languages ?? []).map((l: any) => String(l.language_id)),
           benefitsText: (globalBen ?? []).join("\n"),
           documents: docMap,
+          job_specific_documents: (d.job_specific_documents ?? []).map((doc: any) => ({
+            id: doc.id,
+            document_name: doc.document_name ?? "",
+            is_required: Boolean(Number(doc.is_required)),
+          })),
         });
       } catch (e: any) {
         setError((e as ApiError)?.message ?? "Failed to load job");
@@ -286,6 +295,55 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       })),
     [currencies],
   );
+  const masterDocumentOptions = useMemo(
+    () => docTypes.map((dt) => ({ label: dt.document_name, value: String(dt.document_type_id) })),
+    [docTypes],
+  );
+
+  const selectedMasterDocumentIds = useMemo(
+    () =>
+      Object.entries(form.documents)
+        .filter(([, v]) => v.include)
+        .map(([document_type_id]) => String(document_type_id)),
+    [form.documents],
+  );
+
+  const addJobSpecificDocument = () => {
+    setForm((f) => ({
+      ...f,
+      job_specific_documents: [...f.job_specific_documents, { document_name: "", is_required: true }],
+    }));
+  };
+
+  const updateJobSpecificDocument = (index: number, next: Partial<{ document_name: string; is_required: boolean }>) => {
+    setForm((f) => ({
+      ...f,
+      job_specific_documents: f.job_specific_documents.map((doc, idx) => (idx === index ? { ...doc, ...next } : doc)),
+    }));
+  };
+
+  const removeJobSpecificDocument = (index: number) => {
+    setForm((f) => ({
+      ...f,
+      job_specific_documents: f.job_specific_documents.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const updateSelectedMasterDocuments = (selectedIds: string[]) => {
+    setForm((f) => {
+      const next: Form["documents"] = {};
+      for (const dt of docTypes) {
+        const key = dt.document_type_id;
+        const prev = f.documents[key];
+        const include = selectedIds.includes(String(key));
+        next[key] = {
+          include,
+          is_required: include ? prev?.is_required ?? Boolean(Number(dt.is_required)) : prev?.is_required ?? Boolean(Number(dt.is_required)),
+        };
+      }
+      return { ...f, documents: next };
+    });
+  };
 
   const save = async () => {
     try {
@@ -334,6 +392,9 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         documents: Object.entries(form.documents)
           .filter(([, v]) => v.include)
           .map(([document_type_id, v]) => ({ document_type_id: Number(document_type_id), is_required: v.is_required })),
+        job_specific_documents: form.job_specific_documents
+          .map((d) => ({ id: d.id, document_name: d.document_name.trim(), is_required: d.is_required }))
+          .filter((d) => Boolean(d.document_name)),
         benefits: lines(form.benefitsText),
         location: {
           country_id: form.country_id ? Number(form.country_id) : null,
@@ -562,44 +623,103 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
 
             <Stack spacing={0.75}>
               <Typography fontWeight={800} variant="subtitle2">
-                Documents
+                Master Documents
               </Typography>
-              {docTypes.map((dt) => {
-                const v = form.documents[dt.document_type_id] ?? { include: false, is_required: Boolean(Number(dt.is_required)) };
-                return (
-                  <Stack key={dt.document_type_id} direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "center" }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={v.include}
-                          onChange={(_, checked) =>
+              <AdSearchableDropDownMulti
+                label="Select Master Documents"
+                options={masterDocumentOptions}
+                value={selectedMasterDocumentIds}
+                onChange={updateSelectedMasterDocuments}
+              />
+              {selectedMasterDocumentIds.length ? (
+                <Stack spacing={1} sx={{ pt: 0.5 }}>
+                  {selectedMasterDocumentIds.map((document_type_id) => {
+                    const dt = docTypes.find((x) => String(x.document_type_id) === String(document_type_id));
+                    if (!dt) return null;
+                    const v = form.documents[dt.document_type_id] ?? { include: true, is_required: Boolean(Number(dt.is_required)) };
+                    return (
+                      <Stack
+                        key={dt.document_type_id}
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={1.5}
+                        alignItems={{ md: "center" }}
+                      >
+                        <Typography sx={{ minWidth: 260, fontWeight: 700 }}>{dt.document_name}</Typography>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={v.is_required}
+                              onChange={(_, checked) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  documents: { ...f.documents, [dt.document_type_id]: { ...v, include: true, is_required: checked } },
+                                }))
+                              }
+                            />
+                          }
+                          label="Required"
+                        />
+                        <AdButton
+                          variant="text"
+                          onClick={() =>
                             setForm((f) => ({
                               ...f,
-                              documents: { ...f.documents, [dt.document_type_id]: { ...v, include: checked } },
+                              documents: { ...f.documents, [dt.document_type_id]: { ...v, include: false } },
                             }))
                           }
-                        />
-                      }
-                      label={dt.document_name}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={v.is_required}
-                          disabled={!v.include}
-                          onChange={(_, checked) =>
-                            setForm((f) => ({
-                              ...f,
-                              documents: { ...f.documents, [dt.document_type_id]: { ...v, is_required: checked } },
-                            }))
-                          }
-                        />
-                      }
-                      label="Required"
-                    />
-                  </Stack>
-                );
-              })}
+                        >
+                          Remove
+                        </AdButton>
+                      </Stack>
+                    );
+                  })}
+                </Stack>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Select one or more master documents from the database.
+                </Typography>
+              )}
+            </Stack>
+
+            <Divider />
+
+            <Stack spacing={0.75}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                <Typography fontWeight={800} variant="subtitle2">
+                  Job Specific Documents
+                </Typography>
+                <AdButton variant="text" startIcon={<AddIcon fontSize="small" />} onClick={addJobSpecificDocument}>
+                  Add
+                </AdButton>
+              </Stack>
+              {!form.job_specific_documents.length ? (
+                <Typography variant="body2" color="text.secondary">
+                  Add documents that should apply only to this job.
+                </Typography>
+              ) : null}
+              {form.job_specific_documents.map((doc, index) => (
+                <Stack key={`${doc.id ?? index}-${index}`} direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "center" }}>
+                  <AdTextBox
+                    label={`Document ${index + 1}`}
+                    required
+                    size="small"
+                    value={doc.document_name}
+                    onChange={(v) => updateJobSpecificDocument(index, { document_name: v })}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={doc.is_required}
+                        onChange={(_, checked) => updateJobSpecificDocument(index, { is_required: checked })}
+                      />
+                    }
+                    label="Required"
+                  />
+                  <IconButton aria-label="Remove job specific document" onClick={() => removeJobSpecificDocument(index)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              ))}
             </Stack>
           </Stack>
         )}

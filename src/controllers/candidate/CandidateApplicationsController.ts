@@ -23,7 +23,8 @@ type CandidateApplicationRow = {
 };
 
 type CandidateApplicationDocRow = {
-  document_type_id: number;
+  document_type_id: number | null;
+  job_specific_document_id: number | null;
   document_name: string;
   job_is_required: 0 | 1;
   candidate_document_id: number | null;
@@ -188,6 +189,33 @@ export class CandidateApplicationsController extends Controller {
       {
         candidate_id,
         document_type_id: documentTypeId,
+        file_path
+      }
+    );
+
+    return { updated: true };
+  }
+
+  @Put('{applicationId}/job-documents/{jobSpecificDocumentId}')
+  @Security('jwt')
+  public async upsertJobSpecificDocument(
+    @Request() req: any,
+    @Path() applicationId: number,
+    @Path() jobSpecificDocumentId: number,
+    @Body() body: { file_path: string }
+  ): Promise<{ updated: true }> {
+    const user = requireUser(req);
+    const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
+    await assertOwnsApplication(applicationId, candidate_id);
+
+    const file_path = String(body?.file_path ?? '').trim();
+    if (!file_path) throw httpError(400, 'file_path is required');
+
+    await callProc(
+      `CALL sp_rec_application_job_documents('UPSERT', NULL, :application_id, :job_specific_document_id, :file_path)`,
+      {
+        application_id: applicationId,
+        job_specific_document_id: jobSpecificDocumentId,
         file_path
       }
     );

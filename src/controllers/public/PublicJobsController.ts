@@ -45,6 +45,15 @@ type PublicJobRow = {
 type PublicJobRequirement = { requirement_id: number; job_id: number; location_id: number | null; requirement: string };
 type PublicJobBenefit = { benefit_id: number; job_id: number; location_id: number | null; benefit: string };
 type PublicJobDocument = { id: number; job_id: number; document_type_id: number; document_name: string; is_required: 0 | 1 };
+type PublicJobSpecificDocument = {
+  id: number;
+  job_id: number;
+  document_name: string;
+  is_required: 0 | 1;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
 type PublicJobLocation = {
   id: number;
   job_id: number;
@@ -102,6 +111,7 @@ export class PublicJobsController extends Controller {
     requirements: PublicJobRequirement[];
     benefits: PublicJobBenefit[];
     documents: PublicJobDocument[];
+    job_specific_documents: PublicJobSpecificDocument[];
     locations: PublicJobLocation[];
   }> {
     const jobRows = await callProc<RowDataPacket & PublicJobRow>(
@@ -113,7 +123,7 @@ export class PublicJobsController extends Controller {
     // Don't expose closed jobs publicly (avoid stale links).
     if (String(job.status ?? '').trim().toLowerCase() === 'closed') throw httpError(404, 'Job not found');
 
-    const [requirements, benefits, documents, locations] = await Promise.all([
+    const [requirements, benefits, documents, job_specific_documents, locations] = await Promise.all([
       callProc<RowDataPacket & PublicJobRequirement>(
         `CALL sp_job_requirements('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
@@ -126,12 +136,16 @@ export class PublicJobsController extends Controller {
         `CALL sp_job_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
       ),
+      callProc<RowDataPacket & PublicJobSpecificDocument>(
+        `CALL sp_job_specific_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
+        { job_id: jobId }
+      ),
       callProc<RowDataPacket & PublicJobLocation>(
         `CALL sp_job_locations('LIST_BY_JOB', NULL, :job_id, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { job_id: jobId }
       )
     ]);
 
-    return { job, requirements, benefits, documents, locations };
+    return { job, requirements, benefits, documents, job_specific_documents, locations };
   }
 }

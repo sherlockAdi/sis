@@ -20,6 +20,10 @@ function isRequiredMissing(docs: CandidateApplicationDocRow[]): boolean {
   return docs.some((d) => Number(d.job_is_required) === 1 && !String(d.file_path ?? "").trim());
 }
 
+function docKey(doc: CandidateApplicationDocRow): number {
+  return Number(doc.job_specific_document_id ?? doc.document_type_id ?? 0);
+}
+
 function moneyRange(min: string | null, max: string | null) {
   const a = String(min ?? "").trim();
   const b = String(max ?? "").trim();
@@ -31,7 +35,7 @@ function moneyRange(min: string | null, max: string | null) {
 function latestDocs(rows: CandidateApplicationDocRow[]): CandidateApplicationDocRow[] {
   const byType = new Map<number, CandidateApplicationDocRow>();
   for (const row of rows) {
-    const key = row.document_type_id;
+    const key = docKey(row);
     const existing = byType.get(key);
     if (!existing) {
       byType.set(key, row);
@@ -140,13 +144,21 @@ export default function CandidateJobApplyPage() {
     try {
       const now = Date.now();
       const ext = fileExt(file.name);
-      const objectKey = `applications/${applicationId}/docs/${doc.document_type_id}/${now}${ext}`;
+      const key = docKey(doc);
+      const folder = doc.job_specific_document_id ? "job-docs" : "docs";
+      const objectKey = `applications/${applicationId}/${folder}/${key}/${now}${ext}`;
 
       const presign = await recruitmentApi.files.presignUpload(objectKey);
       const put = await fetch(presign.url, { method: "PUT", body: file });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
 
-      await candidateApi.applications.upsertDocument(applicationId, doc.document_type_id, objectKey);
+      if (doc.job_specific_document_id) {
+        await candidateApi.applications.upsertJobSpecificDocument(applicationId, doc.job_specific_document_id, objectKey);
+      } else if (doc.document_type_id) {
+        await candidateApi.applications.upsertDocument(applicationId, doc.document_type_id, objectKey);
+      } else {
+        throw new Error("Unknown document type");
+      }
       setToast({ open: true, message: "Uploaded", severity: "success" });
       loadDocs(applicationId);
     } catch (e: any) {
@@ -178,6 +190,11 @@ export default function CandidateJobApplyPage() {
       setSubmitting(false);
     }
   };
+
+  const jobDocuments = useMemo(
+    () => [...(job?.documents ?? []), ...(job?.job_specific_documents ?? [])],
+    [job],
+  );
 
   useEffect(() => {
     loadJob();
@@ -222,7 +239,7 @@ export default function CandidateJobApplyPage() {
                 <Chip size="small" label={`Salary: ${moneyRange(job.job.salary_min, job.job.salary_max)}`} />
               ) : null}
               {job.locations?.length ? <Chip size="small" label={`${job.locations.length} location(s)`} /> : null}
-              {job.documents?.length ? <Chip size="small" label={`${job.documents.length} document(s)`} /> : null}
+              {jobDocuments.length ? <Chip size="small" label={`${jobDocuments.length} document(s)`} /> : null}
             </Stack>
 
             {job.job.job_description ? (
@@ -269,15 +286,15 @@ export default function CandidateJobApplyPage() {
               </>
             ) : null}
 
-            {job.documents?.length ? (
+            {jobDocuments.length ? (
               <>
                 <Divider />
                 <Box>
                   <Typography fontWeight={950}>Required Documents (Job)</Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 0.75 }}>
-                    {job.documents.map((d) => (
+                    {jobDocuments.map((d: any) => (
                       <Chip
-                        key={d.document_type_id}
+                        key={d.id}
                         size="small"
                         label={`${d.document_name}${Number(d.is_required) ? " • Required" : " • Optional"}`}
                         color={Number(d.is_required) ? "primary" : "default"}

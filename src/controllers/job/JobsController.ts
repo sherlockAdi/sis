@@ -43,6 +43,15 @@ type JobRow = {
 type JobRequirement = { requirement_id: number; job_id: number; location_id: number | null; requirement: string };
 type JobBenefit = { benefit_id: number; job_id: number; location_id: number | null; benefit: string };
 type JobDocument = { id: number; job_id: number; document_type_id: number; document_name: string; is_required: 0 | 1 };
+type JobSpecificDocument = {
+  id: number;
+  job_id: number;
+  document_name: string;
+  is_required: 0 | 1;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
 type JobLocation = {
   id: number;
   job_id: number;
@@ -92,6 +101,7 @@ type JobUpsertBody = {
   requirements?: string[];
   benefits?: string[];
   documents?: Array<{ document_type_id: number; is_required?: boolean }>;
+  job_specific_documents?: Array<{ id?: number; document_name: string; is_required?: boolean }>;
   location?: {
     country_id?: number | null;
     state_id?: number | null;
@@ -143,6 +153,7 @@ export class JobsController extends Controller {
     requirements: JobRequirement[];
     benefits: JobBenefit[];
     documents: JobDocument[];
+    job_specific_documents: JobSpecificDocument[];
     locations: JobLocation[];
     status_history: JobStatusHistory[];
     languages: JobLanguage[];
@@ -162,7 +173,7 @@ export class JobsController extends Controller {
       }
     }
 
-    const [requirements, benefits, documents, locations, status_history, languages] = await Promise.all([
+    const [requirements, benefits, documents, job_specific_documents, locations, status_history, languages] = await Promise.all([
       callProc<RowDataPacket & JobRequirement>(
         `CALL sp_job_requirements('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
@@ -173,6 +184,10 @@ export class JobsController extends Controller {
       ),
       callProc<RowDataPacket & JobDocument>(
         `CALL sp_job_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
+        { job_id: jobId }
+      ),
+      callProc<RowDataPacket & JobSpecificDocument>(
+        `CALL sp_job_specific_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
       ),
       callProc<RowDataPacket & JobLocation>(
@@ -189,7 +204,7 @@ export class JobsController extends Controller {
       ),
     ]);
 
-    return { job, requirements, benefits, documents, locations, status_history, languages };
+    return { job, requirements, benefits, documents, job_specific_documents, locations, status_history, languages };
   }
 
   @Post()
@@ -242,6 +257,16 @@ export class JobsController extends Controller {
         job_id,
         document_type_id: d.document_type_id,
         is_required: d.is_required ?? true
+      });
+    }
+    const jobSpecificDocuments = (body.job_specific_documents ?? [])
+      .map((d) => ({ id: typeof d?.id === 'number' ? d.id : null, document_name: String(d?.document_name ?? '').trim(), is_required: d.is_required ?? true }))
+      .filter((d) => Boolean(d.document_name));
+    for (const d of jobSpecificDocuments) {
+      await callProc(`CALL sp_job_specific_documents('CREATE', NULL, :job_id, :document_name, :is_required)`, {
+        job_id,
+        document_name: d.document_name,
+        is_required: d.is_required
       });
     }
 
@@ -334,6 +359,11 @@ export class JobsController extends Controller {
 
     const globalRequirements = (body.requirements ?? []).map((s) => String(s).trim()).filter(Boolean);
     const globalBenefits = (body.benefits ?? []).map((s) => String(s).trim()).filter(Boolean);
+    const jobSpecificDocuments = Array.isArray(body.job_specific_documents)
+      ? body.job_specific_documents
+          .map((d) => ({ id: typeof d?.id === 'number' ? d.id : null, document_name: String(d?.document_name ?? '').trim(), is_required: d.is_required ?? true }))
+          .filter((d) => Boolean(d.document_name))
+      : null;
 
     await callProc(`CALL sp_job_requirements('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
     await callProc(`CALL sp_job_benefits('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
@@ -387,6 +417,17 @@ export class JobsController extends Controller {
           job_id: jobId,
           document_type_id: d.document_type_id,
           is_required: d.is_required ?? true
+        });
+      }
+    }
+
+    if (jobSpecificDocuments) {
+      await callProc(`CALL sp_job_specific_documents('DELETE_BY_JOB', NULL, :job_id, NULL, NULL)`, { job_id: jobId });
+      for (const d of jobSpecificDocuments) {
+        await callProc(`CALL sp_job_specific_documents('CREATE', NULL, :job_id, :document_name, :is_required)`, {
+          job_id: jobId,
+          document_name: d.document_name,
+          is_required: d.is_required
         });
       }
     }

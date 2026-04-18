@@ -141,6 +141,25 @@ CREATE TABLE IF NOT EXISTS REC_T05_candidate_documents (
 
 
 -- ============================================
+-- REC_T07_application_job_documents
+-- - Stored per application for job-specific docs.
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS REC_T07_application_job_documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    application_id INT NOT NULL,
+    job_specific_document_id INT NOT NULL,
+    file_path TEXT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (application_id) REFERENCES REC_T02_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (job_specific_document_id) REFERENCES JOB_T08_job_specific_documents(id),
+
+    UNIQUE(application_id, job_specific_document_id)
+);
+
+
+-- ============================================
 -- REC_T06_candidate_status_history
 -- ============================================
 
@@ -505,6 +524,59 @@ BEGIN
 END $$
 
 
+DROP PROCEDURE IF EXISTS sp_rec_application_job_documents $$
+CREATE PROCEDURE sp_rec_application_job_documents(
+  IN p_action VARCHAR(30),
+  IN p_id INT,
+  IN p_application_id INT,
+  IN p_job_specific_document_id INT,
+  IN p_file_path TEXT
+)
+BEGIN
+  IF p_action = 'LIST_BY_APPLICATION' THEN
+    SELECT
+      ad.id,
+      ad.application_id,
+      NULL AS candidate_id,
+      NULL AS document_type_id,
+      ad.job_specific_document_id,
+      jsd.document_name,
+      jsd.is_required AS job_is_required,
+      ad.file_path,
+      ad.uploaded_at
+    FROM (
+      SELECT ad1.*
+      FROM REC_T07_application_job_documents ad1
+      JOIN (
+        SELECT application_id, job_specific_document_id, MAX(id) AS max_id
+        FROM REC_T07_application_job_documents
+        WHERE application_id = p_application_id
+        GROUP BY application_id, job_specific_document_id
+      ) latest
+        ON latest.max_id = ad1.id
+    ) ad
+    JOIN JOB_T08_job_specific_documents jsd ON jsd.id = ad.job_specific_document_id
+    WHERE ad.application_id = p_application_id
+    ORDER BY jsd.document_name ASC;
+
+  ELSEIF p_action = 'UPSERT' THEN
+    INSERT INTO REC_T07_application_job_documents (application_id, job_specific_document_id, file_path)
+    VALUES (p_application_id, p_job_specific_document_id, p_file_path)
+    ON DUPLICATE KEY UPDATE
+      file_path = VALUES(file_path),
+      uploaded_at = CURRENT_TIMESTAMP;
+    SELECT 1 AS ok;
+
+  ELSEIF p_action = 'DELETE' THEN
+    DELETE FROM REC_T07_application_job_documents WHERE id = p_id;
+    SELECT ROW_COUNT() AS affected_rows;
+
+  ELSE
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_rec_application_job_documents: invalid action';
+  END IF;
+END $$
+
+
 DROP PROCEDURE IF EXISTS sp_rec_application_documents $$
 CREATE PROCEDURE sp_rec_application_documents(IN p_application_id INT)
 BEGIN
@@ -518,6 +590,7 @@ BEGIN
 
   SELECT
     dt.document_type_id,
+    NULL AS job_specific_document_id,
     dt.document_name,
     jd.is_required AS job_is_required,
     cd.id AS candidate_document_id,
@@ -539,7 +612,31 @@ BEGIN
     ON cd.document_type_id = jd.document_type_id
    AND cd.candidate_id = v_candidate_id
   WHERE jd.job_id = v_job_id
-  ORDER BY dt.document_name ASC;
+  UNION ALL
+  SELECT
+    NULL AS document_type_id,
+    jsd.id AS job_specific_document_id,
+    jsd.document_name,
+    jsd.is_required AS job_is_required,
+    ad.id AS candidate_document_id,
+    ad.file_path,
+    ad.uploaded_at
+  FROM JOB_T08_job_specific_documents jsd
+  LEFT JOIN (
+    SELECT ad1.*
+    FROM REC_T07_application_job_documents ad1
+    JOIN (
+      SELECT application_id, job_specific_document_id, MAX(id) AS max_id
+      FROM REC_T07_application_job_documents
+      WHERE application_id = p_application_id
+      GROUP BY application_id, job_specific_document_id
+    ) latest
+      ON latest.max_id = ad1.id
+  ) ad
+    ON ad.job_specific_document_id = jsd.id
+  WHERE jsd.job_id = v_job_id
+    AND jsd.deleted_at IS NULL
+  ORDER BY document_name ASC;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_rec_candidate_journey $$

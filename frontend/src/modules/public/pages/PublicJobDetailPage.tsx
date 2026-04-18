@@ -207,6 +207,30 @@ export default function PublicJobDetailPage() {
                 </Stack>
               </>
             ) : null}
+
+            {data.documents?.length || data.job_specific_documents?.length ? (
+              <>
+                <Divider sx={{ my: 2.5 }} />
+                <Typography fontWeight={950}>Documents</Typography>
+                <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {data.documents?.map((d) => (
+                    <Chip
+                      key={`m-${d.id}`}
+                      size="small"
+                      label={`${d.document_name}${Number(d.is_required) ? " • Required" : " • Optional"}`}
+                    />
+                  ))}
+                  {data.job_specific_documents?.map((d) => (
+                    <Chip
+                      key={`s-${d.id}`}
+                      size="small"
+                      label={`${d.document_name}${Number(d.is_required) ? " • Required" : " • Optional"}`}
+                      color="secondary"
+                    />
+                  ))}
+                </Box>
+              </>
+            ) : null}
           </Box>
         ) : null}
       </Stack>
