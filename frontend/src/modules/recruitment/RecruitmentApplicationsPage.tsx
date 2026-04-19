@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Drawer, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import DescriptionIcon from "@mui/icons-material/Description";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import CloseIcon from "@mui/icons-material/Close";
 import dayjs, { type Dayjs } from "dayjs";
 import { AdAlertBox, AdButton, AdCard, AdDateTimePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
-import { recruitmentApi, type ApplicationDocRow, type ApplicationInterviewRow, type ApplicationRow } from "../../common/services/recruitmentApi";
+import { recruitmentApi, type ApplicationDocRow, type ApplicationInterviewRow, type ApplicationRow, type CandidateRow } from "../../common/services/recruitmentApi";
 import { mastersApi, type InterviewMode } from "../../common/services/mastersApi";
+import { deploymentApi } from "../../common/services/deploymentApi";
 
 function fileExt(name: string): string {
   const idx = name.lastIndexOf(".");
@@ -44,6 +47,32 @@ type ApplicationViewRow = ApplicationRow & {
   partner_name: string | null;
 };
 
+function formatValue(value: string | number | null | undefined): string {
+  const text = String(value ?? "").trim();
+  return text || "—";
+}
+
+function ProfileField({ label, value }: { label: string; value: string | number | null | undefined }) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gap: 0.3,
+        py: 0.75,
+        borderBottom: "1px solid rgba(226,232,240,0.85)",
+        "&:last-of-type": { borderBottom: 0 },
+      }}
+    >
+      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.1 }}>
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.25, wordBreak: "break-word" }}>
+        {formatValue(value)}
+      </Typography>
+    </Box>
+  );
+}
+
 export default function RecruitmentApplicationsPage() {
   const [rows, setRows] = useState<ApplicationRow[]>([]);
   const [jobs, setJobs] = useState<JobListRow[]>([]);
@@ -59,6 +88,10 @@ export default function RecruitmentApplicationsPage() {
   const [activeApp, setActiveApp] = useState<ApplicationRow | null>(null);
   const [docs, setDocs] = useState<ApplicationDocRow[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
+  const [candidateOpen, setCandidateOpen] = useState(false);
+  const [candidateLoading, setCandidateLoading] = useState(false);
+  const [candidateError, setCandidateError] = useState<string | null>(null);
+  const [candidateProfile, setCandidateProfile] = useState<CandidateRow | null>(null);
 
   const [interviewsOpen, setInterviewsOpen] = useState(false);
   const [interviews, setInterviews] = useState<ApplicationInterviewRow[]>([]);
@@ -123,6 +156,20 @@ export default function RecruitmentApplicationsPage() {
     }
   };
 
+  const openCandidateProfile = async (candidateId: number) => {
+    setCandidateOpen(true);
+    setCandidateLoading(true);
+    setCandidateError(null);
+    setCandidateProfile(null);
+    try {
+      setCandidateProfile(await recruitmentApi.candidates.get(candidateId));
+    } catch (e: any) {
+      setCandidateError((e as ApiError)?.message ?? "Failed to load candidate profile");
+    } finally {
+      setCandidateLoading(false);
+    }
+  };
+
   useEffect(() => {
     refresh();
   }, []);
@@ -140,7 +187,60 @@ export default function RecruitmentApplicationsPage() {
   const cols = useMemo(
     () => [
       { field: "application_id", headerName: "App ID", width: 100 },
-      { field: "candidate_name", headerName: "Candidate", flex: 1, minWidth: 180 },
+      {
+        field: "candidate_name",
+        headerName: "Candidate",
+        flex: 1,
+        minWidth: 180,
+        renderCell: (p: any) => {
+          const r = p.row as ApplicationViewRow;
+
+          return (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                overflow: "hidden",
+              }}
+            >
+              {/* Candidate Name */}
+              <Typography
+                fontWeight={800}
+                noWrap
+                sx={{
+                  color: "primary.main",
+                  cursor: "pointer",
+                  flex: 1,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openCandidateProfile(r.candidate_id);
+                }}
+              >
+                {r.candidate_name}
+              </Typography>
+
+              {/* Doc Icon */}
+              <Tooltip title="View Documents">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveApp(r);
+                    setDocsOpen(true);
+                    loadDocs(r.application_id);
+                  }}
+                  sx={{ ml: 1 }}
+                >
+                  <DescriptionIcon fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          );
+        },
+      },
       { field: "partner_name", headerName: "Partner", flex: 1, minWidth: 180 },
       { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
       { field: "application_date", headerName: "Date", width: 130 },
@@ -165,6 +265,11 @@ export default function RecruitmentApplicationsPage() {
           const shortlisted = isShortlistedStatus(r.status);
           const interviewStage = isInterviewStatus(r.status);
           const rejected = isRejectedStatus(r.status);
+          const showInterviewButton = [
+            "Shortlisted",
+            "Interview",
+            "Postponed",
+          ].includes(r?.status);
 
           const rejectApplication = async () => {
             try {
@@ -178,7 +283,26 @@ export default function RecruitmentApplicationsPage() {
 
           const markReadyForDeployment = async () => {
             try {
-              await recruitmentApi.applications.updateStatus(r.application_id, "Ready");
+              // await recruitmentApi.applications.updateStatus(r.application_id, "Ready");
+              await deploymentApi.create({ application_id: r.application_id, status: "Ready" });
+              await recruitmentApi.applications.updateStatus(r.application_id, "Deployed");
+
+                    // await recruitmentApi.applications.updateStatus(√, "Ready");
+                    // const candId = candidateId ?? activeApp?.candidate_id;
+                    // if (candId) {
+                    //   await recruitmentApi.candidates.update(candId, { status: "Shortlisted" });
+                    // }
+                    setToast({ open: true, message: "  marked Ready for Deployment", severity: "success" });
+                    refresh();
+              setToast({ open: true, message: "Marked ready for deployment", severity: "success" });
+              refresh();
+            } catch (e: any) {
+              setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark ready", severity: "error" });
+            }
+          };
+          const markInterviewPostponed = async () => {
+            try {
+              await recruitmentApi.applications.updateStatus(r.application_id, "Postponed");
               setToast({ open: true, message: "Marked ready for deployment", severity: "success" });
               refresh();
             } catch (e: any) {
@@ -188,22 +312,12 @@ export default function RecruitmentApplicationsPage() {
 
           return (
             <Stack direction="row" spacing={1}>
-              <AdButton
-                variant="text"
-                startIcon={<UploadFileIcon fontSize="small" />}
-                onClick={() => {
-                  setActiveApp(r);
-                  setDocsOpen(true);
-                  loadDocs(r.application_id);
-                }}
-              >
-                Documents
-              </AdButton>
-              {shortlisted ? (
+              
+              {showInterviewButton || shortlisted ? (
                 <AdButton
                   variant="text"
                   startIcon={<EventAvailableIcon fontSize="small" />}
-                  onClick={() => {
+                  onClick={() => { 
                     setActiveApp(r);
                     setInterviewsOpen(true);
                     setSchedule({ mode_id: "", date: null, remarks: "" });
@@ -228,11 +342,17 @@ export default function RecruitmentApplicationsPage() {
                   Shortlist
                 </AdButton>
               )}
+              
 
               {interviewStage ? (
+                <>
                 <AdButton variant="contained" color="success" onClick={markReadyForDeployment}>
                   Ready to Deploy
                 </AdButton>
+                  <AdButton variant="outlined" color="error" onClick={markInterviewPostponed}>
+                    PostPoned
+                  </AdButton>
+                </>
               ) : null}
 
               {!rejected ? (
@@ -382,6 +502,17 @@ export default function RecruitmentApplicationsPage() {
     return enrichedRows.find((row) => row.application_id === activeApp.application_id) ?? (activeApp as ApplicationViewRow);
   }, [activeApp, enrichedRows]);
 
+  const candidateAddress = [candidateProfile?.address1, candidateProfile?.address2].filter(Boolean).join(", ") || "—";
+  const candidateLocation = [candidateProfile?.city_name, candidateProfile?.state_name, candidateProfile?.country_name].filter(Boolean).join(", ") || "—";
+  const candidateDocuments = [
+    { label: "Resume", value: candidateProfile?.resume_file_path },
+    { label: "Passport", value: candidateProfile?.passport_file_path },
+    { label: "Aadhaar", value: candidateProfile?.aadhar_file_path },
+    { label: "PAN", value: candidateProfile?.pan_file_path },
+    { label: "Voter ID", value: candidateProfile?.voter_id_file_path },
+    { label: "Profile Photo", value: candidateProfile?.profile_photo_file_path },
+  ];
+
   return (
     <Stack spacing={2.5}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
@@ -442,6 +573,139 @@ export default function RecruitmentApplicationsPage() {
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
         <AdGrid rows={filteredRows.map((r) => ({ id: r.application_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
       </AdCard>
+
+      <Drawer
+        anchor="right"
+        open={candidateOpen}
+        onClose={() => setCandidateOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", sm: 420, md: 520 },
+            maxWidth: "100vw",
+            bgcolor: "#f8fafc",
+          },
+        }}
+      >
+        <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2, height: "100%", overflow: "hidden" }}>
+          <Stack direction="row" alignItems="flex-start" spacing={1} justifyContent="space-between">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography fontWeight={950} sx={{ fontSize: 20, lineHeight: 1.1 }}>
+                Student Profile
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                Full candidate record from recruitment
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setCandidateOpen(false)} aria-label="Close profile panel">
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+
+          <Box
+            sx={{
+              bgcolor: "#fff",
+              border: "1px solid rgba(148,163,184,0.35)",
+              borderRadius: 0,
+              p: 1.5,
+              boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+              overflow: "auto",
+              flex: 1,
+            }}
+          >
+            {candidateLoading ? (
+              <Typography color="text.secondary">Loading profile...</Typography>
+            ) : candidateError ? (
+              <AdAlertBox severity="error" title="Profile load failed" message={candidateError} />
+            ) : candidateProfile ? (
+              <Stack spacing={2}>
+                <Box>
+                  <Typography fontWeight={950} sx={{ fontSize: 18, lineHeight: 1.1 }}>
+                    {`${candidateProfile.first_name ?? ""} ${candidateProfile.last_name ?? ""}`.trim() || "Student"}
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap" }}>
+                    <Chip size="small" label={candidateProfile.candidate_code ?? `ID ${candidateProfile.candidate_id}`} />
+                    <Chip size="small" label={candidateProfile.status ?? "—"} color="primary" />
+                  </Stack>
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                    Registration Details
+                  </Typography>
+                  <ProfileField label="Candidate Code" value={candidateProfile.candidate_code} />
+                  <ProfileField label="Mobile" value={candidateProfile.phone} />
+                  <ProfileField label="Email" value={candidateProfile.email} />
+                  <ProfileField label="Passport Number" value={candidateProfile.passport_number} />
+                  <ProfileField label="Status" value={candidateProfile.status} />
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                    Location & Address
+                  </Typography>
+                  <ProfileField label="Country" value={candidateProfile.country_name} />
+                  <ProfileField label="State" value={candidateProfile.state_name} />
+                  <ProfileField label="City" value={candidateProfile.city_name} />
+                  <ProfileField label="Address" value={candidateAddress} />
+                  <ProfileField label="Pincode" value={candidateProfile.pincode} />
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                    Personal Profile
+                  </Typography>
+                  <ProfileField label="Father's Name" value={candidateProfile.father_name} />
+                  <ProfileField label="DOB" value={candidateProfile.dob} />
+                  <ProfileField label="Gender" value={candidateProfile.gender} />
+                  <ProfileField label="Skills" value={candidateProfile.skills} />
+                  <ProfileField label="Education" value={candidateProfile.education} />
+                  <ProfileField label="Experience" value={candidateProfile.experience} />
+                  <ProfileField label="Industry Type" value={candidateProfile.industry_type} />
+                  <ProfileField label="Languages Known" value={candidateProfile.languages_known} />
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                    Documents
+                  </Typography>
+                  <Stack spacing={0}>
+                    {candidateDocuments.map((doc) => (
+                      <Box
+                        key={doc.label}
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "minmax(0, 1fr) auto",
+                          gap: 1,
+                          alignItems: "center",
+                          py: 0.75,
+                          borderBottom: "1px solid rgba(226,232,240,0.85)",
+                          "&:last-of-type": { borderBottom: 0 },
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          {doc.label}
+                        </Typography>
+                        <Chip size="small" label={doc.value ? "Uploaded" : "Missing"} color={doc.value ? "success" : "default"} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                    Meta
+                  </Typography>
+                  <ProfileField label="Location" value={candidateLocation} />
+                  <ProfileField label="Created At" value={candidateProfile.created_at} />
+                  <ProfileField label="Updated At" value={candidateProfile.updated_at} />
+                </Box>
+              </Stack>
+            ) : (
+              <Typography color="text.secondary">Click a candidate to view the complete profile.</Typography>
+            )}
+          </Box>
+        </Box>
+      </Drawer>
 
       <AdModal
         open={docsOpen}
@@ -592,7 +856,9 @@ export default function RecruitmentApplicationsPage() {
                         color="success"
                         onClick={async () => {
                           try {
-                            await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Ready");
+                            
+                            await deploymentApi.create({ application_id: currentActiveApp.application_id, status: "Ready" });
+                            await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Deployed");
                             setToast({ open: true, message: "Marked ready for deployment", severity: "success" });
                             refresh();
                             setInterviewsOpen(false);
@@ -602,7 +868,23 @@ export default function RecruitmentApplicationsPage() {
                         }}
                       >
                         Ready to Deploy
-                      </AdButton>
+                        </AdButton>
+                        <AdButton
+                          variant="contained"
+                          color="success"
+                          onClick={async () => {
+                            try {
+                              await recruitmentApi.applications.updateStatus(currentActiveApp.application_id, "Postponed");
+                              setToast({ open: true, message: "Interview Postponed", severity: "success" });
+                              refresh();
+                              setInterviewsOpen(false);
+                            } catch (e: any) {
+                              setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark ready", severity: "error" });
+                            }
+                          }}
+                        >
+                          Postponed
+                        </AdButton>
                       <AdButton
                         variant="outlined"
                         color="error"
