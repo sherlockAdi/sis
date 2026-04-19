@@ -104,7 +104,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     job_title: "",
     category_id: "",
     contract_duration_id: "",
-    status: "Open",
+    status: isPartner ? "Draft" : "Open",
     job_description: "",
     partner_id: "",
     employment_type_id: "",
@@ -185,7 +185,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           job_title: d.job.job_title ?? "",
           category_id: d.job.category_id ? String(d.job.category_id) : "",
           contract_duration_id: d.job.contract_duration_id ? String(d.job.contract_duration_id) : "",
-          status: d.job.status ?? "Open",
+          status: d.job.status ?? (isPartner ? "Draft" : "Open"),
           job_description: d.job.job_description ?? "",
           partner_id: d.job.partner_id ? String(d.job.partner_id) : "",
           employment_type_id: d.job.employment_type_id ? String(d.job.employment_type_id) : "",
@@ -295,6 +295,18 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       })),
     [currencies],
   );
+  const statusOptions = useMemo(
+    () =>
+      isPartner
+        ? [{ label: "Draft", value: "Draft" }]
+        : [
+            { label: "Draft", value: "Draft" },
+            { label: "Open", value: "Open" },
+            { label: "On Hold", value: "On Hold" },
+            { label: "Closed", value: "Closed" },
+          ],
+    [isPartner],
+  );
   const masterDocumentOptions = useMemo(
     () => docTypes.map((dt) => ({ label: dt.document_name, value: String(dt.document_type_id) })),
     [docTypes],
@@ -373,9 +385,9 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         category_id: form.category_id ? Number(form.category_id) : null,
         country_id: form.country_id ? Number(form.country_id) : null,
         contract_duration_id: form.contract_duration_id ? Number(form.contract_duration_id) : null,
-        status: form.status || null,
+        status: isPartner ? (form.status || "Draft") : (form.status || null),
         job_description: jobDescription || null,
-        partner_id: form.partner_id ? Number(form.partner_id) : null,
+        partner_id: form.partner_id ? Number(form.partner_id) : undefined,
         employment_type_id: form.employment_type_id ? Number(form.employment_type_id) : null,
         work_mode_id: form.work_mode_id ? Number(form.work_mode_id) : null,
         currency_id: form.currency_id ? Number(form.currency_id) : null,
@@ -453,9 +465,10 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
               <AdTextBox label="Job Title" required size="small" value={form.job_title} onChange={(v) => setForm((f) => ({ ...f, job_title: v }))} />
               <AdDropDown
                 label="Status"
-                options={[{ label: "Open", value: "Open" }, { label: "On Hold", value: "On Hold" }, { label: "Closed", value: "Closed" }]}
+                options={statusOptions}
                 value={form.status}
                 onChange={(v) => setForm((f) => ({ ...f, status: v }))}
+                disabled={isPartner}
               />
             </Stack>
 

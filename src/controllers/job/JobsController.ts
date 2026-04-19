@@ -127,6 +127,16 @@ async function assertJobOwnedByPartner(job_id: number, partner_id: number): Prom
   if (Number(job.partner_id ?? 0) !== Number(partner_id)) throw httpError(403, 'Forbidden');
 }
 
+async function getJobById(job_id: number): Promise<JobRow> {
+  const rows = await callProc<RowDataPacket & JobRow>(
+    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    { job_id }
+  );
+  const job = rows[0];
+  if (!job) throw httpError(404, 'Job not found');
+  return job;
+}
+
 function decodeJobTextFields(job: JobRow): JobRow {
   return {
     ...job,
@@ -227,6 +237,7 @@ export class JobsController extends Controller {
     const ctx = await getPartnerContext(user.user_id);
     if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
     const resolvedPartnerId = ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null);
+    const resolvedStatus = ctx.partner_id ? 'Draft' : (body.status ?? null);
 
     const rows = await callProc<RowDataPacket & { job_id: number }>(
       `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :min_experience, :min_age, :max_age, :gender_requirement, :created_by, NULL)`,
@@ -240,7 +251,7 @@ export class JobsController extends Controller {
         salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
         salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
         job_description: encodeBase64Text(body.job_description),
-        status: body.status ?? null,
+        status: resolvedStatus,
         partner_id: resolvedPartnerId,
         employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
         work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
@@ -336,7 +347,12 @@ export class JobsController extends Controller {
     const user = (req as any).user as { user_id?: number } | undefined;
     const ctx = user?.user_id ? await getPartnerContext(user.user_id) : { partner_id: null, is_partner_role: false };
     if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
-    if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
+    let existingJob: JobRow | null = null;
+    if (ctx.partner_id) {
+      existingJob = await getJobById(jobId);
+      if (Number(existingJob.partner_id ?? 0) !== Number(ctx.partner_id)) throw httpError(403, 'Forbidden');
+    }
+    const resolvedStatus = ctx.partner_id ? (existingJob?.status ?? 'Draft') : (body.status ?? null);
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
       `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :min_experience, :min_age, :max_age, :gender_requirement, NULL, NULL)`,
@@ -351,7 +367,7 @@ export class JobsController extends Controller {
         salary_min: typeof body.salary_min === 'number' ? body.salary_min : null,
         salary_max: typeof body.salary_max === 'number' ? body.salary_max : null,
         job_description: encodeBase64Text(body.job_description),
-        status: body.status ?? null,
+        status: resolvedStatus,
         partner_id: ctx.partner_id ?? (typeof body.partner_id === 'number' ? body.partner_id : null),
         employment_type_id: typeof body.employment_type_id === 'number' ? body.employment_type_id : null,
         work_mode_id: typeof body.work_mode_id === 'number' ? body.work_mode_id : null,
@@ -462,7 +478,7 @@ export class JobsController extends Controller {
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
     const ctx = await getPartnerContext(user.user_id);
     if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
-    if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
+    if (ctx.partner_id) throw httpError(403, 'Forbidden');
     if (!body?.status?.trim()) throw httpError(400, 'status is required');
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(

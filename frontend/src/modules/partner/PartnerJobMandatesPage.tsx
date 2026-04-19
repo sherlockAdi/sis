@@ -48,13 +48,12 @@ export default function PartnerJobMandatesPage() {
         field: "status",
         headerName: "Status",
         width: 120,
-        renderCell: (p: any) => (
-          <Chip
-            size="small"
-            label={String(p.value ?? "")}
-            color={String(p.value ?? "").toLowerCase() === "open" ? "success" : "default"}
-          />
-        ),
+        renderCell: (p: any) => {
+          const status = String(p.value ?? "").trim();
+          const normalized = status.toLowerCase();
+          const color = normalized === "open" ? "success" : normalized === "draft" ? "warning" : normalized === "closed" ? "default" : "info";
+          return <Chip size="small" label={status || "—"} color={color as any} />;
+        },
       },
       {
         field: "__actions",
