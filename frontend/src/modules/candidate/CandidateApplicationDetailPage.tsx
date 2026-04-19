@@ -15,6 +15,10 @@ function fileExt(name: string): string {
   return name.slice(idx).toLowerCase();
 }
 
+function docKey(doc: CandidateApplicationDocRow): number {
+  return Number(doc.job_specific_document_id ?? doc.document_type_id ?? 0);
+}
+
 export default function CandidateApplicationDetailPage() {
   const navigate = useNavigate();
   const { applicationId } = useParams();
@@ -65,13 +69,21 @@ export default function CandidateApplicationDetailPage() {
     try {
       const now = Date.now();
       const ext = fileExt(file.name);
-      const objectKey = `applications/${id}/docs/${doc.document_type_id}/${now}${ext}`;
+      const key = docKey(doc);
+      const folder = doc.job_specific_document_id ? "job-docs" : "docs";
+      const objectKey = `applications/${id}/${folder}/${key}/${now}${ext}`;
 
       const presign = await recruitmentApi.files.presignUpload(objectKey);
       const put = await fetch(presign.url, { method: "PUT", body: file });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
 
-      await candidateApi.applications.upsertDocument(id, doc.document_type_id, objectKey);
+      if (doc.job_specific_document_id) {
+        await candidateApi.applications.upsertJobSpecificDocument(id, doc.job_specific_document_id, objectKey);
+      } else if (doc.document_type_id) {
+        await candidateApi.applications.upsertDocument(id, doc.document_type_id, objectKey);
+      } else {
+        throw new Error("Unknown document type");
+      }
       setToast({ open: true, message: "Uploaded", severity: "success" });
       loadDocs();
     } catch (e: any) {
@@ -151,7 +163,7 @@ export default function CandidateApplicationDetailPage() {
 
           {docs.map((d) => (
             <AdCard
-              key={d.document_type_id}
+              key={docKey(d)}
               animate={false}
               contentSx={{ p: 1.75 }}
               sx={{ backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 3 }}

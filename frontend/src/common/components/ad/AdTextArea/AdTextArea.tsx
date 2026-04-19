@@ -39,25 +39,36 @@ export default function AdTextArea({
 
   const [innerValue, setInnerValue] = useState<string>(value ?? defaultValue);
   const [internalError, setInternalError] = useState("");
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (isControlled && value !== undefined) {
       setInnerValue(value);
-      setInternalError(runValidation({ required, minLength, maxLength }, value));
+      if (touched) {
+        setInternalError(runValidation({ required, minLength, maxLength }, value));
+      }
     }
-  }, [value, isControlled, required, minLength, maxLength]);
+  }, [value, isControlled, required, minLength, maxLength, touched]);
 
-  const resolvedError = useMemo(() => error ?? internalError, [error, internalError]);
+  const resolvedError = useMemo(() => error ?? (touched ? internalError : ""), [error, internalError, touched]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
 
     if (!isControlled) setInnerValue(val);
+    if (!touched) setTouched(true);
 
     const validationMsg = runValidation({ required, minLength, maxLength }, val);
     setInternalError(validationMsg);
 
     onChange?.(val);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    setTouched(true);
+    const val = e.target.value;
+    setInternalError(runValidation({ required, minLength, maxLength }, val));
+    onBlur?.(e);
   };
 
   const currentValue = isControlled ? value ?? "" : innerValue;
@@ -96,7 +107,7 @@ export default function AdTextArea({
           autoFocus={autoFocus}
           readOnly={readOnly}
           onChange={handleChange}
-          onBlur={onBlur}
+          onBlur={handleBlur}
           onFocus={onFocus}
           style={{
             width: "100%",

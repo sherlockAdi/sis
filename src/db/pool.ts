@@ -7,7 +7,11 @@ export const pool = createPool({
   user: env.DB_USER,
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
+  charset: 'utf8mb4',
   connectionLimit: 10,
   namedPlaceholders: true
 });
 
+pool.on('connection', (conn) => {
+  void conn.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+});

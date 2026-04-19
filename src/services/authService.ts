@@ -24,6 +24,31 @@ type UserForOtpRow = RowDataPacket & {
   status: 0 | 1;
 };
 
+type ExistingUserRow = RowDataPacket & {
+  user_id: number;
+  role_id: number;
+  username: string;
+  email: string | null;
+};
+
+export async function findExistingUserByUsernameOrEmail(username: string, email?: string | null): Promise<ExistingUserRow | null> {
+  const uname = String(username ?? '').trim();
+  const eml = String(email ?? '').trim();
+  if (!uname && !eml) return null;
+
+  const [rows] = await pool.query<ExistingUserRow[]>(
+    `SELECT user_id, role_id, username, email
+     FROM AUTH_U04_users
+     WHERE (:username <> '' AND username = :username)
+        OR (:email <> '' AND email = :email)
+     ORDER BY user_id ASC
+     LIMIT 1`,
+    { username: uname, email: eml },
+  );
+
+  return rows[0] ?? null;
+}
+
 export async function loginWithPassword(username: string, password: string): Promise<{ token: string }> {
   const rows = await callProc<UserRow>(`CALL sp_auth_get_user_for_login(:username)`, { username });
 

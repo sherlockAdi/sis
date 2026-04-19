@@ -3,16 +3,21 @@ import { Chip, Stack, Typography, useMediaQuery, useTheme } from "@mui/material"
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
+import { useAuth } from "../../common/auth/AuthContext";
 
 export default function JobsPage() {
+  const { me } = useAuth();
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
   const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
+  const role = String(me?.role_code ?? "").toUpperCase();
+  const isAdminLike = role === "ADMINISTRATION" || role === "ADMIN";
   const [rows, setRows] = useState<JobListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,13 +56,12 @@ export default function JobsPage() {
         field: "status",
         headerName: "Status",
         width: 100,
-        renderCell: (p: any) => (
-          <Chip
-            size="small"
-            label={String(p.value ?? "")}
-            color={String(p.value ?? "").toLowerCase() === "open" ? "success" : "default"}
-          />
-        ),
+        renderCell: (p: any) => {
+          const status = String(p.value ?? "").trim();
+          const normalized = status.toLowerCase();
+          const color = normalized === "open" ? "success" : normalized === "draft" ? "warning" : normalized === "closed" ? "default" : "info";
+          return <Chip size="small" label={status || "—"} color={color as any} />;
+        },
       },
       {
         field: "__actions",
@@ -67,8 +71,27 @@ export default function JobsPage() {
         filterable: false,
         renderCell: (p: any) => {
           const r = p.row as JobListRow;
+          const isDraft = String(r.status ?? "").trim().toLowerCase() === "draft";
           return (
             <Stack direction="row" spacing={1}>
+              {isAdminLike && isDraft ? (
+                <AdButton
+                  variant="contained"
+                  color="success"
+                  startIcon={<LockOpenIcon fontSize="small" />}
+                  onClick={async () => {
+                    try {
+                      await jobsApi.setStatus(r.job_id, { status: "Open", remarks: "Opened by admin" });
+                      setToast({ open: true, message: "Job opened", severity: "success" });
+                      refresh();
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open job", severity: "error" });
+                    }
+                  }}
+                >
+                  Open
+                </AdButton>
+              ) : null}
               <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => navigate(`/portal/jobs/${r.job_id}`)}>
                 Edit
               </AdButton>
@@ -93,7 +116,7 @@ export default function JobsPage() {
         },
       },
     ],
-    [navigate],
+    [isAdminLike, navigate],
   );
 
   const jobVisibility = useMemo(

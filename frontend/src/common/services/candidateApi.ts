@@ -14,7 +14,8 @@ export type CandidateApplicationRow = {
 };
 
 export type CandidateApplicationDocRow = {
-  document_type_id: number;
+  document_type_id: number | null;
+  job_specific_document_id: number | null;
   document_name: string;
   job_is_required: number;
   candidate_document_id: number | null;
@@ -33,6 +34,20 @@ export type CandidateDocumentRow = {
 };
 
 export const candidateApi = {
+  profile: {
+    me: () =>
+      apiFetch<CandidateRow & { profile_complete: boolean; missing_fields: string[] }>(`/candidate/profile`, {
+        method: "GET",
+      }),
+    update: (
+      input: Partial<
+        Omit<
+          CandidateRow,
+          "candidate_id" | "candidate_code" | "created_at" | "updated_at" | "deleted_at" | "country_name" | "state_name" | "city_name"
+        >
+      >,
+    ) => apiFetch<{ updated: true }>(`/candidate/profile`, { method: "PUT", body: JSON.stringify(input) }),
+  },
   documents: {
     list: () => apiFetch<CandidateDocumentRow[]>(`/candidate/documents`, { method: "GET" }),
   },
@@ -59,6 +74,11 @@ export const candidateApi = {
       apiFetch<CandidateApplicationDocRow[]>(`/candidate/applications/${application_id}/documents`, { method: "GET" }),
     upsertDocument: (application_id: number, document_type_id: number, file_path: string) =>
       apiFetch<{ updated: true }>(`/candidate/applications/${application_id}/documents/${document_type_id}`, {
+        method: "PUT",
+        body: JSON.stringify({ file_path }),
+      }),
+    upsertJobSpecificDocument: (application_id: number, job_specific_document_id: number, file_path: string) =>
+      apiFetch<{ updated: true }>(`/candidate/applications/${application_id}/job-documents/${job_specific_document_id}`, {
         method: "PUT",
         body: JSON.stringify({ file_path }),
       }),

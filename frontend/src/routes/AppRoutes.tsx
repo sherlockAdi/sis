@@ -17,12 +17,18 @@ import JobCategoriesPage from "../modules/masters/JobCategoriesPage";
 import ContractDurationsPage from "../modules/masters/ContractDurationsPage";
 import DocumentTypesPage from "../modules/masters/DocumentTypesPage";
 import PaymentCategoriesPage from "../modules/masters/PaymentCategoriesPage";
+import SystemSettingsPage from "../modules/settings/SystemSettingsPage";
+import EmploymentTypesPage from "../modules/settings/EmploymentTypesPage";
+import WorkModesPage from "../modules/settings/WorkModesPage";
+import CurrenciesPage from "../modules/settings/CurrenciesPage";
+import LanguagesPage from "../modules/settings/LanguagesPage";
 import MenuManagementPage from "../modules/admin/MenuManagementPage";
 import JobsPage from "../modules/job/JobsPage";
 import JobsPreviewPage from "../modules/job/JobsPreviewPage";
 import JobFormPage from "../modules/job/JobFormPage";
 import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentApplicationsPage";
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
+import RecruitmentCandidateFormPage from "../modules/recruitment/RecruitmentCandidateFormPage";
 import RecruitmentScreeningInterviewsPage from "../modules/recruitment/RecruitmentScreeningInterviewsPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
 import CandidateJobApplyPage from "../modules/candidate/CandidateJobApplyPage";
@@ -69,6 +75,7 @@ import PartnerZoneLandingPage from "../modules/public/pages/partner/PartnerZoneL
 import PartnerBenefitsPage from "../modules/public/pages/partner/PartnerBenefitsPage";
 import PartnerHowItWorksPage from "../modules/public/pages/partner/PartnerHowItWorksPage";
 import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/PartnerSubmitCandidatesPage";
+import PartnerFormPage from "../modules/partners/PartnerFormPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
 import { useAuth } from "../common/auth/AuthContext";
 
@@ -162,6 +169,9 @@ export default function AppRoutes() {
           path="/masters/job/contract-durations"
           element={<Navigate to="/portal/masters/job/contract-durations" replace />}
         />
+        <Route path="/masters/job/employment-types" element={<Navigate to="/portal/settings/employment-types" replace />} />
+        <Route path="/masters/job/work-modes" element={<Navigate to="/portal/settings/work-modes" replace />} />
+        <Route path="/masters/recruitment/languages" element={<Navigate to="/portal/masters/recruitment/languages" replace />} />
         <Route
           path="/masters/documents/types"
           element={<Navigate to="/portal/masters/documents/types" replace />}
@@ -170,6 +180,7 @@ export default function AppRoutes() {
           path="/masters/payments/categories"
           element={<Navigate to="/portal/masters/payments/categories" replace />}
         />
+        <Route path="/masters/payments/currencies" element={<Navigate to="/portal/settings/currencies" replace />} />
         <Route
           path="/admin/menu-management"
           element={<Navigate to="/portal/admin/menu-management" replace />}
@@ -216,10 +227,18 @@ export default function AppRoutes() {
             <Route path="location/cities" element={<CitiesPage />} />
             <Route path="masters/recruitment/interview-modes" element={<InterviewModesPage />} />
             <Route path="masters/recruitment/visa-types" element={<VisaTypesPage />} />
+            <Route path="masters/recruitment/languages" element={<LanguagesPage />} />
             <Route path="masters/job/categories" element={<JobCategoriesPage />} />
             <Route path="masters/job/contract-durations" element={<ContractDurationsPage />} />
             <Route path="masters/documents/types" element={<DocumentTypesPage />} />
             <Route path="masters/payments/categories" element={<PaymentCategoriesPage />} />
+            <Route path="settings" element={<SystemSettingsPage />} />
+            <Route path="settings/employment-types" element={<EmploymentTypesPage />} />
+            <Route path="settings/work-modes" element={<WorkModesPage />} />
+            <Route path="settings/currencies" element={<CurrenciesPage />} />
+            <Route path="settings/languages" element={<LanguagesPage />} />
+            <Route path="settings/states" element={<StatesPage />} />
+            <Route path="settings/cities" element={<CitiesPage />} />
             <Route path="admin/menu-management" element={<MenuManagementPage />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="jobs/new" element={<JobFormPage mode="create" />} />
@@ -227,6 +246,8 @@ export default function AppRoutes() {
             <Route path="jobs-preview" element={<JobsPreviewPage />} />
             <Route path="recruitment/applications" element={<RecruitmentApplicationsPage />} />
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
+            <Route path="recruitment/candidates/new" element={<RecruitmentCandidateFormPage mode="create" />} />
+            <Route path="recruitment/candidates/:candidateId" element={<RecruitmentCandidateFormPage mode="edit" />} />
             <Route path="candidate/home" element={<CandidateHomePage />} />
             <Route path="candidate/jobs" element={<CandidateJobsPage />} />
             <Route path="candidate/jobs/:jobId/apply" element={<CandidateJobApplyPage />} />
@@ -286,6 +307,8 @@ export default function AppRoutes() {
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />
+            <Route path="partners/new" element={<PartnerFormPage mode="create" />} />
+            <Route path="partners/:partnerId" element={<PartnerFormPage mode="edit" />} />
             <Route path="partners/*" element={<PartnersPage />} />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
@@ -294,18 +317,7 @@ export default function AppRoutes() {
             <Route path="compliance" element={<PlaceholderPage title="Compliance & Documents" />} />
             <Route path="compliance/*" element={<PlaceholderPage title="Compliance & Documents" />} />
 
-            <Route
-              path="settings"
-              element={
-                <PlaceholderPage title="System Settings" nextLinks={[{ label: "Menu Management", to: "/portal/admin/menu-management" }]} />
-              }
-            />
-            <Route
-              path="settings/*"
-              element={
-                <PlaceholderPage title="System Settings" nextLinks={[{ label: "Menu Management", to: "/portal/admin/menu-management" }]} />
-              }
-            />
+            <Route path="settings/*" element={<SystemSettingsPage />} />
 
             {/* Catch-all inside portal */}
             <Route path="*" element={<PlaceholderPage title="Page not found (Dummy)" />} />

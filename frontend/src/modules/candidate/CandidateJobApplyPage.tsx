@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { Alert, Box, Chip, Divider, Stack, Typography } from "@mui/material";
-import { AdButton, AdCard, AdCheckBox, AdNotification } from "../../common/ad";
+import { Alert, Box, Button, Chip, Divider, Stack, Typography } from "@mui/material";
+import { AdButton, AdCard, AdCheckBox, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
 import { jobsApi, type JobDetail } from "../../common/services/jobsApi";
@@ -16,8 +16,8 @@ function fileExt(name: string): string {
   return name.slice(idx).toLowerCase();
 }
 
-function isRequiredMissing(docs: CandidateApplicationDocRow[]): boolean {
-  return docs.some((d) => Number(d.job_is_required) === 1 && !String(d.file_path ?? "").trim());
+function docKey(doc: CandidateApplicationDocRow): number {
+  return Number(doc.job_specific_document_id ?? doc.document_type_id ?? 0);
 }
 
 function moneyRange(min: string | null, max: string | null) {
@@ -31,7 +31,7 @@ function moneyRange(min: string | null, max: string | null) {
 function latestDocs(rows: CandidateApplicationDocRow[]): CandidateApplicationDocRow[] {
   const byType = new Map<number, CandidateApplicationDocRow>();
   for (const row of rows) {
-    const key = row.document_type_id;
+    const key = docKey(row);
     const existing = byType.get(key);
     if (!existing) {
       byType.set(key, row);
@@ -70,6 +70,9 @@ export default function CandidateJobApplyPage() {
   const [applicationId, setApplicationId] = useState<number | null>(null);
   const [application, setApplication] = useState<CandidateApplicationRow | null>(null);
   const [appLoading, setAppLoading] = useState(false);
+  const [profile, setProfile] = useState<Awaited<ReturnType<typeof candidateApi.profile.me>> | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const profileComplete = Boolean(profile?.profile_complete) && (profile?.missing_fields?.length ?? 0) === 0;
 
   const [docs, setDocs] = useState<CandidateApplicationDocRow[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -77,14 +80,47 @@ export default function CandidateJobApplyPage() {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const resolvedDocs = useMemo(() => {
+    const profilePathMap: Array<[string[], string | null | undefined]> = [
+      [["resume", "cv"], profile?.resume_file_path],
+      [["passport"], profile?.passport_file_path],
+      [["aadhar", "aadhaar"], profile?.aadhar_file_path],
+      [["pan"], profile?.pan_file_path],
+      [["voter"], profile?.voter_id_file_path],
+      [["photo", "profile photo"], profile?.profile_photo_file_path],
+    ];
+
+    return docs.map((doc) => {
+      if (String(doc.file_path ?? "").trim()) return doc;
+      if (doc.document_type_id == null) return doc;
+      const name = String(doc.document_name ?? "").toLowerCase();
+      const matched = profilePathMap.find(([keys, path]) => path && keys.some((k) => name.includes(k)));
+      if (!matched) return doc;
+      return { ...doc, file_path: matched[1] ?? doc.file_path };
+    });
+  }, [docs, profile]);
+
+  const missingDocNames = useMemo(
+    () =>
+      resolvedDocs
+        .filter((d) => Number(d.job_is_required) === 1 && !String(d.file_path ?? "").trim())
+        .map((d) => d.document_name),
+    [resolvedDocs],
+  );
+
   const applyDisabledReason = useMemo(() => {
+    if (profileLoading) return "Loading profile...";
+    if (!profileComplete) {
+      const missing = profile?.missing_fields?.length ? profile.missing_fields.join(", ") : "profile details and uploads";
+      return `Complete your profile before applying. Missing: ${missing}.`;
+    }
     if (!applicationId) return "Start application to continue.";
     if (docsLoading) return "Loading documents...";
-    if (isRequiredMissing(docs)) return "Upload all required documents.";
+    if (missingDocNames.length) return `Upload all required documents: ${missingDocNames.join(", ")}.`;
     if (!consent) return "Consent is required.";
     if (String(application?.status ?? "").toLowerCase() === "applied") return "You already applied for this job.";
     return null;
-  }, [application?.status, applicationId, consent, docs, docsLoading]);
+  }, [application?.status, applicationId, consent, docsLoading, missingDocNames, profile, profileComplete, profileLoading]);
 
   const loadJob = async () => {
     if (!Number.isFinite(id) || id <= 0) return;
@@ -97,6 +133,17 @@ export default function CandidateJobApplyPage() {
       setJobError((e as ApiError)?.message ?? "Failed to load job");
     } finally {
       setJobLoading(false);
+    }
+  };
+
+  const loadProfile = async () => {
+    setProfileLoading(true);
+    try {
+      setProfile(await candidateApi.profile.me());
+    } catch {
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -140,13 +187,21 @@ export default function CandidateJobApplyPage() {
     try {
       const now = Date.now();
       const ext = fileExt(file.name);
-      const objectKey = `applications/${applicationId}/docs/${doc.document_type_id}/${now}${ext}`;
+      const key = docKey(doc);
+      const folder = doc.job_specific_document_id ? "job-docs" : "docs";
+      const objectKey = `applications/${applicationId}/${folder}/${key}/${now}${ext}`;
 
       const presign = await recruitmentApi.files.presignUpload(objectKey);
       const put = await fetch(presign.url, { method: "PUT", body: file });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
 
-      await candidateApi.applications.upsertDocument(applicationId, doc.document_type_id, objectKey);
+      if (doc.job_specific_document_id) {
+        await candidateApi.applications.upsertJobSpecificDocument(applicationId, doc.job_specific_document_id, objectKey);
+      } else if (doc.document_type_id) {
+        await candidateApi.applications.upsertDocument(applicationId, doc.document_type_id, objectKey);
+      } else {
+        throw new Error("Unknown document type");
+      }
       setToast({ open: true, message: "Uploaded", severity: "success" });
       loadDocs(applicationId);
     } catch (e: any) {
@@ -179,14 +234,20 @@ export default function CandidateJobApplyPage() {
     }
   };
 
+  const jobDocuments = useMemo(
+    () => [...(job?.documents ?? []), ...(job?.job_specific_documents ?? [])],
+    [job],
+  );
+
   useEffect(() => {
     loadJob();
+    loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   return (
-    <Stack spacing={2.5}>
-      <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+      <Stack spacing={2.5}>
+        <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
         <AdButton variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate("/portal/candidate/jobs")}>
@@ -202,6 +263,19 @@ export default function CandidateJobApplyPage() {
       {!Number.isFinite(id) || id <= 0 ? <Alert severity="warning">Invalid job id.</Alert> : null}
       {jobLoading ? <Alert severity="info">Loading job...</Alert> : null}
       {jobError ? <Alert severity="warning">{jobError}</Alert> : null}
+      {profileLoading ? <Alert severity="info">Loading profile...</Alert> : null}
+      {!profileComplete ? (
+        <Alert
+          severity="warning"
+          action={
+            <Button color="inherit" size="small" onClick={() => navigate("/portal/candidate/profile/settings")}>
+              Complete Profile
+            </Button>
+          }
+        >
+          Complete your profile before applying. Missing: {profile?.missing_fields?.join(", ") || "profile details and uploads"}.
+        </Alert>
+      ) : null}
 
       {job ? (
         <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
@@ -222,7 +296,7 @@ export default function CandidateJobApplyPage() {
                 <Chip size="small" label={`Salary: ${moneyRange(job.job.salary_min, job.job.salary_max)}`} />
               ) : null}
               {job.locations?.length ? <Chip size="small" label={`${job.locations.length} location(s)`} /> : null}
-              {job.documents?.length ? <Chip size="small" label={`${job.documents.length} document(s)`} /> : null}
+              {jobDocuments.length ? <Chip size="small" label={`${jobDocuments.length} document(s)`} /> : null}
             </Stack>
 
             {job.job.job_description ? (
@@ -230,9 +304,9 @@ export default function CandidateJobApplyPage() {
                 <Divider />
                 <Box>
                   <Typography fontWeight={950}>Job Description</Typography>
-                  <Typography variant="body2" sx={{ mt: 0.75, color: "text.secondary", whiteSpace: "pre-wrap" }}>
-                    {job.job.job_description}
-                  </Typography>
+                  <Box sx={{ mt: 0.75 }}>
+                    <AdRichTextContent html={job.job.job_description} />
+                  </Box>
                 </Box>
               </>
             ) : null}
@@ -269,15 +343,15 @@ export default function CandidateJobApplyPage() {
               </>
             ) : null}
 
-            {job.documents?.length ? (
+            {jobDocuments.length ? (
               <>
                 <Divider />
                 <Box>
                   <Typography fontWeight={950}>Required Documents (Job)</Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 0.75 }}>
-                    {job.documents.map((d) => (
+                    {jobDocuments.map((d: any) => (
                       <Chip
-                        key={d.document_type_id}
+                        key={d.id}
                         size="small"
                         label={`${d.document_name}${Number(d.is_required) ? " • Required" : " • Optional"}`}
                         color={Number(d.is_required) ? "primary" : "default"}
@@ -350,7 +424,7 @@ export default function CandidateJobApplyPage() {
             </Box>
 
             <Stack direction="row" spacing={1}>
-              <AdButton variant="outlined" disabled={appLoading || !Number.isFinite(id) || id <= 0} onClick={start}>
+              <AdButton variant="outlined" disabled={appLoading || !Number.isFinite(id) || id <= 0 || !profileComplete} onClick={start}>
                 {applicationId ? "Refresh" : appLoading ? "Starting..." : "Start Application"}
               </AdButton>
               <AdButton variant="contained" disabled={Boolean(applyDisabledReason) || submitting} onClick={submit}>
@@ -364,11 +438,11 @@ export default function CandidateJobApplyPage() {
           {!applicationId ? <Alert severity="warning">Click “Start Application” to unlock document uploads.</Alert> : null}
           {docsLoading ? <Typography>Loading documents...</Typography> : null}
 
-          {!docsLoading && applicationId && !docs.length ? (
+          {!docsLoading && applicationId && !resolvedDocs.length ? (
             <Alert severity="warning">No job documents found for this application.</Alert>
           ) : null}
 
-          {docs.map((d) => (
+          {resolvedDocs.map((d) => (
             <AdCard
               key={d.document_type_id}
               animate={false}

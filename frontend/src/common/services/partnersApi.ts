@@ -8,10 +8,24 @@ export type PartnerRow = {
   phone: string | null;
   email: string | null;
   address: string | null;
+  country_id?: number | null;
+  country_name?: string | null;
+  state_id?: number | null;
+  state_name?: string | null;
+  city_id?: number | null;
+  city_name?: string | null;
+  alt_partner_name?: string | null;
+  alt_phone?: string | null;
+  organisation_name?: string | null;
+  address2?: string | null;
+  pin?: string | null;
+  landline?: string | null;
   user_id: number | null;
   username?: string | null;
   status: number;
   created_at: string;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 };
 
 export type PartnerApplicationRow = {
@@ -57,14 +71,24 @@ export const partnersApi = {
     apiFetch<PartnerRow[]>(`/partners?include_inactive=${include_inactive ? "true" : "false"}`, { method: "GET" }),
   get: (partner_id: number) => apiFetch<PartnerRow>(`/partners/${partner_id}`, { method: "GET" }),
   create: (input: {
+    partner_code?: string | null;
     partner_name: string;
     contact_name?: string | null;
     phone?: string | null;
     email?: string | null;
     address?: string | null;
+    country_id?: number | null;
+    state_id?: number | null;
+    city_id?: number | null;
+    alt_partner_name?: string | null;
+    alt_phone?: string | null;
+    organisation_name?: string | null;
+    address2?: string | null;
+    pin?: string | null;
+    landline?: string | null;
     status?: boolean | null;
   }) =>
-    apiFetch<{ partner_id: number; user_id: number; username: string; emailed: boolean }>(`/partners`, {
+    apiFetch<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }>(`/partners`, {
       method: "POST",
       body: JSON.stringify(input),
     }),

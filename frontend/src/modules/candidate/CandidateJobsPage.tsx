@@ -18,6 +18,8 @@ type Filters = {
   status?: string;
 };
 
+type CandidateProfile = Awaited<ReturnType<typeof candidateApi.profile.me>>;
+
 export default function CandidateJobsPage() {
   const navigate = useNavigate();
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -30,6 +32,7 @@ export default function CandidateJobsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appByJobId, setAppByJobId] = useState<Record<number, { application_id: number; status: string | null }>>({});
+  const [profile, setProfile] = useState<CandidateProfile | null>(null);
 
   const [filters, setFilters] = useState<Filters>({ status: "Open" });
   const [countries, setCountries] = useState<Country[]>([]);
@@ -146,6 +149,23 @@ export default function CandidateJobsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const row = await candidateApi.profile.me();
+        if (alive) setProfile(row);
+      } catch {
+        if (alive) setProfile(null);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const profileComplete = Boolean(profile?.profile_complete) && (profile?.missing_fields?.length ?? 0) === 0;
+
   return (
     <Stack spacing={2.5}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
@@ -218,6 +238,14 @@ export default function CandidateJobsPage() {
         </Box>
       </AdCard>
 
+      {!profileComplete ? (
+        <AdAlertBox
+          severity="warning"
+          title="Complete your profile before applying"
+          message={`Missing fields: ${(profile?.missing_fields ?? []).join(", ") || "profile details and uploads"}.`}
+        />
+      ) : null}
+
       {error ? <AdAlertBox severity="error" title="Error" message={error} /> : null}
 
       <Grid container spacing={2}>
@@ -245,16 +273,19 @@ export default function CandidateJobsPage() {
               const isApplied = hasApp && statusKey === "applied";
 
               const go = () => {
+                if (!profileComplete) return navigate("/portal/candidate/profile/settings");
                 if (isApplied) return navigate(`/portal/candidate/applications/${app!.application_id}`);
                 return navigate(`/portal/candidate/jobs/${r.job_id}/apply`);
               };
 
               const chip =
+                !profileComplete ? <Chip size="small" label="Profile incomplete" color="warning" /> :
                 isApplied ? <Chip size="small" label="Applied" color="success" /> :
                 hasApp ? <Chip size="small" label={status ? `In progress: ${status}` : "In progress"} /> :
                 null;
 
               const btnLabel =
+                !profileComplete ? "Complete Profile" :
                 isApplied ? "View Application" :
                 hasApp ? "Continue" :
                 "View & Apply";

@@ -67,6 +67,15 @@ export type JobDetail = {
   requirements: Array<{ requirement_id: number; job_id: number; requirement: string }>;
   benefits: Array<{ benefit_id: number; job_id: number; benefit: string }>;
   documents: Array<{ id: number; job_id: number; document_type_id: number; document_name: string; is_required: number }>;
+  job_specific_documents: Array<{
+    id: number;
+    job_id: number;
+    document_name: string;
+    is_required: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+  }>;
   locations: Array<{
     id: number;
     job_id: number;
@@ -109,6 +118,7 @@ export type JobUpsert = {
   requirements?: string[];
   benefits?: string[];
   documents?: Array<{ document_type_id: number; is_required?: boolean }>;
+  job_specific_documents?: Array<{ id?: number; document_name: string; is_required?: boolean }>;
   location?: {
     country_id?: number | null;
     state_id?: number | null;

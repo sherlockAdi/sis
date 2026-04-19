@@ -2,6 +2,7 @@ import { Controller, Get, Path, Query, Route, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
+import { decodeBase64Text } from '../../utils/base64Text';
 
 type PublicJobPreviewRow = {
   job_id: number;
@@ -37,6 +38,7 @@ type PublicJobRow = {
   salary_min: string | null;
   salary_max: string | null;
   job_description?: string | null;
+  compensation_text?: string | null;
   status: string | null;
   created_by: number | null;
   created_at: string;
@@ -45,6 +47,15 @@ type PublicJobRow = {
 type PublicJobRequirement = { requirement_id: number; job_id: number; location_id: number | null; requirement: string };
 type PublicJobBenefit = { benefit_id: number; job_id: number; location_id: number | null; benefit: string };
 type PublicJobDocument = { id: number; job_id: number; document_type_id: number; document_name: string; is_required: 0 | 1 };
+type PublicJobSpecificDocument = {
+  id: number;
+  job_id: number;
+  document_name: string;
+  is_required: 0 | 1;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
 type PublicJobLocation = {
   id: number;
   job_id: number;
@@ -58,6 +69,14 @@ type PublicJobLocation = {
   salary_min: string | null;
   salary_max: string | null;
 };
+
+function decodePublicJobTextFields(job: PublicJobRow): PublicJobRow {
+  return {
+    ...job,
+    job_description: decodeBase64Text(job.job_description),
+    compensation_text: decodeBase64Text(job.compensation_text),
+  };
+}
 
 @Route('public/jobs')
 @Tags('Public')
@@ -102,6 +121,7 @@ export class PublicJobsController extends Controller {
     requirements: PublicJobRequirement[];
     benefits: PublicJobBenefit[];
     documents: PublicJobDocument[];
+    job_specific_documents: PublicJobSpecificDocument[];
     locations: PublicJobLocation[];
   }> {
     const jobRows = await callProc<RowDataPacket & PublicJobRow>(
@@ -113,7 +133,7 @@ export class PublicJobsController extends Controller {
     // Don't expose closed jobs publicly (avoid stale links).
     if (String(job.status ?? '').trim().toLowerCase() === 'closed') throw httpError(404, 'Job not found');
 
-    const [requirements, benefits, documents, locations] = await Promise.all([
+    const [requirements, benefits, documents, job_specific_documents, locations] = await Promise.all([
       callProc<RowDataPacket & PublicJobRequirement>(
         `CALL sp_job_requirements('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
@@ -126,12 +146,16 @@ export class PublicJobsController extends Controller {
         `CALL sp_job_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
         { job_id: jobId }
       ),
+      callProc<RowDataPacket & PublicJobSpecificDocument>(
+        `CALL sp_job_specific_documents('LIST_BY_JOB', NULL, :job_id, NULL, NULL)`,
+        { job_id: jobId }
+      ),
       callProc<RowDataPacket & PublicJobLocation>(
         `CALL sp_job_locations('LIST_BY_JOB', NULL, :job_id, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { job_id: jobId }
       )
     ]);
 
-    return { job, requirements, benefits, documents, locations };
+    return { job: decodePublicJobTextFields(job), requirements, benefits, documents, job_specific_documents, locations };
   }
 }

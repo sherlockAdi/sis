@@ -129,6 +129,23 @@ CREATE TABLE IF NOT EXISTS JOB_T04_job_documents (
 
 
 -- ============================================
+-- JOB_T08_job_specific_documents
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS JOB_T08_job_specific_documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    document_name VARCHAR(150) NOT NULL,
+    is_required BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+
+    FOREIGN KEY (job_id) REFERENCES JOB_T01_jobs(job_id) ON DELETE CASCADE
+);
+
+
+-- ============================================
 -- JOB_T05_job_locations
 -- ============================================
 
@@ -576,6 +593,61 @@ BEGIN
 
   ELSE
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_job_documents: invalid action';
+  END IF;
+END $$
+
+
+DROP PROCEDURE IF EXISTS sp_job_specific_documents $$
+CREATE PROCEDURE sp_job_specific_documents(
+  IN p_action VARCHAR(30),
+  IN p_id INT,
+  IN p_job_id INT,
+  IN p_document_name VARCHAR(150),
+  IN p_is_required BOOLEAN
+)
+BEGIN
+  IF p_action = 'LIST_BY_JOB' THEN
+    SELECT
+      id,
+      job_id,
+      document_name,
+      is_required,
+      created_at,
+      updated_at,
+      deleted_at
+    FROM JOB_T08_job_specific_documents
+    WHERE job_id = p_job_id
+      AND deleted_at IS NULL
+    ORDER BY id ASC;
+
+  ELSEIF p_action = 'CREATE' THEN
+    INSERT INTO JOB_T08_job_specific_documents (job_id, document_name, is_required)
+    VALUES (p_job_id, p_document_name, COALESCE(p_is_required, TRUE));
+    SELECT LAST_INSERT_ID() AS id;
+
+  ELSEIF p_action = 'UPDATE' THEN
+    UPDATE JOB_T08_job_specific_documents
+    SET
+      document_name = COALESCE(p_document_name, document_name),
+      is_required = COALESCE(p_is_required, is_required),
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_id;
+    SELECT ROW_COUNT() AS affected_rows;
+
+  ELSEIF p_action = 'DELETE' THEN
+    UPDATE JOB_T08_job_specific_documents
+    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_id;
+    SELECT ROW_COUNT() AS affected_rows;
+
+  ELSEIF p_action = 'DELETE_BY_JOB' THEN
+    UPDATE JOB_T08_job_specific_documents
+    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+    WHERE job_id = p_job_id AND deleted_at IS NULL;
+    SELECT ROW_COUNT() AS affected_rows;
+
+  ELSE
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_job_specific_documents: invalid action';
   END IF;
 END $$
 

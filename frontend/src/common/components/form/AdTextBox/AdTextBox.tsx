@@ -55,20 +55,24 @@ export default function AdTextBox({
   const isControlled = value !== undefined;
   const [innerValue, setInnerValue] = useState<string>(value ?? defaultValue);
   const [internalError, setInternalError] = useState("");
+  const [touched, setTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isControlled && value !== undefined) {
       setInnerValue(value);
-      setInternalError(runValidation({ required, minLength, maxLength, pattern, type }, value));
+      if (touched) {
+        setInternalError(runValidation({ required, minLength, maxLength, pattern, type }, value));
+      }
     }
-  }, [isControlled, maxLength, minLength, pattern, required, type, value]);
+  }, [isControlled, maxLength, minLength, pattern, required, touched, type, value]);
 
-  const resolvedError = useMemo(() => error ?? internalError, [error, internalError]);
+  const resolvedError = useMemo(() => error ?? (touched ? internalError : ""), [error, internalError, touched]);
 
   const handleChange: TextFieldProps["onChange"] = (e) => {
     const val = e.target.value;
     if (!isControlled) setInnerValue(val);
+    if (!touched) setTouched(true);
 
     const validationMsg = runValidation(
       { required, minLength, maxLength, pattern, type },
@@ -81,6 +85,13 @@ export default function AdTextBox({
 
   const handleKeyDown: TextFieldProps["onKeyDown"] = (e) => {
     if (e.key === "Enter") onEnter?.();
+  };
+
+  const handleBlur: TextFieldProps["onBlur"] = (e) => {
+    setTouched(true);
+    const val = e.target.value;
+    setInternalError(runValidation({ required, minLength, maxLength, pattern, type }, val));
+    onBlur?.(e);
   };
 
   const currentValue = isControlled ? value ?? "" : innerValue;
@@ -103,7 +114,7 @@ export default function AdTextBox({
       helperText={resolvedError || helperText}
       error={Boolean(resolvedError)}
       onChange={handleChange}
-      onBlur={onBlur}
+      onBlur={handleBlur}
       onFocus={onFocus}
       onKeyDown={handleKeyDown}
       InputProps={{
