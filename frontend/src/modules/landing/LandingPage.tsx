@@ -1103,7 +1103,7 @@ export default function LandingPage() {
             {[
               { title: "For Workers", links: ["Find Work", "Jobs in Dubai", "Jobs in Virginia", "Jobs in California"] },
               { title: "For Business", links: ["Merchandising", "Hospitality Staff", "General Labour", "Car Drivers"] },
-              { title: "Company", links: ["About Us", "Career", "Partners", "Blog"] },
+              { title: "Company", links: ["About Us", "Career", "Employers", "Blog"] },
               { title: "Help & Support", links: ["Contact Us", "General FAQ", "Support Center", "Privacy Policy"] },
             ].map((col) => (
               <Box key={col.title}>

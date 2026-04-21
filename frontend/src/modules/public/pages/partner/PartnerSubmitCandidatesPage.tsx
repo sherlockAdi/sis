@@ -9,10 +9,10 @@ export default function PartnerSubmitCandidatesPage() {
   return (
     <Box>
       <PublicPageHero
-        eyebrow="Partner Zone"
+        eyebrow="Employer Sourcing Zone"
         title="Submit"
         highlight="Candidates"
-        subtitle="Use the Partner portal to submit profiles and track progress."
+        subtitle="Use the Employer portal to submit profiles and track progress."
       />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -21,7 +21,7 @@ export default function PartnerSubmitCandidatesPage() {
             Submission CTA
           </Typography>
           <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
-            Partner submissions happen inside the portal so you can upload candidate details, attach documents, and track status
+            Employer submissions happen inside the portal so you can upload candidate details, attach documents, and track status
             updates.
           </Typography>
 
@@ -34,7 +34,7 @@ export default function PartnerSubmitCandidatesPage() {
               sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" }, borderRadius: 3 }}
               fullWidth
             >
-              Partner Portal Login
+              Employer Portal Login
             </Button>
             <Button variant="outlined" onClick={() => navigate("/register")} sx={{ borderRadius: 3 }} fullWidth>
               Get Registered

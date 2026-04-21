@@ -46,7 +46,7 @@ export default function PublicFooter() {
               </Typography>
               <FooterLink to="/about">About Us</FooterLink>
               <FooterLink to="/employer-zone">Employer Zone</FooterLink>
-              <FooterLink to="/partner-zone">Partner Zone</FooterLink>
+              <FooterLink to="/partner-zone">Employer Sourcing Zone</FooterLink>
             </Stack>
 
             <Stack spacing={0.75}>
@@ -63,7 +63,7 @@ export default function PublicFooter() {
               </Typography>
               <FooterLink to={`${PORTAL_BASE}/login?portal=candidate`}>Candidate Login</FooterLink>
               <FooterLink to={`${PORTAL_BASE}/login?portal=employer`}>Customer Login</FooterLink>
-              <FooterLink to={`${PORTAL_BASE}/login?portal=sourcing`}>Partner Login</FooterLink>
+              <FooterLink to={`${PORTAL_BASE}/login?portal=sourcing`}>Employer Login</FooterLink>
               <FooterLink to={`${PORTAL_BASE}/login?portal=administrator`}>Admin Login</FooterLink>
             </Stack>
           </Stack>

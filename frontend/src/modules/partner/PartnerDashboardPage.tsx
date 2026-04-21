@@ -21,7 +21,7 @@ export default function PartnerDashboardPage() {
         setApps(a);
       } catch (e: any) {
         const apiErr = e as ApiError;
-        setError(apiErr?.message ?? "Failed to load partner overview");
+        setError(apiErr?.message ?? "Failed to load employer overview");
       } finally {
         setLoading(false);
       }

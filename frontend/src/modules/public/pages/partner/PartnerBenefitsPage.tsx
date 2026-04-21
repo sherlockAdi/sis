@@ -5,8 +5,8 @@ export default function PartnerBenefitsPage() {
   return (
     <Box>
       <PublicPageHero
-        eyebrow="Partner Zone"
-        title="Partner"
+        eyebrow="Employer Sourcing Zone"
+        title="Employer"
         highlight="Benefits"
         subtitle="Structured sourcing programs with clear visibility and accountability."
       />
@@ -15,7 +15,7 @@ export default function PartnerBenefitsPage() {
         <Stack spacing={2.5}>
           <Box sx={{ p: 3, bgcolor: "white", borderRadius: 4, border: "1px solid rgba(15,23,42,0.08)" }}>
             <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-              What partners get
+              What employers get
             </Typography>
             <Divider sx={{ my: 2.5 }} />
             <Stack spacing={1.1}>
@@ -36,4 +36,3 @@ export default function PartnerBenefitsPage() {
     </Box>
   );
 }
-

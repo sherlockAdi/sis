@@ -11,6 +11,7 @@ export type AdSearchableDropDownMultiProps = {
   helperText?: string;
   error?: boolean;
   fullWidth?: boolean;
+  variant?: "standard" | "outlined" | "filled";
   onChange?: (value: string[]) => void;
 };
 
@@ -24,6 +25,7 @@ export function AdSearchableDropDownMulti({
   helperText,
   error = false,
   fullWidth = true,
+  variant = "outlined",
   onChange,
 }: AdSearchableDropDownMultiProps) {
   const selected = options.filter((opt) => value.includes(String(opt.value)));
@@ -49,6 +51,7 @@ export function AdSearchableDropDownMulti({
       renderInput={(params) => (
         <TextField
           {...params}
+          variant={variant}
           label={label}
           required={required}
           placeholder={placeholder}

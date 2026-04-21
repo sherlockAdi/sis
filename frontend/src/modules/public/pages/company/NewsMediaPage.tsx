@@ -6,7 +6,7 @@ const posts = [
     date: "31",
     month: "Mar",
     title: "SIS expands overseas hiring pipeline for priority roles",
-    excerpt: "Faster job discovery, structured partner submissions, and improved employer trust signals across key regions.",
+    excerpt: "Faster job discovery, structured employer submissions, and improved employer trust signals across key regions.",
   },
   {
     date: "19",
@@ -23,7 +23,7 @@ export default function NewsMediaPage() {
         eyebrow="Company"
         title="News"
         highlight="& Media"
-        subtitle="Updates on hiring programs, deployments, and partner ecosystem improvements."
+        subtitle="Updates on hiring programs, deployments, and employer ecosystem improvements."
       />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -73,4 +73,3 @@ export default function NewsMediaPage() {
     </Box>
   );
 }
-

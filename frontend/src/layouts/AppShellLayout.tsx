@@ -77,6 +77,16 @@ function iconFromDb(name?: string | null) {
       return <SettingsIcon fontSize="small" />;
     case "business":
       return <BusinessIcon fontSize="small" />;
+    case "school":
+      return <MenuBookIcon fontSize="small" />;
+    case "handyman":
+      return <SettingsIcon fontSize="small" />;
+    case "fact_check":
+      return <BadgeIcon fontSize="small" />;
+    case "smart_toy":
+      return <FolderIcon fontSize="small" />;
+    case "add":
+      return <PeopleAltIcon fontSize="small" />;
     default:
       return <FolderIcon fontSize="small" />;
   }
@@ -135,11 +145,12 @@ export default function AppShellLayout() {
       });
     }
 
-    // De-dupe by `to`
+    // De-dupe by menu code so distinct groups can share the same landing route.
     const seen = new Set<string>();
     return items.filter((i) => {
-      if (seen.has(i.to)) return false;
-      seen.add(i.to);
+      const key = String(i.code ?? i.to);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }, [me?.menus]);
@@ -148,46 +159,54 @@ export default function AppShellLayout() {
     if (!isAdminLike) return null;
 
     const MAIN = "MAIN MENU";
-    const SETTINGS = "SETTINGS";
+    const SETTINGS = "SYSTEM SETTINGS";
+    const EMPLOYER = "EMPLOYER";
+    const ASSOCIATE = "ASSOCIATE PARTNERS";
+    const CANDIDATE_DEV = "CANDIDATE DEVELOPMENT ZONE";
+    const EMPLOYEE = "EMPLOYEE ZONE";
+    const ATTENDANCE = "ATTENDANCE RULE";
+    const HELPDESK = "TICKETING & HELPDESK";
     const ADMIN = "ADMINISTRATION";
-    const HRM = "HRM";
 
-    const hrmCodes = new Set([
-      "ADM_RECRUITMENT",
-      "ADM_TRADE_TEST",
-      "ADM_TRAINING",
-      "ADM_DEPLOYMENT",
-      "ADM_ATTENDANCE",
-      "ADM_HELPDESK",
-    ]);
-    const adminCodes = new Set([
-      "ADM_CUSTOMERS",
-      "ADM_PARTNERS",
-      "ADM_REPORTS",
-      "ADM_COMPLIANCE",
+    const assignableCodes = new Map<string, string>([
+      ["ADM_SETTINGS", SETTINGS],
+      ["ADM_EMPLOYER", EMPLOYER],
+      ["ADM_ASSOC_PARTNERS", ASSOCIATE],
+      ["ADM_CAND_DEV_ZONE", CANDIDATE_DEV],
+      ["ADM_EMPLOYEE_ZONE", EMPLOYEE],
+      ["ADM_ATTENDANCE", ATTENDANCE],
+      ["ADM_HELPDESK", HELPDESK],
     ]);
 
     const buckets: Record<string, any[]> = {
       [MAIN]: [],
       [SETTINGS]: [],
+      [EMPLOYER]: [],
+      [ASSOCIATE]: [],
+      [CANDIDATE_DEV]: [],
+      [EMPLOYEE]: [],
+      [ATTENDANCE]: [],
+      [HELPDESK]: [],
       [ADMIN]: [],
-      [HRM]: [],
     };
 
     for (const i of navItems as any[]) {
       const code = String(i.code ?? "");
+      const bucket = assignableCodes.get(code) ?? ADMIN;
       if (code === "ADM_DASHBOARD") buckets[MAIN].push(i);
-      else if (code === "ADM_SETTINGS") buckets[SETTINGS].push(i);
-      else if (hrmCodes.has(code)) buckets[HRM].push(i);
-      else if (adminCodes.has(code)) buckets[ADMIN].push(i);
-      else buckets[ADMIN].push(i);
+      else buckets[bucket].push(i);
     }
 
     return [
       { heading: MAIN, items: buckets[MAIN] },
-      { heading: HRM, items: buckets[HRM] },
-      { heading: ADMIN, items: buckets[ADMIN] },
       { heading: SETTINGS, items: buckets[SETTINGS] },
+      { heading: EMPLOYER, items: buckets[EMPLOYER] },
+      { heading: ASSOCIATE, items: buckets[ASSOCIATE] },
+      { heading: CANDIDATE_DEV, items: buckets[CANDIDATE_DEV] },
+      { heading: EMPLOYEE, items: buckets[EMPLOYEE] },
+      { heading: ATTENDANCE, items: buckets[ATTENDANCE] },
+      { heading: HELPDESK, items: buckets[HELPDESK] },
+      { heading: ADMIN, items: buckets[ADMIN] },
     ].filter((s) => s.items.length);
   }, [isAdminLike, navItems]);
 
@@ -265,9 +284,9 @@ export default function AppShellLayout() {
 
     const path = location.pathname;
     const value =
-      path.includes("/partner/job-mandates") ? "mandates" :
-      path.includes("/partner/submit-candidate") ? "submit" :
-      path.includes("/partner/my-submissions") ? "submissions" :
+      path.includes("/partner/job-mandates") ? "jobs" :
+      path.includes("/partner/my-submissions") ? "applied" :
+      path.includes("/partner/reports") ? "reports" :
       path.includes("/partner/profile") ? "profile" :
       "dashboard";
 
@@ -280,14 +299,14 @@ export default function AppShellLayout() {
             case "dashboard":
               navigate(withPortalBase("/partner/dashboard"));
               break;
-            case "mandates":
+            case "jobs":
               navigate(withPortalBase("/partner/job-mandates"));
               break;
-            case "submit":
-              navigate(withPortalBase("/partner/submit-candidate"));
-              break;
-            case "submissions":
+            case "applied":
               navigate(withPortalBase("/partner/my-submissions"));
+              break;
+            case "reports":
+              navigate(withPortalBase("/partner/reports"));
               break;
             case "profile":
               navigate(withPortalBase("/partner/profile"));
@@ -305,9 +324,9 @@ export default function AppShellLayout() {
         }}
       >
         <BottomNavigationAction label="Dashboard" value="dashboard" icon={<HomeIcon />} />
-        <BottomNavigationAction label="Jobs" value="mandates" icon={<WorkOutlineIcon />} />
-        <BottomNavigationAction label="Submit" value="submit" icon={<PeopleAltIcon />} />
-        <BottomNavigationAction label="My List" value="submissions" icon={<ReceiptLongIcon />} />
+        <BottomNavigationAction label="Job" value="jobs" icon={<WorkOutlineIcon />} />
+        <BottomNavigationAction label="Applied" value="applied" icon={<ReceiptLongIcon />} />
+        <BottomNavigationAction label="Reports" value="reports" icon={<DescriptionIcon />} />
         <BottomNavigationAction label="Profile" value="profile" icon={<PersonIcon />} />
       </BottomNavigation>
     );
@@ -315,7 +334,7 @@ export default function AppShellLayout() {
 
   const effectiveTitle = useMemo(() => {
     if (isCandidate) return "Candidate Portal";
-    if (isPartner) return "Partner Portal";
+    if (isPartner) return "Employer Portal";
     if (isEmployer) return "Employer Portal";
     return "Administrator Dashboard";
   }, [isCandidate, isEmployer, isPartner]);

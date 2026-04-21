@@ -91,7 +91,7 @@ export default function AboutIndexPage() {
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
               {[
                 { t: "Structured workflow", d: "Clear stages and ownership across recruitment and deployment." },
-                { t: "Separate portals", d: "Candidate / Partner / Employer / Admin journeys stay focused." },
+                { t: "Separate portals", d: "Candidate / Employer / Customer / Admin journeys stay focused." },
                 { t: "Document controls", d: "Required docs per job and verification status to reduce delays." },
                 { t: "Traceable history", d: "Status history and audit trail for accountability." },
               ].map((x) => (
@@ -158,7 +158,7 @@ export default function AboutIndexPage() {
               {[
                 { t: "Job discovery first", d: "Users land and instantly see jobs, search, and apply/register." },
                 { t: "Process-based operations", d: "Recruitment → Training → Deployment → Workforce → Reports." },
-                { t: "Partner performance tracking", d: "Conversion visibility and feedback loops improve quality." },
+                { t: "Employer performance tracking", d: "Conversion visibility and feedback loops improve quality." },
                 { t: "Employer visibility", d: "Stage-wise pipeline and pending actions reduce follow-ups." },
               ].map((x) => (
                 <Card key={x.t} variant="outlined" sx={{ borderRadius: 4 }}>

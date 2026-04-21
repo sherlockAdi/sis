@@ -20,7 +20,7 @@ export default function WhySisPage() {
             {[
               { t: "Conversion-focused UX", d: "Users land → see jobs → search → apply/register → portal handoff." },
               { t: "Faster hiring loop", d: "Structured pipeline reduces delays and unclear ownership." },
-              { t: "Partner ecosystem", d: "Sourcing partners submit candidates and track progress." },
+              { t: "Employer ecosystem", d: "Sourcing teams submit candidates and track progress." },
               { t: "Employer confidence", d: "Trust signals, compliance checks, and documented steps." },
             ].map((x) => (
               <Box key={x.t} sx={{ p: 2.5, borderRadius: 4, bgcolor: "white", border: "1px solid rgba(15,23,42,0.08)" }}>
@@ -68,4 +68,3 @@ export default function WhySisPage() {
     </Box>
   );
 }
-

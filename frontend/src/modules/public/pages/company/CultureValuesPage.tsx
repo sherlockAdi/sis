@@ -32,7 +32,7 @@ export default function CultureValuesPage() {
               {[
                 "We institutionalize employee welfare through training, transparent communication, and structured documentation.",
                 "Our operating system is built on clear milestones: apply → screen → interview → visa → deployment.",
-                "Every stakeholder gets a dedicated experience: candidates apply and track; partners submit and monitor; employers review and approve.",
+                "Every stakeholder gets a dedicated experience: candidates apply and track; employers submit and monitor; employers review and approve.",
               ].map((p) => (
                 <Typography key={p} sx={{ color: "text.secondary", lineHeight: 1.9 }}>
                   {p}
@@ -69,4 +69,3 @@ export default function CultureValuesPage() {
     </Box>
   );
 }
-

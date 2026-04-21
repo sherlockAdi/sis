@@ -9,7 +9,7 @@ export type ApiError = {
 function getBaseUrl(): string {
   const base = String((import.meta as any).env?.VITE_API_BASE_URL ?? "").trim();
   if (base) return base.replace(/\/+$/, "");
-  //return "https://sisglobalapi.neuralinfo.co.in";
+  // return "https://uatsisglobalapi.neuralinfo.co.in";
    return "http://localhost:3000"
 }
 

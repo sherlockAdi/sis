@@ -39,7 +39,7 @@ export default function AboutSisPage() {
               {[
                 "SIS Global commenced operations with a mission to standardize workforce sourcing and deployment across multiple geographies.",
                 "We combine compliance-first recruitment, structured screening, and transparent documentation to help employers hire with confidence.",
-                "Our portal ecosystem routes each stakeholder to the right experience: Candidate, Partner, Customer, and Admin.",
+                "Our portal ecosystem routes each stakeholder to the right experience: Candidate, Employer, Customer, and Admin.",
               ].map((p) => (
                 <Typography key={p} sx={{ color: "text.secondary", lineHeight: 1.9 }}>
                   {p}
@@ -51,7 +51,7 @@ export default function AboutSisPage() {
                 {[
                   { t: "Trust Layer", d: "Verified process and clear timelines." },
                   { t: "Job Discovery First", d: "Country-wise jobs like a portal, not a brochure." },
-                  { t: "Partner Network", d: "Agency workflows with visibility and accountability." },
+                  { t: "Employer Network", d: "Agency workflows with visibility and accountability." },
                   { t: "Compliance Ready", d: "Documents, status history, and audit trails." },
                 ].map((x) => (
                   <Box key={x.t} sx={{ p: 2, borderRadius: 3, bgcolor: "#f6f6f8", border: "1px solid rgba(15,23,42,0.08)" }}>
@@ -69,4 +69,3 @@ export default function AboutSisPage() {
     </Box>
   );
 }
-

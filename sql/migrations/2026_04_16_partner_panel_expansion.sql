@@ -10,6 +10,9 @@ ALTER TABLE PART_T01_partners
   ADD COLUMN address2 VARCHAR(255) DEFAULT NULL,
   ADD COLUMN pin VARCHAR(20) DEFAULT NULL,
   ADD COLUMN landline VARCHAR(30) DEFAULT NULL,
+  ADD COLUMN cr_licence_number VARCHAR(100) DEFAULT NULL,
+  ADD COLUMN website VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN other_info VARCHAR(255) DEFAULT NULL,
   ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;
 
@@ -42,6 +45,9 @@ CREATE PROCEDURE sp_partners(
   IN p_address2 VARCHAR(255),
   IN p_pin VARCHAR(20),
   IN p_landline VARCHAR(30),
+  IN p_cr_licence_number VARCHAR(100),
+  IN p_website VARCHAR(255),
+  IN p_other_info VARCHAR(255),
   IN p_user_id INT,
   IN p_status BOOLEAN,
   IN p_include_inactive BOOLEAN
@@ -68,6 +74,9 @@ BEGIN
       p.address2,
       p.pin,
       p.landline,
+      p.cr_licence_number,
+      p.website,
+      p.other_info,
       p.user_id,
       u.username,
       p.status,
@@ -103,6 +112,9 @@ BEGIN
       p.address2,
       p.pin,
       p.landline,
+      p.cr_licence_number,
+      p.website,
+      p.other_info,
       p.user_id,
       u.username,
       p.status,
@@ -138,6 +150,9 @@ BEGIN
       p.address2,
       p.pin,
       p.landline,
+      p.cr_licence_number,
+      p.website,
+      p.other_info,
       p.user_id,
       u.username,
       p.status,
@@ -155,11 +170,11 @@ BEGIN
   ELSEIF p_action = 'CREATE' THEN
     INSERT INTO PART_T01_partners (
       partner_code, partner_name, contact_name, phone, email, address, country_id, state_id, city_id,
-      alt_partner_name, alt_phone, organisation_name, address2, pin, landline, user_id, status
+      alt_partner_name, alt_phone, organisation_name, address2, pin, landline, cr_licence_number, website, other_info, user_id, status
     ) VALUES (
       NULLIF(p_partner_code, ''), p_partner_name, p_contact_name, p_phone, p_email, p_address,
       p_country_id, p_state_id, p_city_id, p_alt_partner_name, p_alt_phone, p_organisation_name,
-      p_address2, p_pin, p_landline, p_user_id, COALESCE(p_status, TRUE)
+      p_address2, p_pin, p_landline, p_cr_licence_number, p_website, p_other_info, p_user_id, COALESCE(p_status, TRUE)
     );
     SET @new_id := LAST_INSERT_ID();
     UPDATE PART_T01_partners
@@ -185,6 +200,9 @@ BEGIN
       address2 = COALESCE(p_address2, address2),
       pin = COALESCE(p_pin, pin),
       landline = COALESCE(p_landline, landline),
+      cr_licence_number = COALESCE(p_cr_licence_number, cr_licence_number),
+      website = COALESCE(p_website, website),
+      other_info = COALESCE(p_other_info, other_info),
       user_id = COALESCE(p_user_id, user_id),
       status = COALESCE(p_status, status),
       updated_at = CURRENT_TIMESTAMP

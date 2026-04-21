@@ -22,7 +22,7 @@ export default function PartnersPage() {
       setRows(await partnersApi.list(true));
     } catch (e: any) {
       const apiErr = e as ApiError;
-      setError(apiErr?.message ?? "Failed to load partners");
+      setError(apiErr?.message ?? "Failed to load employers");
     } finally {
       setLoading(false);
     }
@@ -34,14 +34,16 @@ export default function PartnersPage() {
 
   const cols = useMemo(
     () => [
-      { field: "partner_code", headerName: "Code", width: 120 },
-      { field: "partner_name", headerName: "Partner", flex: 1, minWidth: 220 },
+      { field: "partner_code", headerName: "Employer Code", width: 140 },
+      { field: "partner_name", headerName: "Employer", flex: 1, minWidth: 220 },
       { field: "country_name", headerName: "Country", width: 140 },
       { field: "state_name", headerName: "State", width: 140 },
       { field: "city_name", headerName: "City", width: 140 },
       { field: "contact_name", headerName: "Contact", width: 160 },
       { field: "phone", headerName: "Phone", width: 140 },
       { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
+      { field: "cr_licence_number", headerName: "CR/Licence No.", width: 160 },
+      { field: "website", headerName: "Website", flex: 1, minWidth: 180 },
       { field: "username", headerName: "Username", width: 140 },
       {
         field: "status",
@@ -73,7 +75,7 @@ export default function PartnersPage() {
                 onClick={async () => {
                   try {
                     await partnersApi.disable(r.partner_id);
-                    setToast({ open: true, message: "Partner disabled", severity: "success" });
+                    setToast({ open: true, message: "Employer disabled", severity: "success" });
                     refresh();
                   } catch (e: any) {
                     setToast({ open: true, message: (e as ApiError)?.message ?? "Failed", severity: "error" });
@@ -102,10 +104,10 @@ export default function PartnersPage() {
       >
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Partner Management
+            Employer Management
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Create partner accounts and manage status
+            Create employer accounts and manage status
           </Typography>
         </Stack>
         <AdButton
@@ -113,7 +115,7 @@ export default function PartnersPage() {
           onClick={() => navigate("/portal/partners/new")}
           sx={{ alignSelf: { xs: "stretch", md: "center" }, maxWidth: { xs: "100%", md: "fit-content" } }}
         >
-          Add Partner
+          Add Employer
         </AdButton>
       </Stack>
 

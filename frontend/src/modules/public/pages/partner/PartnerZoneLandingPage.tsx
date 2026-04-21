@@ -18,7 +18,7 @@ export default function PartnerZoneLandingPage() {
     },
     {
       title: "Submit candidates",
-      desc: "Clear CTA to submit profiles and redirect to Partner portal login.",
+      desc: "Clear CTA to submit profiles and redirect to Employer portal login.",
       to: "/partner-zone/submit-candidates",
     },
   ];
@@ -26,10 +26,10 @@ export default function PartnerZoneLandingPage() {
   return (
     <Box>
       <PublicPageHero
-        eyebrow="Partner Zone"
+        eyebrow="Employer Sourcing Zone"
         title="Sourcing"
-        highlight="Partners"
-        subtitle="A dedicated partner journey for agencies — benefits, workflow, and submission handoff."
+        highlight="Teams"
+        subtitle="A dedicated sourcing journey for agencies — benefits, workflow, and submission handoff."
       />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -66,4 +66,3 @@ export default function PartnerZoneLandingPage() {
     </Box>
   );
 }
-

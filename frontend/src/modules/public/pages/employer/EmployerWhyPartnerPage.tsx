@@ -6,7 +6,7 @@ export default function EmployerWhyPartnerPage() {
     <Box>
       <PublicPageHero
         eyebrow="Employer Zone"
-        title="Why partner"
+        title="Why work"
         highlight="with SIS"
         subtitle="Trust-first recruitment: compliance, clarity, and predictable delivery."
       />
@@ -28,7 +28,7 @@ export default function EmployerWhyPartnerPage() {
                 "Clear screening and shortlist criteria",
                 "Transparent timelines and milestones",
                 "Document checklist per job/location",
-                "Partner coordination with accountability",
+                "Team coordination with accountability",
                 "Status history for traceability",
               ].map((x) => (
                 <Typography key={x} sx={{ color: "text.secondary", lineHeight: 1.9 }}>
@@ -42,4 +42,3 @@ export default function EmployerWhyPartnerPage() {
     </Box>
   );
 }
-

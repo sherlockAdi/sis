@@ -7,7 +7,7 @@ export default function EmployerZoneLandingPage() {
 
   const items = [
     {
-      title: "Why partner with SIS",
+      title: "Why work with SIS",
       desc: "Trust layer, compliance, and predictable delivery.",
       to: "/employer-zone/why-partner-with-sis",
     },
@@ -71,4 +71,3 @@ export default function EmployerZoneLandingPage() {
     </Box>
   );
 }
-

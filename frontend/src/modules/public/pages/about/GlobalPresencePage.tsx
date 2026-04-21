@@ -30,7 +30,7 @@ export default function GlobalPresencePage() {
               </Typography>
               <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
                 We standardize the process layer (jobs, requirements, documents, status history) and localize execution by
-                country via partner networks and workflow routing.
+                country via sourcing networks and workflow routing.
               </Typography>
               <Divider sx={{ my: 2.5 }} />
               <Typography fontWeight={950}>What stays consistent</Typography>
@@ -53,4 +53,3 @@ export default function GlobalPresencePage() {
     </Box>
   );
 }
-
