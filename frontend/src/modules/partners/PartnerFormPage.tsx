@@ -266,7 +266,44 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
             Loading partner details...
           </Typography>
         ) : (
-          <Stack spacing={2.5}>
+            <Stack spacing={2.5}>
+              
+              <Stack spacing={1}>
+                <Typography variant="subtitle2" fontWeight={800}>
+                  Partner Details
+                </Typography>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                  <AdTextBox label="Partner Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
+                  <AdTextBox label="Partner Name" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
+                </Stack>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                  <AdTextBox
+                    label="Alternative Partner Name"
+                    value={form.alt_partner_name}
+                    onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))}
+                  />
+                  <AdTextBox label="Contact Name" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
+                </Stack>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                  <AdTextBox label="Associate Partner Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                  <AdTextBox label="Associate Partner Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
+                  <AdTextBox label="Associate Partner Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
+                </Stack>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                  <AdTextBox
+                    label="Organisation Name (Optional)"
+                    value={form.organisation_name}
+                    onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
+                  />
+                  <AdSearchableDropDown
+                    label="Status"
+                    options={statusOptions}
+                    value={form.status ? "1" : "0"}
+                    onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
+                  />
+                </Stack>
+              </Stack>
+              <Divider />
             <Stack spacing={1}>
               <Typography variant="subtitle2" fontWeight={800}>
                 Address & Location
@@ -303,43 +340,9 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
               </Stack>
             </Stack>
 
-            <Divider />
+            
 
-            <Stack spacing={1}>
-              <Typography variant="subtitle2" fontWeight={800}>
-                Partner Details
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Partner Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
-                <AdTextBox label="Partner Name" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox
-                  label="Alternative Partner Name"
-                  value={form.alt_partner_name}
-                  onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))}
-                />
-                <AdTextBox label="Contact Name" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Associate Partner Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-                <AdTextBox label="Associate Partner Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
-                <AdTextBox label="Associate Partner Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox
-                  label="Organisation Name (Optional)"
-                  value={form.organisation_name}
-                  onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
-                />
-                <AdSearchableDropDown
-                  label="Status"
-                  options={statusOptions}
-                  value={form.status ? "1" : "0"}
-                  onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
-                />
-              </Stack>
-            </Stack>
+            
 
             {form.partner_id ? (
               <>
