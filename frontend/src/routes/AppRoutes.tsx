@@ -239,6 +239,8 @@ export default function AppRoutes() {
             <Route path="settings/languages" element={<LanguagesPage />} />
             <Route path="settings/states" element={<StatesPage />} />
             <Route path="settings/cities" element={<CitiesPage />} />
+            <Route path="settings/education" element={<PlaceholderPage title="Education Master" />} />
+            <Route path="settings/skills" element={<PlaceholderPage title="Skills Master" />} />
             <Route path="admin/menu-management" element={<MenuManagementPage />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="jobs/new" element={<JobFormPage mode="create" />} />
@@ -272,6 +274,46 @@ export default function AppRoutes() {
             <Route path="partner/earnings" element={<PartnerEarningsPage />} />
             <Route path="partner/helpdesk" element={<PartnerHelpdeskPage />} />
             <Route path="partner/profile" element={<PartnerProfilePage />} />
+            <Route
+              path="partner/deployment-zone"
+              element={
+                <PlaceholderPage
+                  title="Deployment Zone"
+                  description="Offer received, visa approved, ticket allotted, and deployment milestones will be tracked here."
+                />
+              }
+            />
+            <Route
+              path="partner/reports"
+              element={
+                <PlaceholderPage
+                  title="Reports"
+                  description="Employer reporting workspace for job and selection summaries."
+                  nextLinks={[
+                    { label: "Total Job list", to: "/portal/partner/reports/total-jobs" },
+                    { label: "Final Selected candidates", to: "/portal/partner/reports/final-selected" },
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="partner/reports/total-jobs"
+              element={
+                <PlaceholderPage
+                  title="Total Job list"
+                  description="Summary of all active and closed jobs created by the employer."
+                />
+              }
+            />
+            <Route
+              path="partner/reports/final-selected"
+              element={
+                <PlaceholderPage
+                  title="Final Selected candidates"
+                  description="Candidates marked as final selected will be listed here."
+                />
+              }
+            />
             <Route path="companies" element={<CompaniesPage />} />
 
             {/* Admin scaffolding routes (dummy pages for now, safe for dynamic Menu Management paths) */}
@@ -301,9 +343,13 @@ export default function AppRoutes() {
 
             <Route path="helpdesk" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
             <Route path="helpdesk/*" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
+            <Route path="helpdesk/chatbot" element={<PlaceholderPage title="Chatbot" description="SIS Global and employers can interact here. Conversation history will be stored." />} />
 
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
+
+            <Route path="employees" element={<PlaceholderPage title="Employee Zone" description="Employees deployed from successful candidate records will appear here." />} />
+            <Route path="employees/*" element={<PlaceholderPage title="Employee Zone" description="Employees deployed from successful candidate records will appear here." />} />
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />

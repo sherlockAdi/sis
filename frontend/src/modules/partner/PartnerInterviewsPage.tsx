@@ -185,7 +185,7 @@ export default function PartnerInterviewsPage() {
       >
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Scheduled Interviews
+            Interview Process
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Interviews scheduled for your job applicants

@@ -6,10 +6,10 @@ export default function PartnerHelpdeskPage() {
       <Stack spacing={2.5}>
         <Box>
           <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-            Helpdesk
+            Employer Helpdesk
           </Typography>
           <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Raise ticket and track support (dummy for now).
+            Raise tickets and track support (dummy for now).
           </Typography>
         </Box>
 
@@ -25,4 +25,3 @@ export default function PartnerHelpdeskPage() {
     </Container>
   );
 }
-

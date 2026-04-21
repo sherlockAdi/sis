@@ -87,7 +87,7 @@ export default function PartnerMySubmissionsPage() {
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
       <Stack spacing={0.25}>
         <Typography variant="h5" fontWeight={900}>
-          Applications
+          Applied Candidate List
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Candidates who applied to your jobs

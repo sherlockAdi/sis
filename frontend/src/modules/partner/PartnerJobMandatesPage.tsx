@@ -94,10 +94,10 @@ export default function PartnerJobMandatesPage() {
       >
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Employer Jobs
+            Job List
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Create and manage your job mandates
+            View and manage employer jobs
           </Typography>
         </Stack>
         <AdButton
@@ -105,7 +105,7 @@ export default function PartnerJobMandatesPage() {
           onClick={() => navigate("/portal/partner/job-mandates/new")}
           sx={{ alignSelf: { xs: "stretch", md: "center" }, maxWidth: { xs: "100%", md: "fit-content" } }}
         >
-          Add Job
+          Create Job
         </AdButton>
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}

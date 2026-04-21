@@ -6,7 +6,7 @@ export default function PartnerEarningsPage() {
       <Stack spacing={2.5}>
         <Box>
           <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-            Earnings
+            Employer Reports
           </Typography>
           <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
             Commission, payment status, and invoices (dummy for now).
@@ -15,7 +15,7 @@ export default function PartnerEarningsPage() {
 
         <Card variant="outlined" sx={{ borderRadius: 4 }}>
           <CardContent>
-            <Typography fontWeight={950}>Wallet</Typography>
+            <Typography fontWeight={950}>Reports</Typography>
             <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.85 }}>
               Pending • Approved • Paid — employer payout workflows will appear here.
             </Typography>
