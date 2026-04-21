@@ -241,7 +241,7 @@ export default function RecruitmentApplicationsPage() {
           );
         },
       },
-      { field: "partner_name", headerName: "Partner", flex: 1, minWidth: 180 },
+      { field: "partner_name", headerName: "Employer", flex: 1, minWidth: 180 },
       { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
       { field: "application_date", headerName: "Date", width: 130 },
       {
@@ -448,9 +448,9 @@ export default function RecruitmentApplicationsPage() {
     const seen = new Map<string, string>();
     for (const row of enrichedRows) {
       if (row.partner_id == null) continue;
-      seen.set(String(row.partner_id), row.partner_name?.trim() || `Partner #${row.partner_id}`);
+      seen.set(String(row.partner_id), row.partner_name?.trim() || `Employer #${row.partner_id}`);
     }
-    return [{ label: "All Partners", value: "" }].concat(
+    return [{ label: "All Employers", value: "" }].concat(
       Array.from(seen.entries()).map(([value, label]) => ({ label, value }))
     );
   }, [enrichedRows]);
@@ -531,7 +531,7 @@ export default function RecruitmentApplicationsPage() {
           <Typography fontWeight={900}>Filters</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
             <AdDropDown
-              label="Partner"
+              label="Employer"
               options={partnerOptions}
               value={selectedPartnerId}
               onChange={(v) => {

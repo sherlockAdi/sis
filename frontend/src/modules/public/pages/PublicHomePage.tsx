@@ -229,7 +229,7 @@ export default function PublicHomePage() {
               { t: "Fast Apply & Register", d: "Short forms and clear CTAs that take users to the right portal." },
               { t: "Country Coverage", d: "UAE, Saudi, Qatar and more — browse country pages instantly." },
               { t: "Clear Process", d: "Apply → Screening → Interview → Visa → Deployment." },
-              { t: "Partner & Employer Zones", d: "Separate pages for employers and sourcing partners to build trust." },
+              { t: "Employer & Sourcing Zones", d: "Separate pages for employers and sourcing teams to build trust." },
             ].map((s) => (
               <Box key={s.t} sx={{ p: 2.5, borderRadius: 4, bgcolor: "white", border: "1px solid rgba(15,23,42,0.08)" }}>
                 <Typography fontWeight={950}>{s.t}</Typography>

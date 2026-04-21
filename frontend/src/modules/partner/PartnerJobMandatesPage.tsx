@@ -94,7 +94,7 @@ export default function PartnerJobMandatesPage() {
       >
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Partner Jobs
+            Employer Jobs
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Create and manage your job mandates

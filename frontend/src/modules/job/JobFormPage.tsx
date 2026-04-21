@@ -497,7 +497,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
               />
               {!isPartner ? (
                 <AdSearchableDropDown
-                  label="Partner (optional)"
+                  label="Employer (optional)"
                   options={partnerOptions}
                   value={form.partner_id}
                   onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}

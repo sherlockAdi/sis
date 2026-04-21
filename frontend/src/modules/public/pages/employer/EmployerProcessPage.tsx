@@ -22,7 +22,7 @@ export default function EmployerProcessPage() {
               {[
                 "1) Inquiry & requirement brief",
                 "2) Role definition + document checklist",
-                "3) Sourcing partner pipeline",
+                "3) Sourcing team pipeline",
                 "4) Shortlist & interview coordination",
                 "5) Documentation & approvals",
                 "6) Onboarding & deployment",
@@ -38,4 +38,3 @@ export default function EmployerProcessPage() {
     </Box>
   );
 }
-

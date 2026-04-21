@@ -315,7 +315,7 @@ export default function AppShellLayout() {
 
   const effectiveTitle = useMemo(() => {
     if (isCandidate) return "Candidate Portal";
-    if (isPartner) return "Partner Portal";
+    if (isPartner) return "Employer Portal";
     if (isEmployer) return "Employer Portal";
     return "Administrator Dashboard";
   }, [isCandidate, isEmployer, isPartner]);

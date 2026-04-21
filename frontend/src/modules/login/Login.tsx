@@ -61,7 +61,7 @@ export default function Login() {
         },
         {
           key: "sourcing",
-          title: "Sourcing Partner Portal",
+          title: "Employer Portal",
           description: "Submit candidate referrals and track sourcing performance",
           icon: <GroupAddOutlinedIcon fontSize="small" />,
         },
@@ -172,7 +172,7 @@ export default function Login() {
                     {[
                       { k: "25+", v: "Countries" },
                       { k: "50K+", v: "Workers Deployed" },
-                      { k: "200+", v: "Partner Agencies" },
+                      { k: "200+", v: "Employer Agencies" },
                       { k: "100+", v: "Enterprise Clients" },
                     ].map((s) => (
                       <Box

@@ -79,7 +79,7 @@ export default function EmployerZonePage() {
               </Typography>
               <Box sx={{ mt: 1.75, display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Chip label="Multi-country hiring" sx={{ fontWeight: 900 }} />
-                <Chip label="Partner network sourcing" sx={{ fontWeight: 900 }} />
+                <Chip label="Employer network sourcing" sx={{ fontWeight: 900 }} />
                 <Chip label="Document checklist control" sx={{ fontWeight: 900 }} />
                 <Chip label="Stage-wise status tracking" sx={{ fontWeight: 900 }} />
               </Box>
@@ -104,11 +104,11 @@ export default function EmployerZonePage() {
             sx={{ p: { xs: 2.5, md: 3 }, bgcolor: "white", borderRadius: 4, border: "1px solid rgba(15,23,42,0.08)" }}
           >
             <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-              Why partner with SIS
+              Why work with SIS
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9, maxWidth: 980 }}>
               You get a corporate trust layer over the sourcing ecosystem: standardized screening, controlled documentation,
-              structured partner submissions, and stage-wise visibility until deployment.
+              structured sourcing submissions, and stage-wise visibility until deployment.
             </Typography>
 
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
@@ -161,7 +161,7 @@ export default function EmployerZonePage() {
                   d: "Drivers, security, helpers, housekeeping, technicians, hospitality, construction and more.",
                 },
                 {
-                  t: "Partner sourcing network",
+                  t: "Sourcing network",
                   d: "Structured referrals with performance tracking and quality feedback loops.",
                 },
                 {
@@ -207,7 +207,7 @@ export default function EmployerZonePage() {
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
               {[
                 { n: "01", t: "Inquiry & role brief", d: "Share role, country, salary, experience, and joining timeline." },
-                { n: "02", t: "Sourcing (partners + internal)", d: "Bulk candidate discovery with quality control checkpoints." },
+                { n: "02", t: "Sourcing (team + internal)", d: "Bulk candidate discovery with quality control checkpoints." },
                 { n: "03", t: "Screening & interviews", d: "Shortlist, schedule interviews, capture feedback and decisions." },
                 { n: "04", t: "Trade test / medical / docs", d: "Skill validation + required documents checklist + medicals." },
                 { n: "05", t: "Visa processing & approvals", d: "Stage-wise tracking: biometrics → visa → approvals." },

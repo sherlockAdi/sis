@@ -25,9 +25,9 @@ export default function PartnerZonePage() {
   return (
     <Box>
       <PublicPageHero
-        eyebrow="Partner Zone"
+        eyebrow="Employer Sourcing Zone"
         title="Sourcing"
-        highlight="Partners"
+        highlight="Teams"
         subtitle="Fast job discovery, quick submissions, transparent status updates, and performance visibility."
         actions={
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -37,7 +37,7 @@ export default function PartnerZonePage() {
               onClick={() => navigate("/portal/login/auth?portal=partner")}
               sx={{ borderRadius: 999 }}
             >
-              Partner Portal Login
+              Employer Portal Login
             </Button>
             <Button
               variant="outlined"
@@ -70,7 +70,7 @@ export default function PartnerZonePage() {
           >
             <Box>
               <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-                Speed-first partner experience
+                Speed-first employer experience
               </Typography>
               <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
                 Find mandates fast, submit candidates in minutes, and track each candidate’s status across the pipeline — with
@@ -86,7 +86,7 @@ export default function PartnerZonePage() {
             <Box
               component="img"
               src="/assests/partner.jpeg"
-              alt="Partner sourcing"
+              alt="Employer sourcing"
               sx={{
                 width: "100%",
                 maxHeight: 220,
@@ -106,7 +106,7 @@ export default function PartnerZonePage() {
               Benefits
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9, maxWidth: 980 }}>
-              Designed for sourcing partners to operate at scale while maintaining quality and clarity.
+              Designed for sourcing teams to operate at scale while maintaining quality and clarity.
             </Typography>
 
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
@@ -170,7 +170,7 @@ export default function PartnerZonePage() {
               Submit candidates
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9, maxWidth: 980 }}>
-              Use the Partner Portal for quick single submissions now, and bulk upload workflows as you scale.
+              Use the Employer Portal for quick single submissions now, and bulk upload workflows as you scale.
             </Typography>
 
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
@@ -219,7 +219,7 @@ export default function PartnerZonePage() {
                 sx={{ borderRadius: 3, bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                 fullWidth
               >
-                Open Partner Portal
+                Open Employer Portal
               </Button>
               <Button
                 variant="outlined"
@@ -239,7 +239,7 @@ export default function PartnerZonePage() {
             sx={{ p: { xs: 2.5, md: 3 }, bgcolor: "white", borderRadius: 4, border: "1px solid rgba(15,23,42,0.08)" }}
           >
             <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-              Partner onboarding
+              Employer onboarding
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.75, color: "text.secondary" }}>
               Quick onboarding request.
@@ -265,7 +265,7 @@ export default function PartnerZonePage() {
                   sx={{ borderRadius: 3 }}
                   fullWidth
                 >
-                  Partner Portal Login
+                  Employer Portal Login
                 </Button>
               </Stack>
             </Stack>

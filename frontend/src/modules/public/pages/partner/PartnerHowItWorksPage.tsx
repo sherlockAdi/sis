@@ -5,10 +5,10 @@ export default function PartnerHowItWorksPage() {
   return (
     <Box>
       <PublicPageHero
-        eyebrow="Partner Zone"
+        eyebrow="Employer Sourcing Zone"
         title="How it"
         highlight="Works"
-        subtitle="A simple, repeatable workflow for partner submissions."
+        subtitle="A simple, repeatable workflow for sourcing submissions."
       />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -21,7 +21,7 @@ export default function PartnerHowItWorksPage() {
             <Stack spacing={1.25}>
               {[
                 "1) Register / onboarding request",
-                "2) Access Partner portal",
+                "2) Access Employer portal",
                 "3) Submit candidates against jobs",
                 "4) Track status updates and feedback",
                 "5) Improve quality and resubmit as needed",
@@ -37,4 +37,3 @@ export default function PartnerHowItWorksPage() {
     </Box>
   );
 }
-

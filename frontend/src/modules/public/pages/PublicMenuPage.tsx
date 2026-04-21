@@ -88,7 +88,7 @@ export default function PublicMenuPage() {
                 { label: "About Us", to: "/about" },
                 { label: "Jobs", to: "/jobs" },
                 { label: "Employer Zone", to: "/employer-zone" },
-                { label: "Partner Zone", to: "/partner-zone" },
+                { label: "Employer Sourcing Zone", to: "/partner-zone" },
                 { label: "Get Registered", to: "/register" },
               ].map((l) => (
                 <Button
@@ -126,7 +126,7 @@ export default function PublicMenuPage() {
               {[
                 { label: "Candidate Login", portal: "candidate" },
                 { label: "Customer Login", portal: "employer" },
-                { label: "Partner Login", portal: "sourcing" },
+                { label: "Employer Login", portal: "sourcing" },
                 { label: "Admin Login", portal: "administrator" },
               ].map((p) => (
                 <Button
@@ -197,7 +197,7 @@ export default function PublicMenuPage() {
                 Employer zone (sections)
               </Typography>
               {[
-                { label: "Why partner with SIS", to: "/employer-zone#why" },
+                { label: "Why work with SIS", to: "/employer-zone#why" },
                 { label: "Workforce solutions", to: "/employer-zone#solutions" },
                 { label: "Process", to: "/employer-zone#process" },
                 { label: "Inquiry", to: "/employer-zone#inquiry" },
@@ -228,7 +228,7 @@ export default function PublicMenuPage() {
               }}
             >
               <Typography variant="overline" sx={{ opacity: 0.75 }}>
-                Partner zone (sections)
+                Employer zone (sections)
               </Typography>
               {[
                 { label: "Benefits", to: "/partner-zone#benefits" },

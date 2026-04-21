@@ -123,7 +123,7 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         const partner = await partnersApi.get(partnerId);
         setForm(mapPartnerForm(partner));
       } catch (e: any) {
-        setError((e as ApiError)?.message ?? "Failed to load partner");
+        setError((e as ApiError)?.message ?? "Failed to load employer");
       } finally {
         setLoading(false);
       }
@@ -200,19 +200,19 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         landline: form.landline.trim() || null,
         status: form.status,
       };
-      if (!payload.partner_code) throw new Error("Partner code is required");
-      if (!payload.partner_name) throw new Error("Partner name is required");
+      if (!payload.partner_code) throw new Error("Employer code is required");
+      if (!payload.partner_name) throw new Error("Employer name is required");
 
       if (form.partner_id) {
         await partnersApi.update(form.partner_id, payload);
-        setToast({ open: true, message: "Partner updated", severity: "success" });
+        setToast({ open: true, message: "Employer updated", severity: "success" });
       } else {
         const created = await partnersApi.create(payload);
         const authMsg = created.user_created
-          ? `Partner created. Username: ${created.username}. ${created.emailed ? "Credentials emailed." : "Email not sent (check SMTP)." }`
+          ? `Employer created. Username: ${created.username}. ${created.emailed ? "Credentials emailed." : "Email not sent (check SMTP)." }`
           : created.existing_user_used
-            ? `Partner created. Existing login account linked: ${created.username}.`
-            : `Partner created, but the login account could not be created right now${created.auth_error ? `: ${created.auth_error}` : ""}.`;
+            ? `Employer created. Existing login account linked: ${created.username}.`
+            : `Employer created, but the login account could not be created right now${created.auth_error ? `: ${created.auth_error}` : ""}.`;
         setToast({ open: true, message: authMsg, severity: "success" });
       }
 
@@ -231,14 +231,14 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ flexWrap: "wrap" }}>
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            {form.partner_id ? "Edit Partner" : "Add Partner"}
+            {form.partner_id ? "Edit Employer" : "Add Employer"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {form.partner_id ? "Update the partner profile and contact details" : "Create a new partner profile"}
+            {form.partner_id ? "Update the employer profile and contact details" : "Create a new employer profile"}
           </Typography>
         </Stack>
         <AdButton variant="text" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate("/portal/partners")}>
-          Back to Partners
+          Back to Employers
         </AdButton>
       </Stack>
 
@@ -246,15 +246,15 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
 
       <AdCard
         animate={false}
-        title={form.partner_id ? "Edit Partner" : "Add Partner"}
-        subtitle="Use the full screen form to manage partner master data"
+        title={form.partner_id ? "Edit Employer" : "Add Employer"}
+        subtitle="Use the full screen form to manage employer master data"
         headerRight={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <AdButton variant="text" onClick={() => navigate("/portal/partners")}>
               Cancel
             </AdButton>
             <AdButton onClick={savePartner} disabled={saving || loading}>
-              {saving ? "Saving..." : "Save Partner"}
+              {saving ? "Saving..." : "Save Employer"}
             </AdButton>
           </Stack>
         }
@@ -263,35 +263,35 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
       >
         {loading ? (
           <Typography variant="body2" color="text.secondary">
-            Loading partner details...
+            Loading employer details...
           </Typography>
         ) : (
             <Stack spacing={2.5}>
               
               <Stack spacing={1}>
                 <Typography variant="subtitle2" fontWeight={800}>
-                  Partner Details
+                  Employer Details
                 </Typography>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox label="Partner Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
-                  <AdTextBox label="Partner Name" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
+                  <AdTextBox label="Employer Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
+                  <AdTextBox label="Employer Name / Contact Person" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
                 </Stack>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
                   <AdTextBox
-                    label="Alternative Partner Name"
+                    label="Alternative Employee Name"
                     value={form.alt_partner_name}
                     onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))}
                   />
-                  <AdTextBox label="Contact Name" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
+                  <AdTextBox label="Contact Person" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
                 </Stack>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox label="Associate Partner Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-                  <AdTextBox label="Associate Partner Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
-                  <AdTextBox label="Associate Partner Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
+                  <AdTextBox label="Employer Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                  <AdTextBox label="Employer Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
+                  <AdTextBox label="Employer Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
                 </Stack>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
                   <AdTextBox
-                    label="Organisation Name (Optional)"
+                    label="Organisation Name / Company"
                     value={form.organisation_name}
                     onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
                   />

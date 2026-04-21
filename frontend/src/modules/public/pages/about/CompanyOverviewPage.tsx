@@ -23,7 +23,7 @@ export default function CompanyOverviewPage() {
             </Typography>
             <Typography sx={{ mt: 1.25, color: "text.secondary", lineHeight: 1.9 }}>
               The outer website is designed like a job portal (discover → apply), and then routes users into the right portal
-              experience (Candidate / Partner / Customer / Admin) for execution.
+              experience (Candidate / Employer / Customer / Admin) for execution.
             </Typography>
           </Box>
 
@@ -65,7 +65,7 @@ export default function CompanyOverviewPage() {
               {[
                 "Compliance-first documentation and verification",
                 "Transparent status updates and ownership per step",
-                "Faster turnaround via structured partner collaboration",
+                "Faster turnaround via structured employer collaboration",
                 "Employer trust signals and consistent screening",
               ].map((x) => (
                 <Typography key={x} sx={{ color: "text.secondary", lineHeight: 1.9 }}>
@@ -79,4 +79,3 @@ export default function CompanyOverviewPage() {
     </Box>
   );
 }
-

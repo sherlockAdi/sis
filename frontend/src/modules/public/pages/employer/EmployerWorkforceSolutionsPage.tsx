@@ -18,7 +18,7 @@ export default function EmployerWorkforceSolutionsPage() {
               Solutions we support
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
-              From job posting to deployment, SIS combines sourcing partners, standardized screening, and documentation workflows
+              From job posting to deployment, SIS combines sourcing teams, standardized screening, and documentation workflows
               to deliver candidates faster — without sacrificing compliance.
             </Typography>
             <Divider sx={{ my: 2.5 }} />
@@ -43,4 +43,3 @@ export default function EmployerWorkforceSolutionsPage() {
     </Box>
   );
 }
-

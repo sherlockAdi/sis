@@ -17,7 +17,7 @@ export default function PartnerEarningsPage() {
           <CardContent>
             <Typography fontWeight={950}>Wallet</Typography>
             <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.85 }}>
-              Pending • Approved • Paid — partner payout workflows will appear here.
+              Pending • Approved • Paid — employer payout workflows will appear here.
             </Typography>
           </CardContent>
         </Card>
@@ -25,4 +25,3 @@ export default function PartnerEarningsPage() {
     </Container>
   );
 }
-

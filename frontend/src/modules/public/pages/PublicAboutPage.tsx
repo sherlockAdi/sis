@@ -47,7 +47,7 @@ export default function PublicAboutPage() {
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
               Country-wise discovery (UAE, Saudi, Qatar and more) with portal-based execution for each user type.
-              Candidates, partners, and employers get dedicated journeys for better outcomes.
+              Candidates, employers, and sourcing teams get dedicated journeys for better outcomes.
             </Typography>
           </Box>
 
@@ -73,7 +73,7 @@ export default function PublicAboutPage() {
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
               One entry point that works like a job portal (search → discover → apply), and then routes users into the right portal
-              (Candidate / Partner / Customer / Admin) without mixing experiences.
+              (Candidate / Employer / Customer / Admin) without mixing experiences.
             </Typography>
           </Box>
 

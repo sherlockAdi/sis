@@ -37,7 +37,7 @@ function portalTitle(portal: PortalKey | null) {
     case "employer":
       return "Employer Portal";
     case "sourcing":
-      return "Sourcing Partner Portal";
+      return "Employer Portal";
     default:
       return "Sign In";
   }
@@ -272,7 +272,7 @@ export default function AuthLogin() {
                     {[
                       { k: "25+", v: "Countries" },
                       { k: "50K+", v: "Workers Deployed" },
-                      { k: "200+", v: "Partner Agencies" },
+                      { k: "200+", v: "Employer Agencies" },
                       { k: "100+", v: "Enterprise Clients" },
                     ].map((s) => (
                       <Box

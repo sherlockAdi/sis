@@ -23,7 +23,7 @@ export default function PublicHeader() {
   const activeAbout = location.pathname === "/about" || location.pathname.startsWith("/about/");
   const activeJobs = location.pathname === "/jobs" || location.pathname.startsWith("/jobs/");
   const activeEmployer = location.pathname === "/employer-zone" || location.pathname.startsWith("/employer-zone/");
-  const activePartner = location.pathname === "/partner-zone" || location.pathname.startsWith("/partner-zone/");
+  const activeEmployerZone = location.pathname === "/partner-zone" || location.pathname.startsWith("/partner-zone/");
 
   const go = (to: string) => {
     navigate(to);
@@ -121,7 +121,7 @@ export default function PublicHeader() {
                   px: 1.25,
                 }}
               >
-                Employer Zone
+                Employer Sourcing Zone
               </Button>
 
               <Button
@@ -132,12 +132,12 @@ export default function PublicHeader() {
                   fontWeight: 900,
                   opacity: 1,
                   borderRadius: 0,
-                  borderBottom: activePartner ? "3px solid" : "3px solid transparent",
-                  borderBottomColor: activePartner ? "primary.main" : "transparent",
+                  borderBottom: activeEmployerZone ? "3px solid" : "3px solid transparent",
+                  borderBottomColor: activeEmployerZone ? "primary.main" : "transparent",
                   px: 1.25,
                 }}
               >
-                Partner Zone
+                Employer Zone
               </Button>
 
               <Button
