@@ -11,6 +11,7 @@ export type AdSearchableDropDownProps = {
   helperText?: string;
   error?: boolean;
   fullWidth?: boolean;
+  variant?: "standard" | "outlined" | "filled";
   onChange?: (value: string | number) => void;
 };
 
@@ -24,6 +25,7 @@ export function AdSearchableDropDown({
   helperText,
   error = false,
   fullWidth = true,
+  variant = "outlined",
   onChange,
 }: AdSearchableDropDownProps) {
   const selected = options.find((opt) => String(opt.value) === String(value ?? "")) ?? null;
@@ -41,6 +43,8 @@ export function AdSearchableDropDown({
       renderInput={(params) => (
         <TextField
           {...params}
+          size="small"
+          variant={variant}
           label={label}
           required={required}
           placeholder={placeholder}

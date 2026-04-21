@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box, Checkbox, Divider, FormControlLabel, IconButton, Stack, Typography } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate, useParams } from "react-router-dom";
@@ -429,67 +428,68 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   };
 
   return (
-    <Stack spacing={1.75} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
+    <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 1520, mx: "auto", overflowX: "hidden", minWidth: 0 }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
-        <Stack spacing={0.25}>
-          <Typography variant="h6" fontWeight={900}>
-            {mode === "edit" ? "Edit Job" : "Add Job"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {mode === "edit" ? "Update job details" : "Create a new job posting"}
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <AdButton variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>
-            Back
-          </AdButton>
-          <AdButton onClick={save} disabled={saving || loading}>
-            Save
-          </AdButton>
-        </Stack>
-      </Stack>
 
       {error ? <AdAlertBox severity="error" title="Error" message={error} /> : null}
 
-      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }} contentSx={{ p: 1.5 }}>
+      <AdCard
+        animate={false}
+        title={mode === "edit" ? "Edit Job" : "Add Job"}
+        subtitle={mode === "edit" ? "Update job details" : "Create a new job posting"}
+        headerRight={
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <AdButton variant="text" onClick={() => navigate(-1)}>
+              Cancel
+            </AdButton>
+            <AdButton onClick={save} disabled={saving || loading}>
+              {saving ? "Saving..." : "Save Job"}
+            </AdButton>
+          </Stack>
+        }
+        sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }}
+        contentSx={{ p: { xs: 1.5, md: 2 } }}
+      >
         {loading ? (
           <Typography variant="body2" color="text.secondary">
             Loading...
           </Typography>
         ) : (
           <Stack spacing={1.5}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextBox label="Job Code" required size="small" value={form.job_code} onChange={(v) => setForm((f) => ({ ...f, job_code: v }))} />
-              <AdTextBox label="Job Title" required size="small" value={form.job_title} onChange={(v) => setForm((f) => ({ ...f, job_title: v }))} />
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+              }}
+            >
+              <AdTextBox variant="standard" label="Job Code" required size="small" value={form.job_code} onChange={(v) => setForm((f) => ({ ...f, job_code: v }))} />
+              <AdTextBox variant="standard" label="Job Title" required size="small" value={form.job_title} onChange={(v) => setForm((f) => ({ ...f, job_title: v }))} />
               <AdDropDown
+                variant="standard"
                 label="Status"
                 options={statusOptions}
                 value={form.status}
                 onChange={(v) => setForm((f) => ({ ...f, status: v }))}
                 disabled={isPartner}
               />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdSearchableDropDown label="Category" options={categoryOptions} value={form.category_id} onChange={(v) => setForm((f) => ({ ...f, category_id: v }))} />
+              <AdSearchableDropDown variant="standard" label="Category" options={categoryOptions} value={form.category_id} onChange={(v) => setForm((f) => ({ ...f, category_id: v }))} />
               <AdSearchableDropDown
+                variant="standard"
                 label="Employment Type"
                 options={employmentTypeOptions}
                 value={form.employment_type_id}
                 onChange={(v) => setForm((f) => ({ ...f, employment_type_id: v }))}
               />
               <AdSearchableDropDown
+                variant="standard"
                 label="Contract Duration"
                 options={durationOptions}
                 value={form.contract_duration_id}
                 onChange={(v) => setForm((f) => ({ ...f, contract_duration_id: v }))}
               />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
               <AdSearchableDropDown
+                variant="standard"
                 label="Work Mode"
                 options={workModeOptions}
                 value={form.work_mode_id}
@@ -497,136 +497,119 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
               />
               {!isPartner ? (
                 <AdSearchableDropDown
+                  variant="standard"
                   label="Employer (optional)"
                   options={partnerOptions}
                   value={form.partner_id}
                   onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}
                 />
               ) : null}
-              <Box sx={{ flex: 1 }} />
-            </Stack>
+              <AdSearchableDropDown
+                variant="standard"
+                label="Country"
+                options={countryOptions}
+                value={form.country_id}
+                onChange={(v) => setForm((f) => ({ ...f, country_id: v, state_id: "", city_id: "" }))}
+              />
+              <AdSearchableDropDown
+                variant="standard"
+                label="State"
+                options={stateOptions}
+                value={form.state_id}
+                onChange={(v) => setForm((f) => ({ ...f, state_id: v, city_id: "" }))}
+              />
+              <AdSearchableDropDown variant="standard" label="City" options={cityOptions} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: v }))} />
+            </Box>
 
-            <Stack spacing={0.75}>
-              <Typography fontWeight={800} variant="subtitle2">
-                Work Location
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdSearchableDropDown
-                  label="Country"
-                  options={countryOptions}
-                  value={form.country_id}
-                  onChange={(v) => setForm((f) => ({ ...f, country_id: v, state_id: "", city_id: "" }))}
-                />
-                <AdSearchableDropDown
-                  label="State"
-                  options={stateOptions}
-                  value={form.state_id}
-                  onChange={(v) => setForm((f) => ({ ...f, state_id: v, city_id: "" }))}
-                />
-                <AdSearchableDropDown label="City" options={cityOptions} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: v }))} />
-              </Stack>
-            </Stack>
-
-            <Stack spacing={0.75}>
-              <Typography fontWeight={800} variant="subtitle2">
-                Compensation
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox
-                  label="Number Of Openings"
-                  required
-                  type="number"
-                  size="small"
-                  value={form.vacancy}
-                  onChange={(v) => setForm((f) => ({ ...f, vacancy: v }))}
-                />
-                <AdSearchableDropDown
-                  label="Currency"
-                  options={currencyOptions}
-                  value={form.currency_id}
-                  onChange={(v) => setForm((f) => ({ ...f, currency_id: v }))}
-                />
-                <AdTextBox
-                  label="Salary Min"
-                  required
-                  type="number"
-                  size="small"
-                  value={form.salary_min}
-                  onChange={(v) => setForm((f) => ({ ...f, salary_min: v }))}
-                />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox
-                  label="Salary Max"
-                  required
-                  type="number"
-                  size="small"
-                  value={form.salary_max}
-                  onChange={(v) => setForm((f) => ({ ...f, salary_max: v }))}
-                />
-                <Box sx={{ flex: 1 }} />
-                <Box sx={{ flex: 1 }} />
-              </Stack>
-              <AdRichTextEditor
-                label="Compensation Details"
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+              }}
+            >
+              <AdTextBox
+                variant="standard"
+                label="Number Of Openings"
                 required
-                value={form.compensation_text}
-                placeholder="Describe the compensation package..."
-                onChange={(v) => setForm((f) => ({ ...f, compensation_text: v }))}
+                type="number"
+                size="small"
+                value={form.vacancy}
+                onChange={(v) => setForm((f) => ({ ...f, vacancy: v }))}
               />
-              <AdTextArea
-                label="Benefits (one per line)"
-                minRows={2}
-                value={form.benefitsText}
-                onChange={(v) => setForm((f) => ({ ...f, benefitsText: v }))}
-              />
-            </Stack>
+              <AdSearchableDropDown variant="standard" label="Currency" options={currencyOptions} value={form.currency_id} onChange={(v) => setForm((f) => ({ ...f, currency_id: v }))} />
+              <AdTextBox variant="standard" label="Salary Min" required type="number" size="small" value={form.salary_min} onChange={(v) => setForm((f) => ({ ...f, salary_min: v }))} />
+              <AdTextBox variant="standard" label="Salary Max" required type="number" size="small" value={form.salary_max} onChange={(v) => setForm((f) => ({ ...f, salary_max: v }))} />
+              <AdTextBox variant="standard" label="Min Age" required type="number" size="small" value={form.min_age} onChange={(v) => setForm((f) => ({ ...f, min_age: v }))} />
+              <AdTextBox variant="standard" label="Max Age" required type="number" size="small" value={form.max_age} onChange={(v) => setForm((f) => ({ ...f, max_age: v }))} />
+            </Box>
 
-            <Stack spacing={0.75}>
-              <Typography fontWeight={800} variant="subtitle2">
-                Candidate Eligibility
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox
-                  label="Minimum Education"
-                  required
-                  size="small"
-                  value={form.min_education}
-                  onChange={(v) => setForm((f) => ({ ...f, min_education: v }))}
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                alignItems: "start",
+              }}
+            >
+              <AdTextBox
+                variant="standard"
+                label="Minimum Education"
+                required
+                size="small"
+                value={form.min_education}
+                onChange={(v) => setForm((f) => ({ ...f, min_education: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Minimum Experience"
+                required
+                size="small"
+                value={form.min_experience}
+                onChange={(v) => setForm((f) => ({ ...f, min_experience: v }))}
+              />
+              <AdDropDown
+                variant="standard"
+                label="Gender (if applicable)"
+                options={[
+                  { label: "Any", value: "Any" },
+                  { label: "Male", value: "Male" },
+                  { label: "Female", value: "Female" },
+                  { label: "Other", value: "Other" },
+                ]}
+                value={form.gender_requirement}
+                onChange={(v) => setForm((f) => ({ ...f, gender_requirement: v }))}
+              />
+              <AdSearchableDropDownMulti
+                variant="standard"
+                label="Language Requirement"
+                options={languages.map((l) => ({ label: l.language_name, value: String(l.language_id) }))}
+                value={form.language_ids}
+                onChange={(v) => setForm((f) => ({ ...f, language_ids: v }))}
+              />
+              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
+                <AdTextArea
+                  minRows={2}
+                  maxRows={3}
+                  label="Benefits (one per line)"
+                  value={form.benefitsText}
+                  onChange={(v) => setForm((f) => ({ ...f, benefitsText: v }))}
                 />
-                <AdTextBox
-                  label="Minimum Experience"
-                  required
-                  size="small"
-                  value={form.min_experience}
-                  onChange={(v) => setForm((f) => ({ ...f, min_experience: v }))}
-                />
-                <AdDropDown
-                  label="Gender (if applicable)"
-                  options={[
-                    { label: "Any", value: "Any" },
-                    { label: "Male", value: "Male" },
-                    { label: "Female", value: "Female" },
-                    { label: "Other", value: "Other" },
-                  ]}
-                  value={form.gender_requirement}
-                  onChange={(v) => setForm((f) => ({ ...f, gender_requirement: v }))}
-                />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Min Age" required type="number" size="small" value={form.min_age} onChange={(v) => setForm((f) => ({ ...f, min_age: v }))} />
-                <AdTextBox label="Max Age" required type="number" size="small" value={form.max_age} onChange={(v) => setForm((f) => ({ ...f, max_age: v }))} />
-                <AdSearchableDropDownMulti
-                  label="Language Requirement"
-                  options={languages.map((l) => ({ label: l.language_name, value: String(l.language_id) }))}
-                  value={form.language_ids}
-                  onChange={(v) => setForm((f) => ({ ...f, language_ids: v }))}
-                />
-              </Stack>
-            </Stack>
+              </Box>
+            </Box>
+
+            <AdRichTextEditor
+              label="Compensation Details"
+              required
+              minHeight={160}
+              value={form.compensation_text}
+              placeholder="Describe the compensation package..."
+              onChange={(v) => setForm((f) => ({ ...f, compensation_text: v }))}
+            />
 
             <AdRichTextEditor
               label="Job Description"
+              minHeight={180}
               value={form.job_description}
               placeholder="Write the job description..."
               onChange={(v) => setForm((f) => ({ ...f, job_description: v }))}
@@ -639,6 +622,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 Master Documents
               </Typography>
               <AdSearchableDropDownMulti
+                variant="standard"
                 label="Select Master Documents"
                 options={masterDocumentOptions}
                 value={selectedMasterDocumentIds}
@@ -711,8 +695,17 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 </Typography>
               ) : null}
               {form.job_specific_documents.map((doc, index) => (
-                <Stack key={`${doc.id ?? index}-${index}`} direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "center" }}>
+                <Box
+                  key={`${doc.id ?? index}-${index}`}
+                  sx={{
+                    display: "grid",
+                    gap: 1,
+                    gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) auto auto" },
+                    alignItems: "center",
+                  }}
+                >
                   <AdTextBox
+                    variant="standard"
                     label={`Document ${index + 1}`}
                     required
                     size="small"
@@ -731,7 +724,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                   <IconButton aria-label="Remove job specific document" onClick={() => removeJobSpecificDocument(index)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
-                </Stack>
+                </Box>
               ))}
             </Stack>
           </Stack>

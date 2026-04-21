@@ -42,6 +42,8 @@ export default function PartnersPage() {
       { field: "contact_name", headerName: "Contact", width: 160 },
       { field: "phone", headerName: "Phone", width: 140 },
       { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
+      { field: "cr_licence_number", headerName: "CR/Licence No.", width: 160 },
+      { field: "website", headerName: "Website", flex: 1, minWidth: 180 },
       { field: "username", headerName: "Username", width: 140 },
       {
         field: "status",

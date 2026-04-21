@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Divider, Stack, Typography } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AdAlertBox,
@@ -32,6 +31,9 @@ type Form = {
   address2: string;
   pin: string;
   landline: string;
+  cr_licence_number: string;
+  website: string;
+  other_info: string;
   status: boolean;
   created_at: string;
   updated_at: string;
@@ -55,6 +57,9 @@ const emptyForm: Form = {
   address2: "",
   pin: "",
   landline: "",
+  cr_licence_number: "",
+  website: "",
+  other_info: "",
   status: true,
   created_at: "",
   updated_at: "",
@@ -79,6 +84,9 @@ function mapPartnerForm(partner: Awaited<ReturnType<typeof partnersApi.get>>): F
     address2: partner.address2 ?? "",
     pin: partner.pin ?? "",
     landline: partner.landline ?? "",
+    cr_licence_number: partner.cr_licence_number ?? "",
+    website: partner.website ?? "",
+    other_info: partner.other_info ?? "",
     status: Number(partner.status) === 1,
     created_at: partner.created_at ?? "",
     updated_at: partner.updated_at ?? "",
@@ -198,6 +206,9 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         address2: form.address2.trim() || null,
         pin: form.pin.trim() || null,
         landline: form.landline.trim() || null,
+        cr_licence_number: form.cr_licence_number.trim() || null,
+        website: form.website.trim() || null,
+        other_info: form.other_info.trim() || null,
         status: form.status,
       };
       if (!payload.partner_code) throw new Error("Employer code is required");
@@ -225,29 +236,14 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
   };
 
   return (
-    <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
+    <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 1520, mx: "auto", overflowX: "hidden", minWidth: 0 }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
-
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ flexWrap: "wrap" }}>
-        <Stack spacing={0.25}>
-          <Typography variant="h5" fontWeight={900}>
-            {form.partner_id ? "Edit Employer" : "Add Employer"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {form.partner_id ? "Update the employer profile and contact details" : "Create a new employer profile"}
-          </Typography>
-        </Stack>
-        <AdButton variant="text" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate("/portal/partners")}>
-          Back to Employers
-        </AdButton>
-      </Stack>
 
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard
         animate={false}
-        title={form.partner_id ? "Edit Employer" : "Add Employer"}
-        subtitle="Use the full screen form to manage employer master data"
+        title="Create a new employer profile"
         headerRight={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <AdButton variant="text" onClick={() => navigate("/portal/partners")}>
@@ -259,109 +255,100 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
           </Stack>
         }
         sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }}
-        contentSx={{ p: 2.5 }}
+        contentSx={{ p: { xs: 1.5, md: 2 } }}
       >
         {loading ? (
           <Typography variant="body2" color="text.secondary">
             Loading employer details...
           </Typography>
         ) : (
-            <Stack spacing={2.5}>
-              
-              <Stack spacing={1}>
-                <Typography variant="subtitle2" fontWeight={800}>
-                  Employer Details
-                </Typography>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox label="Employer Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
-                  <AdTextBox label="Employer Name / Contact Person" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
-                </Stack>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox
-                    label="Alternative Employee Name"
-                    value={form.alt_partner_name}
-                    onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))}
-                  />
-                  <AdTextBox label="Contact Person" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
-                </Stack>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox label="Employer Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-                  <AdTextBox label="Employer Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
-                  <AdTextBox label="Employer Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-                </Stack>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <AdTextBox
-                    label="Organisation Name / Company"
-                    value={form.organisation_name}
-                    onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
-                  />
-                  <AdSearchableDropDown
-                    label="Status"
-                    options={statusOptions}
-                    value={form.status ? "1" : "0"}
-                    onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
-                  />
-                </Stack>
-              </Stack>
-              <Divider />
-            <Stack spacing={1}>
-              <Typography variant="subtitle2" fontWeight={800}>
-                Address & Location
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextArea label="Address 1" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} />
-                <AdTextArea label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdSearchableDropDown
-                  label="Country"
-                  options={countryOptions}
-                  value={form.country_id}
-                  onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))}
+          <Stack spacing={1.5}>
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+              }}
+            >
+              <AdSearchableDropDown
+                variant="standard"
+                label="Country"
+                options={countryOptions}
+                value={form.country_id}
+                onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))}
+              />
+              <AdSearchableDropDown
+                variant="standard"
+                label="State"
+                options={stateOptions}
+                value={form.state_id}
+                onChange={(v) => setForm((f) => ({ ...f, state_id: String(v), city_id: "" }))}
+                disabled={!form.country_id}
+              />
+              <AdSearchableDropDown
+                variant="standard"
+                label="City"
+                options={cityOptions}
+                value={form.city_id}
+                onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
+                disabled={!form.state_id}
+              />
+              <AdTextBox variant="standard" size="small" label="Employer Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
+              <AdTextBox variant="standard" size="small" label="Employer Name / Contact Person" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
+              <AdTextBox variant="standard" size="small" label="Alternative Employee Name" value={form.alt_partner_name} onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))} />
+              <AdTextBox variant="standard" size="small" label="Contact Person" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
+              <AdTextBox variant="standard" size="small" label="Employer Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+              <AdTextBox variant="standard" size="small" label="Employer Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
+              <AdTextBox variant="standard" size="small" label="Employer Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
+              <AdSearchableDropDown
+                variant="standard"
+                label="Status"
+                options={statusOptions}
+                value={form.status ? "1" : "0"}
+                onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
+              />
+              <AdTextBox variant="standard" size="small" label="Organisation Name / Company" value={form.organisation_name} onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))} />
+              <AdTextBox variant="standard" size="small" label="CR/Licence Number" value={form.cr_licence_number} onChange={(v) => setForm((f) => ({ ...f, cr_licence_number: v }))} />
+              <AdTextBox variant="standard" size="small" label="Website" value={form.website} onChange={(v) => setForm((f) => ({ ...f, website: v }))} />
+              <Box sx={{ maxWidth: { xs: "100%", md: 220 } }}>
+                <AdTextBox
+                  variant="standard"
+                  size="small"
+                  label="Pin"
+                  value={form.pin}
+                  onChange={(v) => setForm((f) => ({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) }))}
+                  maxLength={6}
+                  pattern={/^\d{6}$/}
                 />
-                <AdSearchableDropDown
-                  label="State"
-                  options={stateOptions}
-                  value={form.state_id}
-                  onChange={(v) => setForm((f) => ({ ...f, state_id: String(v), city_id: "" }))}
-                  disabled={!form.country_id}
-                />
-                <AdSearchableDropDown
-                  label="City"
-                  options={cityOptions}
-                  value={form.city_id}
-                  onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
-                  disabled={!form.state_id}
-                />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Pin" value={form.pin} onChange={(v) => setForm((f) => ({ ...f, pin: v }))} />
-                <AdTextBox label="Landline with Country Code" value={form.landline} onChange={(v) => setForm((f) => ({ ...f, landline: v }))} />
-              </Stack>
-            </Stack>
-
-            
-
-            
+              </Box>
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Landline with Country Code"
+                value={form.landline}
+                onChange={(v) => setForm((f) => ({ ...f, landline: v }))}
+              />
+              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 3" } }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 1,
+                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                  }}
+                >
+                  <AdTextArea minRows={2} maxRows={3} label="Address 1" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} />
+                  <AdTextArea minRows={2} maxRows={3} label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
+                  <AdTextArea minRows={2} maxRows={3} label="Other Info" value={form.other_info} onChange={(v) => setForm((f) => ({ ...f, other_info: v }))} />
+                </Box>
+              </Box>
+            </Box>
 
             {form.partner_id ? (
-              <>
-                <Divider />
-                <Stack spacing={0.5}>
-                  <Typography variant="subtitle2" fontWeight={800}>
-                    System Fields
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Created At: {form.created_at || "—"}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Updated At: {form.updated_at || "—"}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Deleted At: {form.deleted_at || "—"}
-                  </Typography>
-                </Stack>
-              </>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ color: "text.secondary" }}>
+                <Typography variant="body2">Created At: {form.created_at || "—"}</Typography>
+                <Typography variant="body2">Updated At: {form.updated_at || "—"}</Typography>
+                <Typography variant="body2">Deleted At: {form.deleted_at || "—"}</Typography>
+              </Stack>
             ) : null}
           </Stack>
         )}

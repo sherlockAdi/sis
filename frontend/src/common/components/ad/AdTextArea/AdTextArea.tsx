@@ -77,7 +77,7 @@ export default function AdTextArea({
     <Box width={fullWidth ? "100%" : "auto"}>
       {/* Label */}
       {label && (
-        <Typography variant="body2" fontWeight={500} mb={0.5}>
+        <Typography variant="body2" fontWeight={500} mb={0.2}>
           {label}
           {required && " *"}
         </Typography>
@@ -86,17 +86,15 @@ export default function AdTextArea({
       {/* Textarea Container */}
       <Box
         sx={{
-          border: "1px solid",
-          borderColor: resolvedError ? "error.main" : "grey.400",
-          borderRadius: 1,
-          backgroundColor: disabled ? "#f5f5f5" : "white",
+          borderBottom: "1px solid",
+          borderColor: resolvedError ? "error.main" : "rgba(15,23,42,0.22)",
+          backgroundColor: disabled ? "#f5f5f5" : "transparent",
+          transition: "border-color 120ms ease",
           "&:focus-within": {
-            borderColor: "primary.main",
-            boxShadow: "0 0 0 2px rgba(25,118,210,0.2)",
+            borderColor: resolvedError ? "error.main" : "primary.main",
           },
         }}
       >
-        {/* Textarea */}
         <TextareaAutosize
           name={name}
           value={currentValue}
@@ -111,14 +109,14 @@ export default function AdTextArea({
           onFocus={onFocus}
           style={{
             width: "100%",
-            padding: "8px",
+            padding: "6px 4px 7px",
             border: "none",
             outline: "none",
             resize: "vertical",
             fontFamily: "inherit",
-            fontSize: "14px",
+            fontSize: "13px",
             background: "transparent",
-            lineHeight: "1.5",
+            lineHeight: "1.35",
             color: "black",
           }}
         />

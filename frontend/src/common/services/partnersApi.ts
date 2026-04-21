@@ -20,6 +20,9 @@ export type PartnerRow = {
   address2?: string | null;
   pin?: string | null;
   landline?: string | null;
+  cr_licence_number?: string | null;
+  website?: string | null;
+  other_info?: string | null;
   user_id: number | null;
   username?: string | null;
   status: number;
@@ -86,6 +89,9 @@ export const partnersApi = {
     address2?: string | null;
     pin?: string | null;
     landline?: string | null;
+    cr_licence_number?: string | null;
+    website?: string | null;
+    other_info?: string | null;
     status?: boolean | null;
   }) =>
     apiFetch<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }>(`/partners`, {

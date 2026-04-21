@@ -1,47 +1,10 @@
--- ============================================
--- Partner Transactions Schema + Procedures
--- NOTE: API must access DB via procedures only.
--- ============================================
+-- Add missing employer fields to the partner master
+-- Existing records will keep NULL values until edited.
 
--- ============================================
--- PART_T01_partners
--- ============================================
-
-CREATE TABLE IF NOT EXISTS PART_T01_partners (
-    partner_id INT AUTO_INCREMENT PRIMARY KEY,
-    partner_code VARCHAR(20) UNIQUE,
-    partner_name VARCHAR(150) NOT NULL,
-    contact_name VARCHAR(100),
-    phone VARCHAR(20),
-    email VARCHAR(150),
-    address VARCHAR(255),
-    country_id INT DEFAULT NULL,
-    state_id INT DEFAULT NULL,
-    city_id INT DEFAULT NULL,
-    alt_partner_name VARCHAR(150),
-    alt_phone VARCHAR(20),
-    organisation_name VARCHAR(150),
-    address2 VARCHAR(255),
-    pin VARCHAR(20),
-    landline VARCHAR(30),
-    cr_licence_number VARCHAR(100),
-    website VARCHAR(255),
-    other_info VARCHAR(255),
-    user_id INT DEFAULT NULL,
-    status BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-
-    FOREIGN KEY (user_id) REFERENCES AUTH_U04_users(user_id),
-    FOREIGN KEY (country_id) REFERENCES LOC_M01_countries(country_id),
-    FOREIGN KEY (state_id) REFERENCES LOC_M02_states(state_id),
-    FOREIGN KEY (city_id) REFERENCES LOC_M03_cities(city_id)
-);
-
--- ============================================
--- Stored Procedures
--- ============================================
+ALTER TABLE PART_T01_partners
+  ADD COLUMN IF NOT EXISTS cr_licence_number VARCHAR(100) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS website VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS other_info VARCHAR(255) DEFAULT NULL;
 
 DELIMITER $$
 

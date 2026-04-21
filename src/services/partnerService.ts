@@ -17,7 +17,7 @@ export type PartnerRow = {
 
 export async function getPartnerByUserId(user_id: number): Promise<PartnerRow | null> {
   const rows = await callProc<RowDataPacket & PartnerRow>(
-    `CALL sp_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL)`,
+    `CALL sp_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL)`,
     { user_id }
   );
   return rows[0] ?? null;

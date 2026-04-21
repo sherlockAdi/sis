@@ -19,6 +19,7 @@ export type AdDropDownProps = {
   required?: boolean;
   fullWidth?: boolean;
   disabled?: boolean;
+  variant?: "standard" | "outlined" | "filled";
   onChange?: (value: string | number) => void;
 };
 
@@ -29,6 +30,7 @@ export function AdDropDown({
   required = false,
   fullWidth = true,
   disabled = false,
+  variant = "outlined",
   onChange,
 }: AdDropDownProps) {
   const [selected, setSelected] = useState<string | number>(value ?? "");
@@ -44,7 +46,7 @@ export function AdDropDown({
   };
 
   return (
-    <FormControl fullWidth={fullWidth} size="small" disabled={disabled}>
+    <FormControl fullWidth={fullWidth} size="small" disabled={disabled} variant={variant}>
       {label && <InputLabel required={required}>{label}</InputLabel>}
 
       <Select<string | number>
