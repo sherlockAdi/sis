@@ -52,6 +52,7 @@ import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
+import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
 import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
@@ -276,12 +277,7 @@ export default function AppRoutes() {
             <Route path="partner/profile" element={<PartnerProfilePage />} />
             <Route
               path="partner/deployment-zone"
-              element={
-                <PlaceholderPage
-                  title="Deployment Zone"
-                  description="Offer received, visa approved, ticket allotted, and deployment milestones will be tracked here."
-                />
-              }
+              element={<PartnerDeploymentZonePage />}
             />
             <Route
               path="partner/reports"

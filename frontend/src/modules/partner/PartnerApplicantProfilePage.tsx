@@ -1,12 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useNavigate, useParams } from "react-router-dom";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
-import { partnerPortalApi, type PartnerCandidateDocumentRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
+import { partnerPortalApi, type PartnerApplicationRow, type PartnerCandidateDocumentRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
+
+type PartnerInterviewRow = {
+  interview_id: number;
+  application_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  job_id: number;
+  job_title: string;
+  mode_name: string | null;
+  interview_date: string | null;
+  result: string | null;
+  remarks: string | null;
+};
 
 export default function PartnerApplicantProfilePage() {
   const navigate = useNavigate();
@@ -16,6 +29,8 @@ export default function PartnerApplicantProfilePage() {
   const [candidate, setCandidate] = useState<PartnerCandidateRow | null>(null);
   const [docs, setDocs] = useState<PartnerCandidateDocumentRow[]>([]);
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
+  const [applications, setApplications] = useState<PartnerApplicationRow[]>([]);
+  const [interviews, setInterviews] = useState<PartnerInterviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -30,6 +45,19 @@ export default function PartnerApplicantProfilePage() {
         setDocTypes(await mastersApi.documentTypes.list(true));
       } catch {
         setDocTypes([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [apps, ints] = await Promise.all([partnerPortalApi.applications.list(), partnerPortalApi.interviews.list()]);
+        setApplications(apps);
+        setInterviews(ints);
+      } catch {
+        setApplications([]);
+        setInterviews([]);
       }
     })();
   }, []);
@@ -74,6 +102,27 @@ export default function PartnerApplicantProfilePage() {
     [docs, docTypes],
   );
 
+  const candidateApplications = useMemo(
+    () => applications.filter((a) => Number(a.candidate_id) === Number(candidateId)),
+    [applications, candidateId],
+  );
+
+  const activeApplication = useMemo(() => {
+    if (!candidateApplications.length) return null;
+    return [...candidateApplications].sort((a, b) => {
+      const ad = a.application_date ? new Date(a.application_date).getTime() : 0;
+      const bd = b.application_date ? new Date(b.application_date).getTime() : 0;
+      return bd - ad;
+    })[0];
+  }, [candidateApplications]);
+
+  const candidateInterviews = useMemo(
+    () => interviews.filter((i) => Number(i.candidate_id) === Number(candidateId)),
+    [interviews, candidateId],
+  );
+
+  const journey = useMemo(() => buildJourney(activeApplication, candidateInterviews), [activeApplication, candidateInterviews]);
+
   return (
     <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
@@ -100,10 +149,10 @@ export default function PartnerApplicantProfilePage() {
             Loading...
           </Typography>
         ) : candidate ? (
-          <Stack spacing={1.5}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
               <Box sx={{ flex: 1 }}>
-                <Typography fontWeight={900}>
+                <Typography fontWeight={900} sx={{ fontSize: 18, lineHeight: 1.1 }}>
                   {`${candidate.first_name ?? ""} ${candidate.last_name ?? ""}`.trim() || "—"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -112,11 +161,79 @@ export default function PartnerApplicantProfilePage() {
               </Box>
               <Chip size="small" label={candidate.status ?? "—"} />
             </Stack>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              <Typography variant="body2">Email: {candidate.email ?? "—"}</Typography>
-              <Typography variant="body2">Phone: {candidate.phone ?? "—"}</Typography>
-              <Typography variant="body2">Passport: {candidate.passport_number ?? "—"}</Typography>
-            </Stack>
+
+            <Box>
+              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                Journey
+              </Typography>
+              {journey.length ? (
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+                  {journey.map((step) => (
+                    <JourneyStep key={step.key} label={step.label} active={step.active} completed={step.completed} />
+                  ))}
+                </Stack>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No journey history available yet.
+                </Typography>
+              )}
+            </Box>
+
+            <Box>
+              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                Registration Details
+              </Typography>
+              <ProfileField label="Candidate Code" value={candidate.candidate_code} />
+              <ProfileField label="First Name" value={candidate.first_name} />
+              <ProfileField label="Last Name" value={candidate.last_name} />
+              <ProfileField label="Mobile" value={candidate.phone} />
+              <ProfileField label="Email" value={candidate.email} />
+              <ProfileField label="Passport Number" value={candidate.passport_number} />
+              <ProfileField label="Status" value={candidate.status} />
+              {activeApplication ? <ProfileField label="Application Status" value={activeApplication.status} /> : null}
+            </Box>
+
+            <Box>
+              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                Location & Address
+              </Typography>
+              <ProfileField label="Country" value={candidate.country_name} />
+              <ProfileField label="State" value={candidate.state_name} />
+              <ProfileField label="City" value={candidate.city_name} />
+              <ProfileField label="Address 1" value={candidate.address1} />
+              <ProfileField label="Address 2" value={candidate.address2} />
+              <ProfileField label="Pincode" value={candidate.pincode} />
+            </Box>
+
+            <Box>
+              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                Personal Profile
+              </Typography>
+              <ProfileField label="Father's Name" value={candidate.father_name} />
+              <ProfileField label="DOB" value={candidate.dob} />
+              <ProfileField label="Gender" value={candidate.gender} />
+              <ProfileField label="Skills" value={candidate.skills} />
+              <ProfileField label="Education" value={candidate.education} />
+              <ProfileField label="Experience" value={candidate.experience} />
+              <ProfileField label="Industry Type" value={candidate.industry_type} />
+              <ProfileField label="Languages Known" value={candidate.languages_known} />
+            </Box>
+
+            <Box>
+              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
+                Verification Files
+              </Typography>
+              <FileField label="Resume File" value={candidate.resume_file_path} onOpen={openDoc} />
+              <ProfileField label="Passport Expiry Date" value={candidate.passport_expiry_date} />
+              <FileField label="Passport File" value={candidate.passport_file_path} onOpen={openDoc} />
+              <ProfileField label="Aadhaar Number" value={candidate.aadhar_number} />
+              <FileField label="Aadhaar File" value={candidate.aadhar_file_path} onOpen={openDoc} />
+              <ProfileField label="PAN Number" value={candidate.pan_number} />
+              <FileField label="PAN File" value={candidate.pan_file_path} onOpen={openDoc} />
+              <ProfileField label="Voter ID Number" value={candidate.voter_id_number} />
+              <FileField label="Voter ID File" value={candidate.voter_id_file_path} onOpen={openDoc} />
+              <FileField label="Profile Photo" value={candidate.profile_photo_file_path} onOpen={openDoc} />
+            </Box>
           </Stack>
         ) : null}
       </AdCard>
@@ -139,13 +256,9 @@ export default function PartnerApplicantProfilePage() {
                   const r = p.row as any;
                   if (!r.file_path) return "—";
                   return (
-                    <AdButton
-                      variant="text"
-                      startIcon={<OpenInNewIcon fontSize="small" />}
-                      onClick={() => openDoc(String(r.file_path))}
-                    >
-                      Open
-                    </AdButton>
+                    <IconButton aria-label="Open document" onClick={() => openDoc(String(r.file_path))} size="small">
+                      <OpenInNewIcon fontSize="small" />
+                    </IconButton>
                   );
                 },
               },
@@ -157,5 +270,128 @@ export default function PartnerApplicantProfilePage() {
         </Stack>
       </AdCard>
     </Stack>
+  );
+}
+
+function ProfileField({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "140px minmax(0, 1fr)",
+        gap: 1,
+        py: 0.65,
+        borderBottom: "1px solid rgba(226,232,240,0.8)",
+        "&:last-of-type": { borderBottom: 0 },
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+        {value ?? "—"}
+      </Typography>
+    </Box>
+  );
+}
+
+function FileField({
+  label,
+  value,
+  onOpen,
+}: {
+  label: string;
+  value: string | null | undefined;
+  onOpen: (file_path: string) => Promise<void>;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "140px minmax(0, 1fr) auto",
+        gap: 1,
+        py: 0.65,
+        borderBottom: "1px solid rgba(226,232,240,0.8)",
+        alignItems: "center",
+        "&:last-of-type": { borderBottom: 0 },
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+        {value ? "Uploaded" : "—"}
+      </Typography>
+      {value ? (
+        <IconButton aria-label={`View ${label}`} size="small" onClick={() => onOpen(value)}>
+          <OpenInNewIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <Box />
+      )}
+    </Box>
+  );
+}
+
+type JourneyStepModel = {
+  key: string;
+  label: string;
+  active: boolean;
+  completed: boolean;
+};
+
+function buildJourney(activeApplication: PartnerApplicationRow | null, interviews: PartnerInterviewRow[]): JourneyStepModel[] {
+  const status = normalizeStatus(activeApplication?.status);
+  const latestInterview = [...interviews].sort((a, b) => {
+    const ad = a.interview_date ? new Date(a.interview_date).getTime() : 0;
+    const bd = b.interview_date ? new Date(b.interview_date).getTime() : 0;
+    return bd - ad;
+  })[0];
+  const interviewText = normalizeStatus(latestInterview?.result ?? latestInterview?.mode_name ?? "");
+  const remarkText = normalizeStatus(latestInterview?.remarks ?? "");
+
+  const shortlisted = status.includes("shortlist") || status === "ready" || status.includes("screen");
+  const interview = status.includes("interview") || interviews.length > 0;
+  const postponed = interviewText.includes("postpon") || remarkText.includes("postpon");
+  const rescheduled = interviewText.includes("resched") || remarkText.includes("resched") || interviews.length > 1;
+  const offered = status.includes("offer") || status.includes("select") || interviewText.includes("offer");
+
+  return [
+    { key: "shortlisted", label: "Shortlisted", active: shortlisted, completed: shortlisted },
+    { key: "interview", label: "Interview", active: interview && !postponed, completed: interview && !postponed },
+    { key: "postponed", label: "Postponed", active: postponed, completed: postponed },
+    { key: "reschedule", label: "Reschedule", active: rescheduled, completed: rescheduled },
+    { key: "offered", label: "Offered", active: offered, completed: offered },
+  ];
+}
+
+function normalizeStatus(value: string | null | undefined): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+}
+
+function JourneyStep({ label, active, completed }: { label: string; active: boolean; completed: boolean }) {
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        minWidth: 120,
+        px: 1.25,
+        py: 1,
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: completed ? "success.main" : active ? "primary.main" : "rgba(148,163,184,0.5)",
+        bgcolor: completed ? "rgba(34,197,94,0.08)" : active ? "rgba(37,99,235,0.08)" : "rgba(255,255,255,0.7)",
+      }}
+    >
+      <Typography variant="body2" fontWeight={800} textAlign="center">
+        {label}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
+        {completed ? "Done" : active ? "Current" : "Pending"}
+      </Typography>
+    </Box>
   );
 }
