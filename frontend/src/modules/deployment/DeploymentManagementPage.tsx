@@ -112,7 +112,7 @@ export default function DeploymentManagementPage() {
           const status = normalizeStatus(r.current_status);
           const canUploadOffer = activeStage === "Ready" && status === "ready";
           const canUploadTicket = activeStage === "Travel Booked" && (status === "travel booked" || status === "visa approved" || status === "ticket confirmed");
-          const canFinalizeDeployment = activeStage === "Deployed" && (status === "ticket confirmed" || status === "deployed");
+          const canFinalizeDeployment = activeStage === "Deployed" && status === "ticket confirmed";
           const canApproveVisa = activeStage === "Visa Processing" && status === "visa processing";
           const canUploadVisa =
             activeStage === "Visa Processing" && (status === "offered" || status === "visa processing" || status === "visa approved");
