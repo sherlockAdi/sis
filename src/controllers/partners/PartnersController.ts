@@ -45,6 +45,8 @@ function randomPassword(len = 10): string {
   return out;
 }
 
+const REGISTRATION_CC = ['mrsrivastava@neuralinfo.org'];
+
 @Route('partners')
 @Tags('Partners')
 export class PartnersController extends Controller {
@@ -210,6 +212,7 @@ export class PartnersController extends Controller {
           },
           {
             to: partner.email,
+            cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Partner Login',
             text: credentialsEmailText({
               name: partner.partner_name,

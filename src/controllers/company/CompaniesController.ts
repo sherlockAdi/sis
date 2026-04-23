@@ -50,6 +50,8 @@ function randomPassword(len = 10): string {
   return out;
 }
 
+const REGISTRATION_CC = ['mrsrivastava@neuralinfo.org'];
+
 @Route('companies')
 @Tags('Company')
 export class CompaniesController extends Controller {
@@ -182,6 +184,7 @@ export class CompaniesController extends Controller {
           },
           {
             to: company.email,
+            cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Company portal credentials',
             text: credentialsEmailText({
               name: company.contact_person ?? company.company_name,

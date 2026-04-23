@@ -114,6 +114,8 @@ function randomPassword(len = 10): string {
   return out;
 }
 
+const REGISTRATION_CC = ['mrsrivastava@neuralinfo.org'];
+
 @Route('recruitment/candidates')
 @Tags('Recruitment')
 export class RecruitmentCandidatesController extends Controller {
@@ -250,6 +252,7 @@ export class RecruitmentCandidatesController extends Controller {
           },
           {
             to: candidate.email,
+            cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Candidate portal credentials',
             text: credentialsEmailText({
               name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
