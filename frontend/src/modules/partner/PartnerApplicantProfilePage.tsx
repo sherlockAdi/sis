@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useNavigate, useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
@@ -31,6 +32,7 @@ export default function PartnerApplicantProfilePage() {
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
   const [applications, setApplications] = useState<PartnerApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<PartnerInterviewRow[]>([]);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -107,7 +109,7 @@ export default function PartnerApplicantProfilePage() {
     [applications, candidateId],
   );
 
-  const activeApplication = useMemo(() => {
+  const latestApplication = useMemo(() => {
     if (!candidateApplications.length) return null;
     return [...candidateApplications].sort((a, b) => {
       const ad = a.application_date ? new Date(a.application_date).getTime() : 0;
@@ -116,159 +118,360 @@ export default function PartnerApplicantProfilePage() {
     })[0];
   }, [candidateApplications]);
 
+  useEffect(() => {
+    if (!candidateApplications.length) {
+      setSelectedApplicationId(null);
+      return;
+    }
+
+    const hasSelection = selectedApplicationId != null && candidateApplications.some((app) => app.application_id === selectedApplicationId);
+    if (!hasSelection) {
+      setSelectedApplicationId(latestApplication?.application_id ?? candidateApplications[0].application_id);
+    }
+  }, [candidateApplications, latestApplication, selectedApplicationId]);
+
+  const activeApplication = useMemo(() => {
+    if (!candidateApplications.length) return null;
+    const selected = candidateApplications.find((app) => app.application_id === selectedApplicationId);
+    return selected ?? latestApplication;
+  }, [candidateApplications, latestApplication, selectedApplicationId]);
+
   const candidateInterviews = useMemo(
-    () => interviews.filter((i) => Number(i.candidate_id) === Number(candidateId)),
-    [interviews, candidateId],
+    () => interviews.filter((i) => Number(i.candidate_id) === Number(candidateId) && Number(i.application_id) === Number(activeApplication?.application_id)),
+    [activeApplication?.application_id, interviews, candidateId],
   );
 
   const journey = useMemo(() => buildJourney(activeApplication, candidateInterviews), [activeApplication, candidateInterviews]);
+  const currentJourney = journey.find((step) => step.state === "current") ?? journey[0] ?? null;
+  const candidateName = `${candidate?.first_name ?? ""} ${candidate?.last_name ?? ""}`.trim() || "Candidate";
+  const candidateCode = candidate?.candidate_code ?? (candidate ? `ID ${candidate.candidate_id}` : "—");
+  const selectedJobLabel = activeApplication ? activeApplication.job_title : "No job selected yet";
+  const selectedApplicationStatus = activeApplication ? formatApplicationStatus(activeApplication.status) : "No application";
+  const selectedApplicationStatusTone = getStatusTone(activeApplication?.status);
+  const candidateStatusTone = getStatusTone(candidate?.status);
 
   return (
-    <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
+    <Stack
+      spacing={2.5}
+      sx={{
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "hidden",
+        minWidth: 0,
+        pb: 2,
+      }}
+    >
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1}>
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Candidate Profile
+            Applicant Profile
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            View candidate details and documents
+            One candidate, one job journey, with interview history and documents in view.
           </Typography>
         </Stack>
-        <AdButton variant="text" onClick={() => navigate(-1)}>
+        <AdButton variant="text" onClick={() => navigate(-1)} sx={{ alignSelf: { xs: "stretch", sm: "center" } }}>
           Back
         </AdButton>
       </Stack>
 
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
-      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        {loading ? (
+      {loading && !candidate ? (
+        <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.76)" }} contentSx={{ p: 2.5 }}>
           <Typography variant="body2" color="text.secondary">
-            Loading...
+            Loading applicant profile...
           </Typography>
-        ) : candidate ? (
-          <Stack spacing={2}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography fontWeight={900} sx={{ fontSize: 18, lineHeight: 1.1 }}>
-                  {`${candidate.first_name ?? ""} ${candidate.last_name ?? ""}`.trim() || "—"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {candidate.candidate_code ?? `ID ${candidate.candidate_id}`}
-                </Typography>
-              </Box>
-              <Chip size="small" label={candidate.status ?? "—"} />
-            </Stack>
-
-            <Box>
-              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
-                Journey
-              </Typography>
-              {journey.length ? (
-                <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-                  {journey.map((step) => (
-                    <JourneyStep key={step.key} label={step.label} active={step.active} completed={step.completed} />
-                  ))}
+        </AdCard>
+      ) : candidate ? (
+        <Stack spacing={2.5} sx={{ width: "100%", minWidth: 0 }}>
+          <AdCard
+            animate={false}
+            sx={{
+              overflow: "hidden",
+              border: "1px solid rgba(148,163,184,0.18)",
+              background: "linear-gradient(135deg, rgba(15,23,42,0.97) 0%, rgba(29,78,216,0.95) 55%, rgba(14,165,233,0.92) 100%)",
+              boxShadow: "0 28px 80px rgba(15,23,42,0.18)",
+            }}
+            contentSx={{ p: 0 }}
+          >
+            <Box sx={{ p: { xs: 2.25, md: 3 }, color: "#fff" }}>
+              <Stack direction={{ xs: "column", lg: "row" }} spacing={2.5} alignItems={{ lg: "center" }} justifyContent="space-between">
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 76,
+                      height: 76,
+                      flexShrink: 0,
+                      borderRadius: "50%",
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "rgba(255,255,255,0.16)",
+                      border: "1px solid rgba(255,255,255,0.24)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)",
+                      fontSize: 28,
+                      fontWeight: 900,
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {buildInitials(candidateName)}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 0.75 }}>
+                      <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.1 }}>
+                        {candidateName}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={selectedApplicationStatus}
+                        sx={{
+                          color: selectedApplicationStatusTone.text,
+                          bgcolor: selectedApplicationStatusTone.bg,
+                          fontWeight: 800,
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      />
+                    </Stack>
+                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.84)", fontWeight: 700 }}>
+                      {candidateCode}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.78)", mt: 0.5 }}>
+                      {selectedJobLabel}
+                    </Typography>
+                  </Box>
                 </Stack>
-              ) : (
+
+                <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{ xs: "flex-start", lg: "flex-end" }}>
+                  <Chip
+                    size="small"
+                    label={formatApplicationStatus(candidate?.status)}
+                    sx={{
+                      bgcolor: candidateStatusTone.bg,
+                      color: candidateStatusTone.text,
+                      fontWeight: 800,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    label={currentJourney?.label ? `Journey: ${currentJourney.label}` : "Journey: Applied"}
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.16)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      border: "1px solid rgba(255,255,255,0.16)",
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    label={`${candidateApplications.length} job${candidateApplications.length === 1 ? "" : "s"}`}
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    label={`${candidateInterviews.length} interview${candidateInterviews.length === 1 ? "" : "s"}`}
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  />
+                </Stack>
+              </Stack>
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.25}
+                sx={{ mt: 2.5, width: "100%" }}
+              >
+                <SummaryStat label="Application" value={activeApplication ? `#${activeApplication.application_id}` : "—"} helper={activeApplication?.application_date ? formatDateTime(activeApplication.application_date) : "No application selected"} />
+                <SummaryStat label="Interview" value={candidateInterviews.length ? String(candidateInterviews.length) : "0"} helper={candidateInterviews[0]?.mode_name ?? "No interview yet"} />
+                <SummaryStat label="Documents" value={String(docRows.length)} helper={docRows.length ? "Files uploaded" : "No documents"} />
+              </Stack>
+            </Box>
+          </AdCard>
+
+          {candidateApplications.length > 1 ? (
+            <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.82)" }} contentSx={{ p: 2.25 }}>
+              <Stack spacing={1.25}>
+                <Typography fontWeight={900}>Choose job journey</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  No journey history available yet.
+                  This profile can have multiple applications. Select the job you want to inspect.
                 </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {candidateApplications.map((app) => {
+                    const isSelected = app.application_id === activeApplication?.application_id;
+                    return (
+                      <Chip
+                        key={app.application_id}
+                        clickable
+                        onClick={() => setSelectedApplicationId(app.application_id)}
+                        label={`${app.job_title} • ${formatApplicationStatus(app.status)}`}
+                        variant={isSelected ? "filled" : "outlined"}
+                        color={isSelected ? "primary" : "default"}
+                        sx={{ fontWeight: isSelected ? 800 : 600 }}
+                      />
+                    );
+                  })}
+                </Stack>
+              </Stack>
+            </AdCard>
+          ) : null}
+
+          <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.82)" }} contentSx={{ p: 2.25 }}>
+            <Stack spacing={1.5}>
+              <Stack spacing={0.25}>
+                <Typography fontWeight={900}>Journey</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Progress is shown for the selected job only. Applied, shortlisted, interview, postponement, reschedule, and offer all stay tied to one application.
+                </Typography>
+              </Stack>
+              {journey.length ? (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, minmax(0, 1fr))",
+                      lg: "repeat(3, minmax(0, 1fr))",
+                    },
+                    gap: 1.25,
+                  }}
+                >
+                  {journey.map((step) => (
+                    <JourneyStep key={step.key} label={step.label} note={step.note} state={step.state} />
+                  ))}
+                </Box>
+              ) : (
+                <AdAlertBox severity="info" title="No application yet" message="This candidate does not have a job application attached yet." />
               )}
-            </Box>
+            </Stack>
+          </AdCard>
 
-            <Box>
-              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
-                Registration Details
-              </Typography>
-              <ProfileField label="Candidate Code" value={candidate.candidate_code} />
-              <ProfileField label="First Name" value={candidate.first_name} />
-              <ProfileField label="Last Name" value={candidate.last_name} />
-              <ProfileField label="Mobile" value={candidate.phone} />
-              <ProfileField label="Email" value={candidate.email} />
-              <ProfileField label="Passport Number" value={candidate.passport_number} />
-              <ProfileField label="Status" value={candidate.status} />
-              {activeApplication ? <ProfileField label="Application Status" value={activeApplication.status} /> : null}
-            </Box>
-
-            <Box>
-              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
-                Location & Address
-              </Typography>
-              <ProfileField label="Country" value={candidate.country_name} />
-              <ProfileField label="State" value={candidate.state_name} />
-              <ProfileField label="City" value={candidate.city_name} />
-              <ProfileField label="Address 1" value={candidate.address1} />
-              <ProfileField label="Address 2" value={candidate.address2} />
-              <ProfileField label="Pincode" value={candidate.pincode} />
-            </Box>
-
-            <Box>
-              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
-                Personal Profile
-              </Typography>
-              <ProfileField label="Father's Name" value={candidate.father_name} />
-              <ProfileField label="DOB" value={candidate.dob} />
-              <ProfileField label="Gender" value={candidate.gender} />
-              <ProfileField label="Skills" value={candidate.skills} />
-              <ProfileField label="Education" value={candidate.education} />
-              <ProfileField label="Experience" value={candidate.experience} />
-              <ProfileField label="Industry Type" value={candidate.industry_type} />
-              <ProfileField label="Languages Known" value={candidate.languages_known} />
-            </Box>
-
-            <Box>
-              <Typography fontWeight={900} sx={{ fontSize: 14, mb: 0.75 }}>
-                Verification Files
-              </Typography>
-              <FileField label="Resume File" value={candidate.resume_file_path} onOpen={openDoc} />
-              <ProfileField label="Passport Expiry Date" value={candidate.passport_expiry_date} />
-              <FileField label="Passport File" value={candidate.passport_file_path} onOpen={openDoc} />
-              <ProfileField label="Aadhaar Number" value={candidate.aadhar_number} />
-              <FileField label="Aadhaar File" value={candidate.aadhar_file_path} onOpen={openDoc} />
-              <ProfileField label="PAN Number" value={candidate.pan_number} />
-              <FileField label="PAN File" value={candidate.pan_file_path} onOpen={openDoc} />
-              <ProfileField label="Voter ID Number" value={candidate.voter_id_number} />
-              <FileField label="Voter ID File" value={candidate.voter_id_file_path} onOpen={openDoc} />
-              <FileField label="Profile Photo" value={candidate.profile_photo_file_path} onOpen={openDoc} />
-            </Box>
-          </Stack>
-        ) : null}
-      </AdCard>
-
-      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Typography fontWeight={900}>Documents</Typography>
-          <AdGrid
-            rows={docRows.map((r) => ({ ...r, id: r.id }))}
-            columns={[
-              { field: "document_name", headerName: "Document", flex: 1, minWidth: 200 },
-              { field: "uploaded_at", headerName: "Uploaded", width: 170 },
-              {
-                field: "__actions",
-                headerName: "View",
-                width: 120,
-                sortable: false,
-                filterable: false,
-                renderCell: (p: any) => {
-                  const r = p.row as any;
-                  if (!r.file_path) return "—";
-                  return (
-                    <IconButton aria-label="Open document" onClick={() => openDoc(String(r.file_path))} size="small">
-                      <OpenInNewIcon fontSize="small" />
-                    </IconButton>
-                  );
-                },
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                xl: "minmax(0, 1.4fr) minmax(320px, 0.9fr)",
               },
-            ] as any}
-            loading={loading}
-            showExport={false}
-            disableColumnMenu
-          />
+              gap: 2.5,
+              alignItems: "start",
+            }}
+          >
+            <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.82)" }} contentSx={{ p: 2.25 }}>
+              <Stack spacing={2}>
+                <Stack spacing={0.25}>
+                  <Typography fontWeight={900}>Profile Details</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Registration, location, and verification details for the candidate record.
+                  </Typography>
+                </Stack>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      md: "repeat(2, minmax(0, 1fr))",
+                    },
+                    gap: 1.5,
+                  }}
+                >
+                  <SectionCard title="Registration Details">
+                    <ProfileField label="Candidate Code" value={candidate.candidate_code} />
+                    <ProfileField label="First Name" value={candidate.first_name} />
+                    <ProfileField label="Last Name" value={candidate.last_name} />
+                    <ProfileField label="Mobile" value={candidate.phone} />
+                    <ProfileField label="Email" value={candidate.email} />
+                    <ProfileField label="Passport Number" value={candidate.passport_number} />
+                    <ProfileField label="Candidate Status" value={candidate.status} />
+                    {activeApplication ? <ProfileField label="Application Status" value={activeApplication.status} /> : null}
+                  </SectionCard>
+
+                  <SectionCard title="Location & Address">
+                    <ProfileField label="Country" value={candidate.country_name} />
+                    <ProfileField label="State" value={candidate.state_name} />
+                    <ProfileField label="City" value={candidate.city_name} />
+                    <ProfileField label="Address 1" value={candidate.address1} />
+                    <ProfileField label="Address 2" value={candidate.address2} />
+                    <ProfileField label="Pincode" value={candidate.pincode} />
+                  </SectionCard>
+
+                  <SectionCard title="Personal Profile">
+                    <ProfileField label="Father's Name" value={candidate.father_name} />
+                    <ProfileField label="DOB" value={candidate.dob} />
+                    <ProfileField label="Gender" value={candidate.gender} />
+                    <ProfileField label="Skills" value={candidate.skills} />
+                    <ProfileField label="Education" value={candidate.education} />
+                    <ProfileField label="Experience" value={candidate.experience} />
+                    <ProfileField label="Industry Type" value={candidate.industry_type} />
+                    <ProfileField label="Languages Known" value={candidate.languages_known} />
+                  </SectionCard>
+
+                  <SectionCard title="Verification Files">
+                    <FileField label="Resume File" value={candidate.resume_file_path} onOpen={openDoc} />
+                    <ProfileField label="Passport Expiry" value={candidate.passport_expiry_date} />
+                    <FileField label="Passport File" value={candidate.passport_file_path} onOpen={openDoc} />
+                    <ProfileField label="Aadhaar Number" value={candidate.aadhar_number} />
+                    <FileField label="Aadhaar File" value={candidate.aadhar_file_path} onOpen={openDoc} />
+                    <ProfileField label="PAN Number" value={candidate.pan_number} />
+                    <FileField label="PAN File" value={candidate.pan_file_path} onOpen={openDoc} />
+                    <ProfileField label="Voter ID Number" value={candidate.voter_id_number} />
+                    <FileField label="Voter ID File" value={candidate.voter_id_file_path} onOpen={openDoc} />
+                    <FileField label="Profile Photo" value={candidate.profile_photo_file_path} onOpen={openDoc} />
+                  </SectionCard>
+                </Box>
+              </Stack>
+            </AdCard>
+
+            <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.82)" }} contentSx={{ p: 2.25 }}>
+              <Stack spacing={1.5}>
+                <Stack spacing={0.25}>
+                  <Typography fontWeight={900}>Documents</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Uploaded files for the candidate record.
+                  </Typography>
+                </Stack>
+                <AdGrid
+                  rows={docRows.map((r) => ({ ...r, id: r.id }))}
+                  columns={[
+                    { field: "document_name", headerName: "Document", flex: 1, minWidth: 200 },
+                    { field: "uploaded_at", headerName: "Uploaded", width: 170 },
+                    {
+                      field: "__actions",
+                      headerName: "View",
+                      width: 120,
+                      sortable: false,
+                      filterable: false,
+                      renderCell: (p: any) => {
+                        const r = p.row as any;
+                        if (!r.file_path) return "—";
+                        return (
+                          <IconButton aria-label="Open document" onClick={() => openDoc(String(r.file_path))} size="small">
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        );
+                      },
+                    },
+                  ] as any}
+                  loading={loading}
+                  showExport={false}
+                  disableColumnMenu
+                />
+              </Stack>
+            </AdCard>
+          </Box>
         </Stack>
-      </AdCard>
+      ) : null}
     </Stack>
   );
 }
@@ -278,17 +481,20 @@ function ProfileField({ label, value }: { label: string; value: string | null | 
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "140px minmax(0, 1fr)",
+        gridTemplateColumns: "128px minmax(0, 1fr)",
         gap: 1,
-        py: 0.65,
-        borderBottom: "1px solid rgba(226,232,240,0.8)",
-        "&:last-of-type": { borderBottom: 0 },
+        alignItems: "center",
+        px: 1.25,
+        py: 0.9,
+        borderRadius: 2,
+        bgcolor: "rgba(248,250,252,0.9)",
+        border: "1px solid rgba(148,163,184,0.16)",
       }}
     >
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+      <Typography variant="body2" fontWeight={800} sx={{ wordBreak: "break-word", color: "text.primary" }}>
         {value ?? "—"}
       </Typography>
     </Box>
@@ -308,19 +514,21 @@ function FileField({
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "140px minmax(0, 1fr) auto",
+        gridTemplateColumns: "128px minmax(0, 1fr) auto",
         gap: 1,
-        py: 0.65,
-        borderBottom: "1px solid rgba(226,232,240,0.8)",
         alignItems: "center",
-        "&:last-of-type": { borderBottom: 0 },
+        px: 1.25,
+        py: 0.9,
+        borderRadius: 2,
+        bgcolor: "rgba(248,250,252,0.9)",
+        border: "1px solid rgba(148,163,184,0.16)",
       }}
     >
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
-        {value ? "Uploaded" : "—"}
+      <Typography variant="body2" fontWeight={800} sx={{ wordBreak: "break-word" }}>
+        {value ? "Uploaded" : "Not uploaded"}
       </Typography>
       {value ? (
         <IconButton aria-label={`View ${label}`} size="small" onClick={() => onOpen(value)}>
@@ -336,33 +544,55 @@ function FileField({
 type JourneyStepModel = {
   key: string;
   label: string;
-  active: boolean;
-  completed: boolean;
+  state: "done" | "current" | "pending";
+  note: string;
 };
 
 function buildJourney(activeApplication: PartnerApplicationRow | null, interviews: PartnerInterviewRow[]): JourneyStepModel[] {
-  const status = normalizeStatus(activeApplication?.status);
+  if (!activeApplication) return [];
+
+  const status = normalizeStatus(activeApplication.status);
   const latestInterview = [...interviews].sort((a, b) => {
     const ad = a.interview_date ? new Date(a.interview_date).getTime() : 0;
     const bd = b.interview_date ? new Date(b.interview_date).getTime() : 0;
     return bd - ad;
   })[0];
-  const interviewText = normalizeStatus(latestInterview?.result ?? latestInterview?.mode_name ?? "");
-  const remarkText = normalizeStatus(latestInterview?.remarks ?? "");
+  const interviewText = normalizeStatus([latestInterview?.result, latestInterview?.mode_name, latestInterview?.remarks].filter(Boolean).join(" "));
+  const hasPostponed = status.includes("postpon") || interviewText.includes("postpon");
+  const hasReschedule = status.includes("resched") || interviewText.includes("resched");
+  const hasOffer = status.includes("offer") || status.includes("ready") || status.includes("deploy") || interviewText.includes("offer");
+  const hasInterview = hasOffer || hasReschedule || hasPostponed || status.includes("interview") || interviews.length > 0;
+  const hasShortlist = hasInterview || status.includes("shortlist") || status.includes("screen") || status === "ready" || status.includes("offer") || status.includes("deploy");
 
-  const shortlisted = status.includes("shortlist") || status === "ready" || status.includes("screen");
-  const interview = status.includes("interview") || interviews.length > 0;
-  const postponed = interviewText.includes("postpon") || remarkText.includes("postpon");
-  const rescheduled = interviewText.includes("resched") || remarkText.includes("resched") || interviews.length > 1;
-  const offered = status.includes("offer") || status.includes("select") || interviewText.includes("offer");
+  const currentKey = hasOffer ? "offered" : hasInterview ? "interview" : hasShortlist ? "shortlisted" : "applied";
 
-  return [
-    { key: "shortlisted", label: "Shortlisted", active: shortlisted, completed: shortlisted },
-    { key: "interview", label: "Interview", active: interview && !postponed, completed: interview && !postponed },
-    { key: "postponed", label: "Postponed", active: postponed, completed: postponed },
-    { key: "reschedule", label: "Reschedule", active: rescheduled, completed: rescheduled },
-    { key: "offered", label: "Offered", active: offered, completed: offered },
+  const steps: Array<{ key: JourneyStepModel["key"]; label: string; note: string; evidence: boolean }> = [
+    { key: "applied", label: "Applied", note: "Application received for this job", evidence: true },
+    { key: "shortlisted", label: "Shortlisted", note: hasShortlist ? "Moved into review for this application" : "Waiting for shortlist", evidence: hasShortlist },
+    {
+      key: "interview",
+      label: "Interview",
+      note: latestInterview
+        ? `${hasPostponed ? "Postponed" : hasReschedule ? "Reschedule pending" : latestInterview.mode_name ?? "Interview"}${latestInterview.interview_date ? ` • ${formatDateTime(latestInterview.interview_date)}` : ""}`
+        : hasPostponed
+          ? "Postponed"
+          : "Interview not scheduled yet",
+      evidence: hasInterview,
+    },
+    {
+      key: "offered",
+      label: "Offered",
+      note: hasOffer ? "Offer / ready to deploy stage reached" : "Offer pending",
+      evidence: hasOffer,
+    },
   ];
+
+  return steps.map((step) => ({
+    key: step.key,
+    label: step.label,
+    note: step.note,
+    state: step.key === currentKey ? "current" : step.evidence ? "done" : "pending",
+  }));
 }
 
 function normalizeStatus(value: string | null | undefined): string {
@@ -372,26 +602,154 @@ function normalizeStatus(value: string | null | undefined): string {
     .replace(/[_-]+/g, " ");
 }
 
-function JourneyStep({ label, active, completed }: { label: string; active: boolean; completed: boolean }) {
+function formatApplicationStatus(value: string | null | undefined): string {
+  const status = normalizeStatus(value);
+  if (!status) return "—";
+  if (status.includes("shortlist")) return "Shortlisted";
+  if (status.includes("postpon")) return "Postponed";
+  if (status.includes("resched")) return "Reschedule";
+  if (status.includes("interview")) return "Interview";
+  if (status.includes("offer")) return "Offered";
+  if (status.includes("ready")) return "Ready to Deploy";
+  if (status.includes("deploy")) return "Deployed";
+  return status.replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function getStatusTone(value: string | null | undefined): { bg: string; text: string } {
+  const status = normalizeStatus(value);
+  if (status.includes("shortlist") || status.includes("offer") || status.includes("ready")) return { bg: "rgba(34,197,94,0.18)", text: "#dcfce7" };
+  if (status.includes("interview")) return { bg: "rgba(14,165,233,0.18)", text: "#e0f2fe" };
+  if (status.includes("postpon")) return { bg: "rgba(251,191,36,0.2)", text: "#fef3c7" };
+  return { bg: "rgba(255,255,255,0.16)", text: "#fff" };
+}
+
+function buildInitials(value: string): string {
+  const parts = value.split(" ").filter(Boolean);
+  if (!parts.length) return "C";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("DD MMM YYYY, HH:mm") : String(value);
+}
+
+function SummaryStat({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <Box
       sx={{
         flex: 1,
-        minWidth: 120,
-        px: 1.25,
-        py: 1,
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: completed ? "success.main" : active ? "primary.main" : "rgba(148,163,184,0.5)",
-        bgcolor: completed ? "rgba(34,197,94,0.08)" : active ? "rgba(37,99,235,0.08)" : "rgba(255,255,255,0.7)",
+        minWidth: 0,
+        px: 1.5,
+        py: 1.25,
+        borderRadius: 2.5,
+        bgcolor: "rgba(255,255,255,0.1)",
+        border: "1px solid rgba(255,255,255,0.12)",
       }}
     >
-      <Typography variant="body2" fontWeight={800} textAlign="center">
+      <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.72)", fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase" }}>
         {label}
       </Typography>
-      <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
-        {completed ? "Done" : active ? "Current" : "Pending"}
+      <Typography variant="h6" fontWeight={900} sx={{ color: "#fff", lineHeight: 1.15, mt: 0.4 }}>
+        {value}
       </Typography>
+      <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.76)", mt: 0.25 }}>
+        {helper}
+      </Typography>
+    </Box>
+  );
+}
+
+function SectionCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Box
+      sx={{
+        borderRadius: 3,
+        p: 1.5,
+        bgcolor: "rgba(255,255,255,0.82)",
+        border: "1px solid rgba(148,163,184,0.16)",
+        boxShadow: "0 10px 28px rgba(15,23,42,0.04)",
+      }}
+    >
+      <Typography fontWeight={900} sx={{ mb: 1.25 }}>
+        {title}
+      </Typography>
+      <Stack spacing={1}>
+        {children}
+      </Stack>
+    </Box>
+  );
+}
+
+function JourneyStep({ label, note, state }: { label: string; note: string; state: "done" | "current" | "pending" }) {
+  const style =
+    state === "done"
+      ? {
+          bgcolor: "rgba(34,197,94,0.08)",
+          borderColor: "rgba(34,197,94,0.28)",
+          titleColor: "success.main",
+          chipBg: "rgba(34,197,94,0.14)",
+          chipText: "success.dark",
+          chipLabel: "Done",
+        }
+      : state === "current"
+        ? {
+            bgcolor: "rgba(37,99,235,0.08)",
+            borderColor: "rgba(37,99,235,0.34)",
+            titleColor: "primary.main",
+            chipBg: "rgba(37,99,235,0.14)",
+            chipText: "primary.dark",
+            chipLabel: "Current",
+          }
+        : {
+            bgcolor: "rgba(148,163,184,0.08)",
+            borderColor: "rgba(148,163,184,0.24)",
+            titleColor: "text.primary",
+            chipBg: "rgba(148,163,184,0.14)",
+            chipText: "text.secondary",
+            chipLabel: "Pending",
+          };
+
+  return (
+    <Box
+      sx={{
+        minWidth: 0,
+        px: 1.5,
+        py: 1.25,
+        borderRadius: 2.5,
+        border: "1px solid",
+        borderColor: style.borderColor,
+        bgcolor: style.bgcolor,
+      }}
+    >
+      <Stack spacing={0.7}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+          <Typography variant="body2" fontWeight={900} sx={{ color: style.titleColor }}>
+            {label}
+          </Typography>
+          <Box
+            sx={{
+              px: 0.9,
+              py: 0.2,
+              borderRadius: 999,
+              bgcolor: style.chipBg,
+              color: style.chipText,
+              fontSize: 11,
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {style.chipLabel}
+          </Box>
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ minHeight: 36, lineHeight: 1.4 }}>
+          {note}
+        </Typography>
+      </Stack>
     </Box>
   );
 }

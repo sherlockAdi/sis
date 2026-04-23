@@ -28,8 +28,14 @@ export type DeploymentHistoryRow = {
 };
 
 export type VisaDetailRow = {
-  visa_detail_id: number;
+  offer_detail_id?: number | null;
+  visa_processing_id?: number | null;
+  ticket_booking_id?: number | null;
   deployment_id: number;
+  offer_date?: string | null;
+  offer_letter_file_path: string | null;
+  offer_payment_received?: number | null;
+  offer_remarks?: string | null;
   visa_type_id: number | null;
   visa_number: string | null;
   issue_date: string | null;
@@ -41,6 +47,13 @@ export type VisaDetailRow = {
   sponsor_contact: string | null;
   passport_file_path: string | null;
   visa_file_path: string | null;
+  visa_payment_received?: number | null;
+  visa_remarks?: string | null;
+  ticket_number?: string | null;
+  booked_date?: string | null;
+  travel_date?: string | null;
+  ticket_file_path?: string | null;
+  ticket_remarks?: string | null;
   remarks: string | null;
   created_at: string;
   updated_at: string;

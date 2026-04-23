@@ -49,6 +49,10 @@ export class CandidateDeploymentController extends Controller {
     @Body()
     body: {
       deployment_id: number;
+      offer_date?: string | null;
+      offer_letter_file_path?: string | null;
+      offer_payment_received?: number | null;
+      offer_remarks?: string | null;
       visa_type_id?: number | null;
       visa_number?: string | null;
       issue_date?: string | null;
@@ -60,6 +64,13 @@ export class CandidateDeploymentController extends Controller {
       sponsor_contact?: string | null;
       passport_file_path?: string | null;
       visa_file_path?: string | null;
+      visa_payment_received?: number | null;
+      visa_remarks?: string | null;
+      ticket_number?: string | null;
+      booked_date?: string | null;
+      travel_date?: string | null;
+      ticket_file_path?: string | null;
+      ticket_remarks?: string | null;
       remarks?: string | null;
     },
     @Request() req: any
@@ -85,9 +96,13 @@ export class CandidateDeploymentController extends Controller {
     if (!allowed) throw httpError(403, 'Access denied');
 
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
-      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :remarks, :user_id)`,
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
         deployment_id,
+        offer_date: body.offer_date ?? null,
+        offer_letter_file_path: body.offer_letter_file_path ?? null,
+        offer_payment_received: body.offer_payment_received ?? null,
+        offer_remarks: body.offer_remarks ?? null,
         visa_type_id: body.visa_type_id ?? null,
         visa_number: body.visa_number ?? null,
         issue_date: body.issue_date ?? null,
@@ -99,6 +114,13 @@ export class CandidateDeploymentController extends Controller {
         sponsor_contact: body.sponsor_contact ?? null,
         passport_file_path: body.passport_file_path ?? null,
         visa_file_path: body.visa_file_path ?? null,
+        visa_payment_received: body.visa_payment_received ?? null,
+        visa_remarks: body.visa_remarks ?? null,
+        ticket_number: body.ticket_number ?? null,
+        booked_date: body.booked_date ?? null,
+        travel_date: body.travel_date ?? null,
+        ticket_file_path: body.ticket_file_path ?? null,
+        ticket_remarks: body.ticket_remarks ?? null,
         remarks: body.remarks ?? null,
         user_id: user.user_id,
       }

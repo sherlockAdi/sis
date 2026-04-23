@@ -49,11 +49,37 @@ CREATE TABLE IF NOT EXISTS DEP_T02_deployment_history (
 
 
 -- ============================================
--- DEP_T03_visa_details
+-- DEP_T03_offer_details
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS DEP_T03_visa_details (
-    visa_detail_id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS DEP_T03_offer_details (
+    offer_detail_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    deployment_id INT NOT NULL UNIQUE,
+
+    offer_date DATE DEFAULT NULL,
+    offer_letter_file_path TEXT DEFAULT NULL,
+    payment_received TINYINT(1) DEFAULT 0,
+    remarks VARCHAR(255) DEFAULT NULL,
+
+    created_by INT DEFAULT NULL,
+    updated_by INT DEFAULT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (deployment_id) REFERENCES DEP_T01_deployments(deployment_id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES AUTH_U04_users(user_id),
+    FOREIGN KEY (updated_by) REFERENCES AUTH_U04_users(user_id)
+);
+
+
+-- ============================================
+-- DEP_T04_visa_processing_details
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS DEP_T04_visa_processing_details (
+    visa_processing_id INT AUTO_INCREMENT PRIMARY KEY,
 
     deployment_id INT NOT NULL UNIQUE,
 
@@ -71,7 +97,7 @@ CREATE TABLE IF NOT EXISTS DEP_T03_visa_details (
 
     passport_file_path TEXT DEFAULT NULL,
     visa_file_path TEXT DEFAULT NULL,
-
+    payment_received TINYINT(1) DEFAULT 0,
     remarks VARCHAR(255) DEFAULT NULL,
 
     created_by INT DEFAULT NULL,
@@ -82,6 +108,33 @@ CREATE TABLE IF NOT EXISTS DEP_T03_visa_details (
 
     FOREIGN KEY (deployment_id) REFERENCES DEP_T01_deployments(deployment_id) ON DELETE CASCADE,
     FOREIGN KEY (visa_type_id) REFERENCES REC_M02_visa_types(visa_type_id),
+    FOREIGN KEY (created_by) REFERENCES AUTH_U04_users(user_id),
+    FOREIGN KEY (updated_by) REFERENCES AUTH_U04_users(user_id)
+);
+
+
+-- ============================================
+-- DEP_T05_ticket_bookings
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS DEP_T05_ticket_bookings (
+    ticket_booking_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    deployment_id INT NOT NULL UNIQUE,
+
+    ticket_number VARCHAR(100) DEFAULT NULL,
+    booked_date DATE DEFAULT NULL,
+    travel_date DATE DEFAULT NULL,
+    ticket_file_path TEXT DEFAULT NULL,
+    remarks VARCHAR(255) DEFAULT NULL,
+
+    created_by INT DEFAULT NULL,
+    updated_by INT DEFAULT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (deployment_id) REFERENCES DEP_T01_deployments(deployment_id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES AUTH_U04_users(user_id),
     FOREIGN KEY (updated_by) REFERENCES AUTH_U04_users(user_id)
 );
@@ -104,6 +157,8 @@ CREATE PROCEDURE sp_dep_deployments(
   IN p_user_id INT
 )
 BEGIN
+  DECLARE v_current_status VARCHAR(50) DEFAULT NULL;
+
   IF p_action = 'LIST' THEN
     SELECT
       d.deployment_id,
@@ -213,6 +268,11 @@ BEGIN
     END;
 
   ELSEIF p_action = 'SET_STATUS' THEN
+    SELECT current_status INTO v_current_status
+    FROM DEP_T01_deployments
+    WHERE deployment_id = p_deployment_id
+    LIMIT 1;
+
     UPDATE DEP_T01_deployments
     SET
       current_status = COALESCE(NULLIF(p_status,''), current_status),
@@ -222,7 +282,7 @@ BEGIN
     WHERE deployment_id = p_deployment_id;
 
     INSERT INTO DEP_T02_deployment_history (deployment_id, status, remarks, changed_by)
-    VALUES (p_deployment_id, COALESCE(NULLIF(p_status,''), current_status), p_remarks, p_user_id);
+    VALUES (p_deployment_id, COALESCE(NULLIF(p_status,''), v_current_status, 'Ready'), p_remarks, p_user_id);
 
     SELECT ROW_COUNT() AS affected_rows;
 
@@ -267,6 +327,10 @@ CREATE PROCEDURE sp_dep_visa_details(
   IN p_action VARCHAR(30),
   IN p_visa_detail_id INT,
   IN p_deployment_id INT,
+  IN p_offer_date DATE,
+  IN p_offer_letter_file_path TEXT,
+  IN p_offer_payment_received TINYINT(1),
+  IN p_offer_remarks VARCHAR(255),
   IN p_visa_type_id INT,
   IN p_visa_number VARCHAR(100),
   IN p_issue_date DATE,
@@ -278,55 +342,156 @@ CREATE PROCEDURE sp_dep_visa_details(
   IN p_sponsor_contact VARCHAR(100),
   IN p_passport_file_path TEXT,
   IN p_visa_file_path TEXT,
+  IN p_visa_payment_received TINYINT(1),
+  IN p_visa_remarks VARCHAR(255),
+  IN p_ticket_number VARCHAR(100),
+  IN p_booked_date DATE,
+  IN p_travel_date DATE,
+  IN p_ticket_file_path TEXT,
+  IN p_ticket_remarks VARCHAR(255),
   IN p_remarks VARCHAR(255),
   IN p_user_id INT
 )
 BEGIN
   IF p_action = 'GET_BY_DEPLOYMENT' THEN
-    SELECT * FROM DEP_T03_visa_details WHERE deployment_id = p_deployment_id LIMIT 1;
+    SELECT
+      o.offer_detail_id,
+      v.visa_processing_id,
+      t.ticket_booking_id,
+      p_deployment_id AS deployment_id,
+      o.offer_date,
+      o.offer_letter_file_path,
+      o.payment_received AS offer_payment_received,
+      o.remarks AS offer_remarks,
+      v.visa_type_id,
+      v.visa_number,
+      v.issue_date,
+      v.expiry_date,
+      v.passport_number,
+      v.passport_issue_date,
+      v.passport_expiry_date,
+      v.sponsor_id,
+      v.sponsor_contact,
+      v.passport_file_path,
+      v.visa_file_path,
+      v.payment_received AS visa_payment_received,
+      v.remarks AS visa_remarks,
+      t.ticket_number,
+      t.booked_date,
+      t.travel_date,
+      t.ticket_file_path,
+      t.remarks AS ticket_remarks,
+      COALESCE(t.remarks, v.remarks, o.remarks, NULL) AS remarks,
+      COALESCE(o.created_at, v.created_at, t.created_at, CURRENT_TIMESTAMP) AS created_at,
+      COALESCE(o.updated_at, v.updated_at, t.updated_at, CURRENT_TIMESTAMP) AS updated_at
+    FROM (SELECT p_deployment_id AS deployment_id) dep
+    LEFT JOIN DEP_T03_offer_details o ON o.deployment_id = dep.deployment_id
+    LEFT JOIN DEP_T04_visa_processing_details v ON v.deployment_id = dep.deployment_id
+    LEFT JOIN DEP_T05_ticket_bookings t ON t.deployment_id = dep.deployment_id
+    LIMIT 1;
 
   ELSEIF p_action = 'UPSERT' THEN
     BEGIN
-      DECLARE v_existing_id INT DEFAULT NULL;
-      SELECT visa_detail_id INTO v_existing_id
-      FROM DEP_T03_visa_details
+      DECLARE v_offer_id INT DEFAULT NULL;
+      DECLARE v_visa_id INT DEFAULT NULL;
+      DECLARE v_ticket_id INT DEFAULT NULL;
+      DECLARE v_result_id INT DEFAULT NULL;
+
+      SELECT offer_detail_id INTO v_offer_id
+      FROM DEP_T03_offer_details
       WHERE deployment_id = p_deployment_id
       LIMIT 1;
 
-      IF v_existing_id IS NULL THEN
-        INSERT INTO DEP_T03_visa_details (
-          deployment_id, visa_type_id, visa_number, issue_date, expiry_date,
-          passport_number, passport_issue_date, passport_expiry_date,
-          sponsor_id, sponsor_contact,
-          passport_file_path, visa_file_path, remarks,
-          created_by, updated_by
-        ) VALUES (
-          p_deployment_id, p_visa_type_id, p_visa_number, p_issue_date, p_expiry_date,
-          p_passport_number, p_passport_issue_date, p_passport_expiry_date,
-          p_sponsor_id, p_sponsor_contact,
-          p_passport_file_path, p_visa_file_path, p_remarks,
-          p_user_id, p_user_id
-        );
-        SELECT LAST_INSERT_ID() AS visa_detail_id;
-      ELSE
-        UPDATE DEP_T03_visa_details
-        SET
-          visa_type_id = COALESCE(p_visa_type_id, visa_type_id),
-          visa_number = COALESCE(p_visa_number, visa_number),
-          issue_date = COALESCE(p_issue_date, issue_date),
-          expiry_date = COALESCE(p_expiry_date, expiry_date),
-          passport_number = COALESCE(p_passport_number, passport_number),
-          passport_issue_date = COALESCE(p_passport_issue_date, passport_issue_date),
-          passport_expiry_date = COALESCE(p_passport_expiry_date, passport_expiry_date),
-          sponsor_id = COALESCE(p_sponsor_id, sponsor_id),
-          sponsor_contact = COALESCE(p_sponsor_contact, sponsor_contact),
-          passport_file_path = COALESCE(p_passport_file_path, passport_file_path),
-          visa_file_path = COALESCE(p_visa_file_path, visa_file_path),
-          remarks = COALESCE(p_remarks, remarks),
-          updated_by = p_user_id
-        WHERE visa_detail_id = v_existing_id;
-        SELECT v_existing_id AS visa_detail_id;
+      IF p_offer_date IS NOT NULL OR p_offer_letter_file_path IS NOT NULL OR p_offer_payment_received IS NOT NULL OR p_offer_remarks IS NOT NULL OR v_offer_id IS NOT NULL THEN
+        IF v_offer_id IS NULL THEN
+          INSERT INTO DEP_T03_offer_details (
+            deployment_id, offer_date, offer_letter_file_path, payment_received, remarks, created_by, updated_by
+          ) VALUES (
+            p_deployment_id, p_offer_date, p_offer_letter_file_path, COALESCE(p_offer_payment_received, 0), p_offer_remarks, p_user_id, p_user_id
+          );
+          SET v_offer_id = LAST_INSERT_ID();
+        ELSE
+          UPDATE DEP_T03_offer_details
+          SET
+            offer_date = COALESCE(p_offer_date, offer_date),
+            offer_letter_file_path = COALESCE(NULLIF(p_offer_letter_file_path, ''), offer_letter_file_path),
+            payment_received = COALESCE(p_offer_payment_received, payment_received),
+            remarks = COALESCE(p_offer_remarks, remarks),
+            updated_by = p_user_id
+          WHERE offer_detail_id = v_offer_id;
+        END IF;
       END IF;
+
+      SELECT visa_processing_id INTO v_visa_id
+      FROM DEP_T04_visa_processing_details
+      WHERE deployment_id = p_deployment_id
+      LIMIT 1;
+
+      IF p_visa_type_id IS NOT NULL OR p_visa_number IS NOT NULL OR p_issue_date IS NOT NULL OR p_expiry_date IS NOT NULL OR p_passport_number IS NOT NULL OR p_passport_issue_date IS NOT NULL OR p_passport_expiry_date IS NOT NULL OR p_sponsor_id IS NOT NULL OR p_sponsor_contact IS NOT NULL OR p_passport_file_path IS NOT NULL OR p_visa_file_path IS NOT NULL OR p_visa_payment_received IS NOT NULL OR p_visa_remarks IS NOT NULL OR v_visa_id IS NOT NULL THEN
+        IF v_visa_id IS NULL THEN
+          INSERT INTO DEP_T04_visa_processing_details (
+            deployment_id, visa_type_id, visa_number, issue_date, expiry_date,
+            passport_number, passport_issue_date, passport_expiry_date,
+            sponsor_id, sponsor_contact,
+            passport_file_path, visa_file_path, payment_received, remarks,
+            created_by, updated_by
+          ) VALUES (
+            p_deployment_id, p_visa_type_id, p_visa_number, p_issue_date, p_expiry_date,
+            p_passport_number, p_passport_issue_date, p_passport_expiry_date,
+            p_sponsor_id, p_sponsor_contact,
+            p_passport_file_path, p_visa_file_path, COALESCE(p_visa_payment_received, 0), p_visa_remarks,
+            p_user_id, p_user_id
+          );
+          SET v_visa_id = LAST_INSERT_ID();
+        ELSE
+          UPDATE DEP_T04_visa_processing_details
+          SET
+            visa_type_id = COALESCE(p_visa_type_id, visa_type_id),
+            visa_number = COALESCE(p_visa_number, visa_number),
+            issue_date = COALESCE(p_issue_date, issue_date),
+            expiry_date = COALESCE(p_expiry_date, expiry_date),
+            passport_number = COALESCE(p_passport_number, passport_number),
+            passport_issue_date = COALESCE(p_passport_issue_date, passport_issue_date),
+            passport_expiry_date = COALESCE(p_passport_expiry_date, passport_expiry_date),
+            sponsor_id = COALESCE(p_sponsor_id, sponsor_id),
+            sponsor_contact = COALESCE(p_sponsor_contact, sponsor_contact),
+            passport_file_path = COALESCE(NULLIF(p_passport_file_path, ''), passport_file_path),
+            visa_file_path = COALESCE(NULLIF(p_visa_file_path, ''), visa_file_path),
+            payment_received = COALESCE(p_visa_payment_received, payment_received),
+            remarks = COALESCE(p_visa_remarks, remarks),
+            updated_by = p_user_id
+          WHERE visa_processing_id = v_visa_id;
+        END IF;
+      END IF;
+
+      SELECT ticket_booking_id INTO v_ticket_id
+      FROM DEP_T05_ticket_bookings
+      WHERE deployment_id = p_deployment_id
+      LIMIT 1;
+
+      IF p_ticket_number IS NOT NULL OR p_booked_date IS NOT NULL OR p_travel_date IS NOT NULL OR p_ticket_file_path IS NOT NULL OR p_ticket_remarks IS NOT NULL OR v_ticket_id IS NOT NULL THEN
+        IF v_ticket_id IS NULL THEN
+          INSERT INTO DEP_T05_ticket_bookings (
+            deployment_id, ticket_number, booked_date, travel_date, ticket_file_path, remarks, created_by, updated_by
+          ) VALUES (
+            p_deployment_id, p_ticket_number, p_booked_date, p_travel_date, p_ticket_file_path, p_ticket_remarks, p_user_id, p_user_id
+          );
+          SET v_ticket_id = LAST_INSERT_ID();
+        ELSE
+          UPDATE DEP_T05_ticket_bookings
+          SET
+            ticket_number = COALESCE(p_ticket_number, ticket_number),
+            booked_date = COALESCE(p_booked_date, booked_date),
+            travel_date = COALESCE(p_travel_date, travel_date),
+            ticket_file_path = COALESCE(NULLIF(p_ticket_file_path, ''), ticket_file_path),
+            remarks = COALESCE(p_ticket_remarks, remarks),
+            updated_by = p_user_id
+          WHERE ticket_booking_id = v_ticket_id;
+        END IF;
+      END IF;
+
+      SET v_result_id = COALESCE(v_offer_id, v_visa_id, v_ticket_id);
+      SELECT v_result_id AS visa_detail_id;
     END;
 
   ELSE

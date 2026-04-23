@@ -8,7 +8,7 @@ import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentHistoryRow, type DeploymentRow } from "../../common/services/deploymentApi";
 import { partnerPortalApi, type PartnerApplicationRow } from "../../common/services/partnersApi";
 
-const stages = ["Ready", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"] as const;
+const stages = ["Ready", "Offered", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"] as const;
 
 function normalizeStatus(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
@@ -76,7 +76,7 @@ export default function PartnerDeploymentZonePage() {
       rows
         .filter((row) => {
           const s = normalizeStatus(row.current_status);
-          return s === "ready" || s === "visa processing" || s === "biometrics" || s === "visa approved" || s === "travel booked" || s === "deployed";
+          return s === "ready" || s === "offered" || s === "visa processing" || s === "biometrics" || s === "visa approved" || s === "travel booked" || s === "deployed";
         })
         .sort((a, b) => b.deployment_id - a.deployment_id),
     [rows],

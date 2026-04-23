@@ -9,7 +9,7 @@ import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../com
 import { mastersApi, type VisaType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 
-const steps = ["Ready", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"];
+const steps = ["Ready", "Offered", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"];
 
 function activeIndex(status?: string | null) {
   const idx = steps.findIndex((s) => s.toLowerCase() === String(status ?? "").toLowerCase());

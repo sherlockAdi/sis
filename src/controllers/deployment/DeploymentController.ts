@@ -31,8 +31,14 @@ type DeploymentHistoryRow = {
 };
 
 type VisaDetailRow = {
-  visa_detail_id: number;
+  offer_detail_id: number | null;
+  visa_processing_id: number | null;
+  ticket_booking_id: number | null;
   deployment_id: number;
+  offer_date: string | null;
+  offer_letter_file_path: string | null;
+  offer_payment_received: number | null;
+  offer_remarks: string | null;
   visa_type_id: number | null;
   visa_number: string | null;
   issue_date: string | null;
@@ -44,6 +50,13 @@ type VisaDetailRow = {
   sponsor_contact: string | null;
   passport_file_path: string | null;
   visa_file_path: string | null;
+  visa_payment_received: number | null;
+  visa_remarks: string | null;
+  ticket_number: string | null;
+  booked_date: string | null;
+  travel_date: string | null;
+  ticket_file_path: string | null;
+  ticket_remarks: string | null;
   remarks: string | null;
   created_at: string;
   updated_at: string;
@@ -154,7 +167,7 @@ export class DeploymentController extends Controller {
   @Security('jwt')
   public async visaDetails(@Path() deploymentId: number): Promise<VisaDetailRow | null> {
     const rows = await callProc<RowDataPacket & VisaDetailRow>(
-      `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { deployment_id: deploymentId }
     );
     return rows[0] ?? null;
@@ -175,8 +188,19 @@ export class DeploymentController extends Controller {
       passport_expiry_date?: string | null;
       sponsor_id?: string | null;
       sponsor_contact?: string | null;
+      offer_date?: string | null;
       passport_file_path?: string | null;
       visa_file_path?: string | null;
+      offer_letter_file_path?: string | null;
+      offer_payment_received?: number | null;
+      offer_remarks?: string | null;
+      visa_payment_received?: number | null;
+      visa_remarks?: string | null;
+      ticket_number?: string | null;
+      booked_date?: string | null;
+      travel_date?: string | null;
+      ticket_file_path?: string | null;
+      ticket_remarks?: string | null;
       remarks?: string | null;
     },
     @Request() req: any
@@ -185,9 +209,13 @@ export class DeploymentController extends Controller {
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
 
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
-      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :remarks, :user_id)`,
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
         deployment_id: deploymentId,
+        offer_date: body.offer_date ?? null,
+        offer_letter_file_path: body.offer_letter_file_path ?? null,
+        offer_payment_received: body.offer_payment_received ?? null,
+        offer_remarks: body.offer_remarks ?? null,
         visa_type_id: body.visa_type_id ?? null,
         visa_number: body.visa_number ?? null,
         issue_date: body.issue_date ?? null,
@@ -199,6 +227,13 @@ export class DeploymentController extends Controller {
         sponsor_contact: body.sponsor_contact ?? null,
         passport_file_path: body.passport_file_path ?? null,
         visa_file_path: body.visa_file_path ?? null,
+        visa_payment_received: body.visa_payment_received ?? null,
+        visa_remarks: body.visa_remarks ?? null,
+        ticket_number: body.ticket_number ?? null,
+        booked_date: body.booked_date ?? null,
+        travel_date: body.travel_date ?? null,
+        ticket_file_path: body.ticket_file_path ?? null,
+        ticket_remarks: body.ticket_remarks ?? null,
         remarks: body.remarks ?? null,
         user_id: user.user_id,
       }
@@ -215,4 +250,5 @@ export class DeploymentController extends Controller {
 
     return { visa_detail_id };
   }
+
 }
