@@ -11,6 +11,7 @@ import MapIcon from "@mui/icons-material/Map";
 import LocationCityIcon from "@mui/icons-material/LocationCity";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import ArticleIcon from "@mui/icons-material/Article";
 import CategoryIcon from "@mui/icons-material/Category";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -154,6 +155,95 @@ export default function AppShellLayout() {
       return true;
     });
   }, [me?.menus]);
+
+  const candidateNavSections = useMemo(() => {
+    if (!isCandidate) return null;
+
+    return [
+      {
+        heading: "MAIN MENU",
+        items: [
+          {
+            label: "Dashboard",
+            to: withPortalBase("/candidate/home"),
+            icon: <HomeIcon fontSize="small" />,
+          },
+        ],
+      },
+      {
+        heading: "PROFILE",
+        items: [
+          {
+            label: "Profile",
+            to: withPortalBase("/candidate/profile"),
+            icon: <PersonIcon fontSize="small" />,
+            children: [
+              { label: "Personal Info", to: withPortalBase("/candidate/profile/settings"), icon: <BadgeIcon fontSize="small" /> },
+              { label: "Upload Documents", to: withPortalBase("/candidate/profile/documents"), icon: <ArticleIcon fontSize="small" /> },
+              { label: "Upload Trade Video", to: withPortalBase("/candidate/profile/trade-test"), icon: <VideoCallIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "JOBS",
+        items: [
+          {
+            label: "Jobs",
+            to: withPortalBase("/candidate/jobs"),
+            icon: <WorkOutlineIcon fontSize="small" />,
+            children: [
+              { label: "Job List", to: withPortalBase("/candidate/jobs"), icon: <WorkOutlineIcon fontSize="small" /> },
+              { label: "View Applied Jobs", to: withPortalBase("/candidate/applications"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "View Job Status", to: withPortalBase("/candidate/profile/deployment"), icon: <ScheduleIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "ONBOARDING PROCESS",
+        items: [
+          {
+            label: "Onboarding",
+            to: withPortalBase("/candidate/onboarding/offer"),
+            icon: <MenuBookOutlinedIcon fontSize="small" />,
+            children: [
+              { label: "Download Offer", to: withPortalBase("/candidate/onboarding/offer"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Visa Details", to: withPortalBase("/candidate/onboarding/visa-details"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Download Tickets", to: withPortalBase("/candidate/onboarding/tickets"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "ACCOUNTS",
+        items: [
+          {
+            label: "Accounts",
+            to: withPortalBase("/candidate/accounts/payments"),
+            icon: <AccountBalanceWalletOutlinedIcon fontSize="small" />,
+            children: [
+              { label: "Payments", to: withPortalBase("/candidate/accounts/payments"), icon: <PaymentsIcon fontSize="small" /> },
+              { label: "Download Receipts", to: withPortalBase("/candidate/accounts/receipts"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "SETTINGS",
+        items: [
+          {
+            label: "Settings",
+            to: withPortalBase("/candidate/profile/settings"),
+            icon: <SettingsIcon fontSize="small" />,
+            children: [
+              { label: "Change Password", to: withPortalBase("/candidate/profile/settings"), icon: <SettingsOutlinedIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+    ];
+  }, [isCandidate]);
 
   const navSections = useMemo(() => {
     if (!isAdminLike) return null;
@@ -446,7 +536,7 @@ export default function AppShellLayout() {
       // subtitle="Recruitment, Deployment & Governance Overview"
       brand="SIS Global"
       navItems={navItems}
-      navSections={navSections}
+      navSections={candidateNavSections ?? navSections}
       topBarCenter={adminTopSearch}
       rightSlot={isAdminLike ? adminRightSlot : isPartner ? partnerRightSlot : effectiveRightSlot}
       bottomNav={candidateBottomNav ?? partnerBottomNav}

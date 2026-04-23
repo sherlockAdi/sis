@@ -53,11 +53,36 @@ export type PartnerCandidateRow = {
   email: string | null;
   passport_number: string | null;
   country_id: number | null;
+  country_name?: string | null;
   state_id: number | null;
+  state_name?: string | null;
   city_id: number | null;
+  city_name?: string | null;
+  father_name?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  pincode?: string | null;
+  dob?: string | null;
+  gender?: string | null;
+  skills?: string | null;
+  education?: string | null;
+  experience?: string | null;
+  industry_type?: string | null;
+  resume_file_path?: string | null;
+  passport_expiry_date?: string | null;
+  passport_file_path?: string | null;
+  aadhar_number?: string | null;
+  aadhar_file_path?: string | null;
+  pan_number?: string | null;
+  pan_file_path?: string | null;
+  voter_id_number?: string | null;
+  voter_id_file_path?: string | null;
+  profile_photo_file_path?: string | null;
+  languages_known?: string | null;
   status: string | null;
   user_id: number | null;
   created_at: string;
+  updated_at?: string | null;
 };
 
 export type PartnerCandidateDocumentRow = {

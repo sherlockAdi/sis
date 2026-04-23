@@ -112,6 +112,12 @@ export class RecruitmentApplicationsController extends Controller {
     );
     const interview_id = rows[0]?.interview_id;
     if (!interview_id) throw httpError(500, 'Failed to schedule interview');
+
+    await callProc(
+      `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
+      { application_id: applicationId, status: 'Interview' }
+    );
+
     return { interview_id };
   }
 

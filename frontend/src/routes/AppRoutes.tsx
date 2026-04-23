@@ -42,6 +42,9 @@ import CandidateProfileTradeTestPage from "../modules/candidate/CandidateProfile
 import CandidateProfileDeploymentPage from "../modules/candidate/CandidateProfileDeploymentPage";
 import CandidateProfileHelpdeskPage from "../modules/candidate/CandidateProfileHelpdeskPage";
 import CandidateProfileSettingsPage from "../modules/candidate/CandidateProfileSettingsPage";
+import CandidateOnboardingOfferPage from "../modules/candidate/CandidateOnboardingOfferPage";
+import CandidateOnboardingVisaDetailsPage from "../modules/candidate/CandidateOnboardingVisaDetailsPage";
+import CandidateOnboardingTicketsPage from "../modules/candidate/CandidateOnboardingTicketsPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
@@ -52,6 +55,7 @@ import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
+import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
 import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
@@ -262,6 +266,17 @@ export default function AppRoutes() {
             <Route path="candidate/profile/deployment" element={<CandidateProfileDeploymentPage />} />
             <Route path="candidate/profile/helpdesk" element={<CandidateProfileHelpdeskPage />} />
             <Route path="candidate/profile/settings" element={<CandidateProfileSettingsPage />} />
+            <Route path="candidate/onboarding/offer" element={<CandidateOnboardingOfferPage />} />
+            <Route path="candidate/onboarding/visa-details" element={<CandidateOnboardingVisaDetailsPage />} />
+            <Route path="candidate/onboarding/tickets" element={<CandidateOnboardingTicketsPage />} />
+            <Route
+              path="candidate/accounts/payments"
+              element={<PlaceholderPage title="Candidate • Payments" description="Payment history and account transactions will appear here." />}
+            />
+            <Route
+              path="candidate/accounts/receipts"
+              element={<PlaceholderPage title="Candidate • Download Receipts" description="Downloadable payment receipts will appear here." />}
+            />
             <Route path="partner/dashboard" element={<PartnerDashboardPage />} />
             <Route path="partner/job-mandates" element={<PartnerJobMandatesPage />} />
             <Route path="partner/job-mandates/new" element={<JobFormPage mode="create" />} />
@@ -276,12 +291,7 @@ export default function AppRoutes() {
             <Route path="partner/profile" element={<PartnerProfilePage />} />
             <Route
               path="partner/deployment-zone"
-              element={
-                <PlaceholderPage
-                  title="Deployment Zone"
-                  description="Offer received, visa approved, ticket allotted, and deployment milestones will be tracked here."
-                />
-              }
+              element={<PartnerDeploymentZonePage />}
             />
             <Route
               path="partner/reports"

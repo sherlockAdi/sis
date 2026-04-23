@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import { Box, Chip, Divider, IconButton, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useLocation } from "react-router-dom";
 import dayjs, { type Dayjs } from "dayjs";
-import { AdAlertBox, AdButton, AdCard, AdDatePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdDatePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
 import { mastersApi, type VisaType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 
-const stages = ["Ready", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"] as const;
+const stages = ["Ready", "Offered", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"] as const;
 
 function stageFromPath(pathname: string): string | null {
   if (pathname.includes("/deployment/ready")) return "Ready";
@@ -21,6 +21,10 @@ function stageFromPath(pathname: string): string | null {
   if (pathname.includes("/deployment/travel-booked")) return "Travel Booked";
   if (pathname.includes("/deployment/deployed")) return "Deployed";
   return null;
+}
+
+function normalizeStatus(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
 }
 
 export default function DeploymentManagementPage() {
@@ -36,18 +40,17 @@ export default function DeploymentManagementPage() {
     severity: "success",
   });
 
-  const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
-  const [editOpen, setEditOpen] = useState(false);
   const [visaOpen, setVisaOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DeploymentRow | null>(null);
-  const [updateForm, setUpdateForm] = useState<{ status: string; visa_type_id: string; remarks: string }>({
-    status: "",
-    visa_type_id: "",
-    remarks: "",
-  });
   const [visaForm, setVisaForm] = useState<Partial<VisaDetailRow>>({});
   const [visaLoading, setVisaLoading] = useState(false);
-  const [uploading, setUploading] = useState<{ passport: boolean; visa: boolean }>({ passport: false, visa: false });
+  const [uploading, setUploading] = useState<{ offer: boolean; passport: boolean; visa: boolean; ticket: boolean }>({
+    offer: false,
+    passport: false,
+    visa: false,
+    ticket: false,
+  });
+  const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
 
   const activeStage = stageFromPath(location.pathname);
 
@@ -55,7 +58,8 @@ export default function DeploymentManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await deploymentApi.list(activeStage ?? undefined));
+      const shouldUseLocalFilter = activeStage === "Ready" || activeStage === "Visa Processing" || activeStage === "Travel Booked" || activeStage === "Deployed";
+      setRows(await deploymentApi.list(shouldUseLocalFilter ? undefined : activeStage ?? undefined));
     } catch (e: any) {
       setError((e as ApiError)?.message ?? "Failed to load deployments");
     } finally {
@@ -82,11 +86,6 @@ export default function DeploymentManagementPage() {
     [visaTypes],
   );
 
-  const statusOptions = useMemo(
-    () => [{ label: "- Select -", value: "" }].concat(stages.map((s) => ({ label: s, value: s }))),
-    [],
-  );
-
   const cols = useMemo(
     () => [
       { field: "deployment_id", headerName: "ID", width: 80 },
@@ -96,61 +95,151 @@ export default function DeploymentManagementPage() {
         field: "current_status",
         headerName: "Status",
         width: 150,
-        renderCell: (p: any) => <Chip size="small" label={String(p.value ?? "")} />,
+        renderCell: (p: any) => {
+          const status = normalizeStatus(p.value);
+          return <Chip size="small" label={String(p.value ?? "")} color={status === "offered" ? "success" : "default"} />;
+        },
       },
       { field: "visa_type_name", headerName: "Visa", width: 140 },
       {
         field: "__actions",
         headerName: "Actions",
-        width: 220,
+        width: 120,
         sortable: false,
         filterable: false,
         renderCell: (p: any) => {
           const r = p.row as DeploymentRow;
+          const status = normalizeStatus(r.current_status);
+          const canUploadOffer = activeStage === "Ready" && status === "ready";
+          const canUploadTicket = activeStage === "Travel Booked" && (status === "travel booked" || status === "visa approved" || status === "ticket confirmed");
+          const canFinalizeDeployment = activeStage === "Deployed" && status === "ticket confirmed";
+          const canApproveVisa = activeStage === "Visa Processing" && status === "visa processing";
+          const canUploadVisa =
+            activeStage === "Visa Processing" && (status === "offered" || status === "visa processing" || status === "visa approved");
           return (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ width: "100%" }}>
-              <AdButton
-                variant="outlined"
-                startIcon={<EventAvailableIcon fontSize="small" />}
-                sx={{ minWidth: 0, px: 1 }}
-                onClick={() => {
-                  setActiveRow(r);
-                  setUpdateForm({
-                    status: r.current_status ?? "",
-                    visa_type_id: r.visa_type_id ? String(r.visa_type_id) : "",
-                    remarks: r.remarks ?? "",
-                  });
-                  setEditOpen(true);
-                }}
-              >
-                Update
-              </AdButton>
-              <AdButton
-                variant="outlined"
-                sx={{ minWidth: 0, px: 1 }}
-                onClick={async () => {
-                  setActiveRow(r);
-                  setVisaOpen(true);
-                  setVisaLoading(true);
-                  try {
-                    const details = await deploymentApi.visaDetails.get(r.deployment_id);
-                    setVisaForm(details ?? { deployment_id: r.deployment_id });
-                  } catch (e: any) {
-                    setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
-                    setVisaForm({ deployment_id: r.deployment_id });
-                  } finally {
-                    setVisaLoading(false);
-                  }
-                }}
-              >
-                Visa Details
-              </AdButton>
+              {canUploadOffer ? (
+                <IconButton
+                  aria-label="Upload offer details"
+                  size="small"
+                  disabled={uploading.offer}
+                  onClick={async () => {
+                    setActiveRow(r);
+                    setVisaOpen(true);
+                    setVisaLoading(true);
+                    try {
+                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                      setVisaForm(details ?? { deployment_id: r.deployment_id });
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load offer details", severity: "error" });
+                      setVisaForm({ deployment_id: r.deployment_id });
+                    } finally {
+                      setVisaLoading(false);
+                    }
+                  }}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <UploadFileIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+              {canUploadTicket ? (
+                <IconButton
+                  aria-label="Upload ticket details"
+                  size="small"
+                  disabled={uploading.ticket}
+                  onClick={async () => {
+                    setActiveRow(r);
+                    setVisaOpen(true);
+                    setVisaLoading(true);
+                    try {
+                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                      setVisaForm(details ?? { deployment_id: r.deployment_id });
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load ticket details", severity: "error" });
+                      setVisaForm({ deployment_id: r.deployment_id });
+                    } finally {
+                      setVisaLoading(false);
+                    }
+                  }}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <UploadFileIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+              {canFinalizeDeployment ? (
+                <IconButton
+                  aria-label="Finalize deployment"
+                  size="small"
+                  onClick={async () => {
+                    setActiveRow(r);
+                    setVisaOpen(true);
+                    setVisaLoading(true);
+                    try {
+                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                      setVisaForm(details ?? { deployment_id: r.deployment_id });
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load deployment details", severity: "error" });
+                      setVisaForm({ deployment_id: r.deployment_id });
+                    } finally {
+                      setVisaLoading(false);
+                    }
+                  }}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <CheckCircleOutlineIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+              {canApproveVisa ? (
+                <IconButton
+                  aria-label="Mark visa approved"
+                  size="small"
+                  onClick={async () => {
+                    try {
+                      await deploymentApi.setStatus(r.deployment_id, {
+                        status: "Visa Approved",
+                        remarks: r.remarks ?? null,
+                      });
+                      setToast({ open: true, message: "Status changed to Visa Approved", severity: "success" });
+                      refresh();
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark visa approved", severity: "error" });
+                    }
+                  }}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <CheckCircleOutlineIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+              {canUploadVisa ? (
+                <IconButton
+                  aria-label="Upload visa details"
+                  size="small"
+                  disabled={uploading.passport || uploading.visa}
+                  onClick={async () => {
+                    setActiveRow(r);
+                    setVisaOpen(true);
+                    setVisaLoading(true);
+                    try {
+                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                      setVisaForm(details ?? { deployment_id: r.deployment_id });
+                    } catch (e: any) {
+                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
+                      setVisaForm({ deployment_id: r.deployment_id });
+                    } finally {
+                      setVisaLoading(false);
+                    }
+                  }}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <UploadFileIcon fontSize="small" />
+                </IconButton>
+              ) : null}
             </Stack>
           );
         },
       },
     ],
-    [],
+    [uploading.offer, uploading.passport, uploading.visa],
   );
 
   const visibility = useMemo(
@@ -160,26 +249,6 @@ export default function DeploymentManagementPage() {
     }),
     [isMdDown],
   );
-
-  const saveUpdate = async () => {
-    if (!activeRow) return;
-    if (!updateForm.status) {
-      setToast({ open: true, message: "Select status", severity: "error" });
-      return;
-    }
-    try {
-      await deploymentApi.setStatus(activeRow.deployment_id, {
-        status: updateForm.status,
-        visa_type_id: updateForm.visa_type_id ? Number(updateForm.visa_type_id) : null,
-        remarks: updateForm.remarks.trim() || null,
-      });
-      setToast({ open: true, message: "Status updated", severity: "success" });
-      setEditOpen(false);
-      refresh();
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update", severity: "error" });
-    }
-  };
 
   const uploadFile = async (file: File, type: "passport" | "visa") => {
     if (!activeRow) return;
@@ -196,11 +265,49 @@ export default function DeploymentManagementPage() {
         passport_file_path: type === "passport" ? objectKey : v.passport_file_path,
         visa_file_path: type === "visa" ? objectKey : v.visa_file_path,
       }));
-      setToast({ open: true, message: "Uploaded", severity: "success" });
+      setToast({ open: true, message: `${type === "passport" ? "Passport" : "Visa"} file uploaded`, severity: "success" });
     } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Upload failed", severity: "error" });
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? `${type === "passport" ? "Passport" : "Visa"} upload failed`, severity: "error" });
     } finally {
       setUploading((u) => ({ ...u, [type]: false }));
+    }
+  };
+
+  const uploadOfferFile = async (file: File) => {
+    if (!activeRow) return;
+    try {
+      setUploading((u) => ({ ...u, offer: true }));
+      const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+      const objectKey = `deployments/${activeRow.deployment_id}/offer_letter_${Date.now()}${ext}`;
+      const presign = await recruitmentApi.files.presignUpload(objectKey);
+      const put = await fetch(presign.url, { method: "PUT", body: file });
+      if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+
+      setVisaForm((v) => ({ ...v, offer_letter_file_path: objectKey }));
+      setToast({ open: true, message: "Offer letter uploaded", severity: "success" });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Offer upload failed", severity: "error" });
+    } finally {
+      setUploading((u) => ({ ...u, offer: false }));
+    }
+  };
+
+  const uploadTicketFile = async (file: File) => {
+    if (!activeRow) return;
+    try {
+      setUploading((u) => ({ ...u, ticket: true }));
+      const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+      const objectKey = `deployments/${activeRow.deployment_id}/ticket_${Date.now()}${ext}`;
+      const presign = await recruitmentApi.files.presignUpload(objectKey);
+      const put = await fetch(presign.url, { method: "PUT", body: file });
+      if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+
+      setVisaForm((v) => ({ ...v, ticket_file_path: objectKey }));
+      setToast({ open: true, message: "Ticket file uploaded", severity: "success" });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Ticket upload failed", severity: "error" });
+    } finally {
+      setUploading((u) => ({ ...u, ticket: false }));
     }
   };
 
@@ -217,27 +324,81 @@ export default function DeploymentManagementPage() {
   const saveVisaDetails = async () => {
     if (!activeRow) return;
     try {
-      await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
-        visa_type_id: visaForm.visa_type_id ?? null,
-        visa_number: visaForm.visa_number ?? null,
-        issue_date: visaForm.issue_date ?? null,
-        expiry_date: visaForm.expiry_date ?? null,
-        passport_number: visaForm.passport_number ?? null,
-        passport_issue_date: visaForm.passport_issue_date ?? null,
-        passport_expiry_date: visaForm.passport_expiry_date ?? null,
-        sponsor_id: visaForm.sponsor_id ?? null,
-        sponsor_contact: visaForm.sponsor_contact ?? null,
-        passport_file_path: visaForm.passport_file_path ?? null,
-        visa_file_path: visaForm.visa_file_path ?? null,
-        remarks: visaForm.remarks ?? null,
-      });
-      setToast({ open: true, message: "Visa details saved", severity: "success" });
+      if (activeStage === "Ready") {
+        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+          offer_date: visaForm.offer_date ?? null,
+          offer_letter_file_path: visaForm.offer_letter_file_path ?? null,
+          offer_payment_received: visaForm.offer_payment_received ?? null,
+          offer_remarks: visaForm.offer_remarks ?? null,
+          remarks: visaForm.remarks ?? null,
+        });
+        await deploymentApi.setStatus(activeRow.deployment_id, {
+          status: "Offered",
+          remarks: visaForm.remarks ?? null,
+        });
+        setToast({ open: true, message: "Offer details saved", severity: "success" });
+      } else if (activeStage === "Travel Booked") {
+        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+          ticket_number: visaForm.ticket_number ?? null,
+          booked_date: visaForm.booked_date ?? null,
+          travel_date: visaForm.travel_date ?? null,
+          ticket_file_path: visaForm.ticket_file_path ?? null,
+          ticket_remarks: visaForm.ticket_remarks ?? null,
+          remarks: visaForm.remarks ?? null,
+        });
+        await deploymentApi.setStatus(activeRow.deployment_id, {
+          status: "Ticket Confirmed",
+          remarks: visaForm.remarks ?? null,
+        });
+        setToast({ open: true, message: "Ticket details saved", severity: "success" });
+      } else if (activeStage === "Deployed") {
+        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+          remarks: visaForm.remarks ?? null,
+        });
+        await deploymentApi.setStatus(activeRow.deployment_id, {
+          status: "Deployed",
+          remarks: visaForm.remarks ?? null,
+        });
+        setToast({ open: true, message: "Deployment details saved", severity: "success" });
+      } else {
+        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+          visa_type_id: visaForm.visa_type_id ?? null,
+          visa_number: visaForm.visa_number ?? null,
+          issue_date: visaForm.issue_date ?? null,
+          expiry_date: visaForm.expiry_date ?? null,
+          passport_number: visaForm.passport_number ?? null,
+          passport_issue_date: visaForm.passport_issue_date ?? null,
+          passport_expiry_date: visaForm.passport_expiry_date ?? null,
+          sponsor_id: visaForm.sponsor_id ?? null,
+          sponsor_contact: visaForm.sponsor_contact ?? null,
+          passport_file_path: visaForm.passport_file_path ?? null,
+          visa_file_path: visaForm.visa_file_path ?? null,
+          visa_payment_received: visaForm.visa_payment_received ?? null,
+          visa_remarks: visaForm.visa_remarks ?? null,
+          remarks: visaForm.remarks ?? null,
+        });
+        setToast({ open: true, message: "Visa details saved", severity: "success" });
+      }
       setVisaOpen(false);
       refresh();
     } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to save visa details", severity: "error" });
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to save details", severity: "error" });
     }
   };
+
+  const visibleRows = useMemo(
+    () =>
+      rows.filter((row) => {
+        const status = normalizeStatus(row.current_status);
+        if (activeStage === "Ready") return status === "ready" || status === "offered" || status === "visa approved";
+        if (activeStage === "Visa Processing") return status === "visa processing" || status === "visa approved" || status === "offered";
+        if (activeStage === "Ready") return status === "ready" || status === "offered" || status === "visa approved";
+        if (activeStage === "Travel Booked") return status === "travel booked" || status === "visa approved" || status === "ticket confirmed";
+        if (activeStage === "Deployed") return status === "ticket confirmed" || status === "deployed";
+        return status === normalizeStatus(activeStage);
+      }),
+    [activeStage, rows],
+  );
 
   return (
     <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
@@ -263,7 +424,7 @@ export default function DeploymentManagementPage() {
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }} contentSx={{ p: 2 }}>
         <AdGrid
-          rows={rows.map((r) => ({ id: r.deployment_id, ...r }))}
+          rows={visibleRows.map((r) => ({ id: r.deployment_id, ...r }))}
           columns={cols as any}
           loading={loading}
           showExport={false}
@@ -274,40 +435,19 @@ export default function DeploymentManagementPage() {
       </AdCard>
 
       <AdModal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="Update Deployment Status"
-        subtitle={activeRow ? `Deployment ID: ${activeRow.deployment_id}` : ""}
-        maxWidth="sm"
-      >
-        <Stack spacing={2}>
-          <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(12, minmax(0, 1fr))" } }}>
-            <Box sx={{ gridColumn: { xs: "span 12", md: "span 6" } }}>
-              <AdDropDown label="Status" options={statusOptions} value={updateForm.status} onChange={(v) => setUpdateForm((f) => ({ ...f, status: String(v) }))} />
-            </Box>
-            <Box sx={{ gridColumn: { xs: "span 12", md: "span 6" } }}>
-              <AdDropDown label="Visa Type" options={visaOptions} value={updateForm.visa_type_id} onChange={(v) => setUpdateForm((f) => ({ ...f, visa_type_id: String(v) }))} />
-            </Box>
-            <Box sx={{ gridColumn: "span 12" }}>
-              <AdTextArea label="Remarks" minRows={3} value={updateForm.remarks} onChange={(v) => setUpdateForm((f) => ({ ...f, remarks: v }))} />
-            </Box>
-          </Box>
-
-          <Stack direction="row" justifyContent="flex-end" spacing={1}>
-            <AdButton variant="text" onClick={() => setEditOpen(false)}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={saveUpdate}>Save</AdButton>
-          </Stack>
-        </Stack>
-      </AdModal>
-
-      <AdModal
         open={visaOpen}
         onClose={() => setVisaOpen(false)}
-        title="Visa Details"
+        title={
+          activeStage === "Ready"
+            ? "Offer Details"
+            : activeStage === "Travel Booked"
+              ? "Ticket Details"
+              : activeStage === "Deployed"
+                ? "Deployment Details"
+                : "Visa Details"
+        }
         subtitle={activeRow ? `Deployment ID: ${activeRow.deployment_id}` : ""}
-        maxWidth="md"
+        maxWidth="lg"
       >
         <Stack spacing={2}>
           {visaLoading ? (
@@ -316,117 +456,157 @@ export default function DeploymentManagementPage() {
             </Typography>
           ) : (
             <Stack spacing={2}>
-              <Box>
-                <Typography fontWeight={800} sx={{ mb: 0.5 }}>
-                  Visa Information
-                </Typography>
-                <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" } }}>
-                  <AdDropDown
-                    label="Visa Type"
-                    options={visaOptions}
-                    value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
-                  />
-                  <AdTextBox
-                    label="Visa Number"
-                    size="small"
-                    value={visaForm.visa_number ?? ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, visa_number: v }))}
-                  />
-                  <AdDatePicker
-                    label="Visa Issue Date"
-                    value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
-                    onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                  />
-                  <AdDatePicker
-                    label="Visa Expiry Date"
-                    value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
-                    onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                  />
+              {activeStage === "Ready" ? (
+                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
+                  <Typography fontWeight={900} sx={{ mb: 1 }}>
+                    Offer Generation
+                  </Typography>
+                  <Stack spacing={1.25}>
+                    <AdDatePicker
+                      label="Offer Date"
+                      value={visaForm.offer_date ? dayjs(visaForm.offer_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, offer_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdDropDown
+                      label="Payment Received"
+                      options={[
+                        { label: "No", value: "0" },
+                        { label: "Yes", value: "1" },
+                      ]}
+                      value={String(visaForm.offer_payment_received ?? 0)}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, offer_payment_received: Number(v) }))}
+                    />
+                    <AdTextArea label="Offer Remarks" minRows={2} value={visaForm.offer_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, offer_remarks: v }))} />
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.offer || !activeRow}>
+                        Upload Offer Letter
+                        <input hidden type="file" accept="image/*,.pdf,.doc,.docx" onChange={(e) => e.target.files?.[0] && uploadOfferFile(e.target.files[0])} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.offer_letter_file_path} onClick={() => openFile(visaForm.offer_letter_file_path)}>
+                        View Offer
+                      </AdButton>
+                    </Stack>
+                  </Stack>
                 </Box>
-              </Box>
+              ) : activeStage === "Travel Booked" ? (
+                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
+                  <Typography fontWeight={900} sx={{ mb: 1 }}>
+                    Ticket Booking
+                  </Typography>
+                  <Stack spacing={1.25}>
+                    <AdTextArea label="Ticket Number" minRows={1} value={visaForm.ticket_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, ticket_number: v }))} />
+                    <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                      <AdDatePicker
+                        label="Booked Date"
+                        value={visaForm.booked_date ? dayjs(visaForm.booked_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, booked_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                      <AdDatePicker
+                        label="Travel Date"
+                        value={visaForm.travel_date ? dayjs(visaForm.travel_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, travel_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                    </Box>
+                    <AdTextArea label="Ticket Remarks" minRows={2} value={visaForm.ticket_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, ticket_remarks: v }))} />
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.ticket || !activeRow}>
+                        Upload Ticket
+                        <input hidden type="file" accept="image/*,.pdf,.doc,.docx" onChange={(e) => e.target.files?.[0] && uploadTicketFile(e.target.files[0])} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.ticket_file_path} onClick={() => openFile(visaForm.ticket_file_path)}>
+                        View Ticket
+                      </AdButton>
+                    </Stack>
+                  </Stack>
+                </Box>
+              ) : activeStage === "Deployed" ? (
+                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
+                  <Typography fontWeight={900} sx={{ mb: 1 }}>
+                    Deployment Details
+                  </Typography>
+                  <Stack spacing={1.25}>
+                    <AdTextArea label="Deployment Remarks" minRows={2} value={visaForm.remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))} />
+                    <Box sx={{ px: 1.25, py: 0.8, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Saving this will mark the deployment as <strong>Deployed</strong>.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              ) : (
+                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
+                  <Typography fontWeight={900} sx={{ mb: 1 }}>
+                    Visa Processing
+                  </Typography>
+                  <Stack spacing={1.25}>
+                    <AdDropDown
+                      label="Visa Type"
+                      options={visaOptions}
+                      value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
+                    />
+                    <AdTextArea label="Visa Remarks" minRows={2} value={visaForm.visa_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, visa_remarks: v }))} />
+                    <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                      <AdDatePicker
+                        label="Visa Issue Date"
+                        value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                      <AdDatePicker
+                        label="Visa Expiry Date"
+                        value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                      <AdTextArea label="Passport Number" minRows={1} value={visaForm.passport_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))} />
+                      <AdTextArea label="Sponsor ID" minRows={1} value={visaForm.sponsor_id ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))} />
+                      <AdTextArea label="Sponsor Contact" minRows={1} value={visaForm.sponsor_contact ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))} />
+                      <AdDropDown
+                        label="Payment Received"
+                        options={[
+                          { label: "No", value: "0" },
+                          { label: "Yes", value: "1" },
+                        ]}
+                        value={String(visaForm.visa_payment_received ?? 0)}
+                        onChange={(v) => setVisaForm((f) => ({ ...f, visa_payment_received: Number(v) }))}
+                      />
+                      <AdDatePicker
+                        label="Passport Issue Date"
+                        value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                      <AdDatePicker
+                        label="Passport Expiry Date"
+                        value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
+                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                      />
+                    </Box>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport || !activeRow}>
+                        Upload Passport
+                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
+                        View Passport
+                      </AdButton>
+                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
+                        Upload Visa
+                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
+                      </AdButton>
+                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
+                        View Visa
+                      </AdButton>
+                    </Stack>
+                  </Stack>
+                </Box>
+              )}
 
               <Divider />
 
               <Box>
                 <Typography fontWeight={800} sx={{ mb: 0.5 }}>
-                  Passport Details
+                  Remarks
                 </Typography>
-                <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
-                  <AdTextBox
-                    label="Passport Number"
-                    size="small"
-                    value={visaForm.passport_number ?? ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))}
-                  />
-                  <AdDatePicker
-                    label="Passport Issue Date"
-                    value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
-                    onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                  />
-                  <AdDatePicker
-                    label="Passport Expiry Date"
-                    value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
-                    onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                  />
-                </Box>
-              </Box>
-
-              <Divider />
-
-              <Box>
-                <Typography fontWeight={800} sx={{ mb: 0.5 }}>
-                  Sponsorship & Additional Info
-                </Typography>
-                <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
-                  <AdTextBox
-                    label="Sponsor ID"
-                    size="small"
-                    value={visaForm.sponsor_id ?? ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))}
-                  />
-                  <AdTextBox
-                    label="Sponsor Contact"
-                    size="small"
-                    value={visaForm.sponsor_contact ?? ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))}
-                  />
-                  <AdTextBox
-                    label="Remarks"
-                    size="small"
-                    value={visaForm.remarks ?? ""}
-                    onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))}
-                  />
-                </Box>
-              </Box>
-
-              <Box>
-                <Typography fontWeight={800} sx={{ mb: 0.5 }}>
-                  Documents
-                </Typography>
-                <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
-                  <Stack spacing={1} alignItems="flex-start">
-                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport}>
-                      Upload Passport
-                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
-                    </AdButton>
-                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
-                      View
-                    </AdButton>
-                  </Stack>
-                  <Stack spacing={1} alignItems="flex-start">
-                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa}>
-                      Upload Visa
-                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
-                    </AdButton>
-                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
-                      View
-                    </AdButton>
-                  </Stack>
-                  <Stack spacing={1} alignItems="flex-end" justifyContent="flex-start">
-                    <AdButton onClick={saveVisaDetails}>Save</AdButton>
-                  </Stack>
-                </Box>
+                <AdTextArea label="Remarks" minRows={2} value={visaForm.remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))} />
               </Box>
             </Stack>
           )}
@@ -434,6 +614,9 @@ export default function DeploymentManagementPage() {
           <Stack direction="row" justifyContent="flex-end" spacing={1}>
             <AdButton variant="text" onClick={() => setVisaOpen(false)}>
               Close
+            </AdButton>
+            <AdButton onClick={saveVisaDetails}>
+              {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : activeStage === "Deployed" ? "Mark Deployed" : "Save Visa Details"}
             </AdButton>
           </Stack>
         </Stack>
