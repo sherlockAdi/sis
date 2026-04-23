@@ -18,10 +18,12 @@ function normalizeLines(s: string): string {
   return s.replace(/\r?\n/g, '\r\n');
 }
 
-function buildMessage(input: { from: string; to: string; subject: string; text: string }): string {
+function buildMessage(input: { from: string; to: string; cc?: string[]; subject: string; text: string }): string {
+  const cc = (input.cc ?? []).map((v) => String(v).trim()).filter(Boolean);
   const headers = [
     `From: ${input.from}`,
     `To: ${input.to}`,
+    ...(cc.length ? [`Cc: ${cc.join(', ')}`] : []),
     `Subject: ${input.subject}`,
     `MIME-Version: 1.0`,
     `Content-Type: text/plain; charset="utf-8"`,
@@ -34,7 +36,7 @@ type Reply = { code: number; lines: string[] };
 
 export async function sendSmtpMail(
   cfg: SmtpConfig,
-  input: { to: string; subject: string; text: string }
+  input: { to: string; cc?: string[]; subject: string; text: string }
 ): Promise<void> {
   if (!cfg.host || !cfg.user || !cfg.pass) {
     throw new Error('SMTP is not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS)');
@@ -110,10 +112,16 @@ export async function sendSmtpMail(
   await expect(250);
   await writeLine(`RCPT TO:<${input.to}>`);
   await expect([250, 251]);
+  for (const cc of input.cc ?? []) {
+    const recipient = String(cc ?? '').trim();
+    if (!recipient) continue;
+    await writeLine(`RCPT TO:<${recipient}>`);
+    await expect([250, 251]);
+  }
   await writeLine('DATA');
   await expect(354);
 
-  const msg = buildMessage({ from, to: input.to, subject: input.subject, text: input.text });
+  const msg = buildMessage({ from, to: input.to, cc: input.cc, subject: input.subject, text: input.text });
   await new Promise<void>((resolve, reject) => socket.write(msg + '\r\n.\r\n', (err) => (err ? reject(err) : resolve())));
   await expect(250);
 
@@ -122,4 +130,3 @@ export async function sendSmtpMail(
 
   socket.end();
 }
-
