@@ -47,6 +47,7 @@ import CandidateProfileSettingsPage from "../modules/candidate/CandidateProfileS
 import CandidateOnboardingOfferPage from "../modules/candidate/CandidateOnboardingOfferPage";
 import CandidateOnboardingVisaDetailsPage from "../modules/candidate/CandidateOnboardingVisaDetailsPage";
 import CandidateOnboardingTicketsPage from "../modules/candidate/CandidateOnboardingTicketsPage";
+import EmployeesPage from "../modules/employees/EmployeesPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
@@ -360,8 +361,13 @@ export default function AppRoutes() {
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
 
-            <Route path="employees" element={<PlaceholderPage title="Employee Zone" description="Employees deployed from successful candidate records will appear here." />} />
-            <Route path="employees/*" element={<PlaceholderPage title="Employee Zone" description="Employees deployed from successful candidate records will appear here." />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="employees/*" element={<EmployeesPage />} />
+            <Route path="employees/dashboard" element={<PlaceholderPage title="Employee Dashboard" description="Employee summary and quick actions will live here." />} />
+            <Route path="employees/profile" element={<PlaceholderPage title="Employee Profile" description="Personal info, local information, and documents will live here." />} />
+            <Route path="employees/attendance" element={<PlaceholderPage title="Employee Attendance" description="Daily attendance and attendance history will live here." />} />
+            <Route path="employees/helpdesk" element={<PlaceholderPage title="Employee Helpdesk" description="Employee tickets and support will live here." />} />
+            <Route path="employees/settings" element={<PlaceholderPage title="Employee Settings" description="Password and account settings will live here." />} />
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />
