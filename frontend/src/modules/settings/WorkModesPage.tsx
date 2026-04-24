@@ -3,11 +3,11 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type WorkMode } from "../../common/services/mastersApi";
 
-type Form = { work_mode_id?: number; mode_name: string; description: string };
+type Form = { work_mode_id?: number; mode_name: string; description: string; status: boolean };
 
 export default function WorkModesPage() {
   const [rows, setRows] = useState<WorkMode[]>([]);
@@ -19,7 +19,7 @@ export default function WorkModesPage() {
     severity: "success",
   });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ mode_name: "", description: "" });
+  const [form, setForm] = useState<Form>({ mode_name: "", description: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -46,7 +46,7 @@ export default function WorkModesPage() {
         field: "status",
         headerName: "Status",
         width: 120,
-        renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} />,
+        renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />,
       },
       {
         field: "__actions",
@@ -66,6 +66,7 @@ export default function WorkModesPage() {
                     work_mode_id: r.work_mode_id,
                     mode_name: r.mode_name,
                     description: r.description ?? "",
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -98,16 +99,18 @@ export default function WorkModesPage() {
         await mastersApi.workModes.update(form.work_mode_id, {
           mode_name: form.mode_name.trim(),
           description: form.description.trim() || null,
+          status: form.status,
         });
       } else {
         await mastersApi.workModes.create({
           mode_name: form.mode_name.trim(),
           description: form.description.trim() || null,
+          status: form.status,
         });
       }
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ mode_name: "", description: "" });
+      setForm({ mode_name: "", description: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -130,7 +133,7 @@ export default function WorkModesPage() {
         <AdButton
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => {
-            setForm({ mode_name: "", description: "" });
+            setForm({ mode_name: "", description: "", status: true });
             setModalOpen(true);
           }}
         >
@@ -160,6 +163,7 @@ export default function WorkModesPage() {
         <Stack spacing={2}>
           <AdTextBox label="Mode Name" required value={form.mode_name} onChange={(v) => setForm((f) => ({ ...f, mode_name: v }))} />
           <AdTextBox label="Description" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>

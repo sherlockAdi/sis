@@ -26,6 +26,22 @@ type Language = {
   created_at: string;
 };
 
+type Education = {
+  education_id: number;
+  education_name: string;
+  description: string | null;
+  status: 0 | 1;
+  created_at: string;
+};
+
+type Skill = {
+  skill_id: number;
+  skill_name: string;
+  description: string | null;
+  status: 0 | 1;
+  created_at: string;
+};
+
 @Route('masters/recruitment')
 @Tags('Masters')
 export class MastersRecruitmentController extends Controller {
@@ -186,6 +202,92 @@ export class MastersRecruitmentController extends Controller {
       { id }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Language not found');
+    return { disabled: true };
+  }
+
+  @Get('education')
+  @Security('jwt')
+  public async listEducation(@Query() include_inactive?: boolean): Promise<Education[]> {
+    return callProc<RowDataPacket & Education>(
+      `CALL sp_rec_educations('LIST', NULL, NULL, NULL, NULL, :include_inactive)`,
+      { include_inactive: include_inactive ?? false }
+    );
+  }
+
+  @Post('education')
+  @Security('jwt')
+  public async createEducation(@Body() body: { education_name: string; description?: string | null; status?: boolean }): Promise<{ education_id: number }> {
+    const rows = await callProc<RowDataPacket & { education_id: number }>(
+      `CALL sp_rec_educations('CREATE', NULL, :education_name, :description, :status, NULL)`,
+      { education_name: body.education_name, description: body.description ?? null, status: body.status ?? true }
+    );
+    const education_id = rows[0]?.education_id;
+    if (!education_id) throw httpError(500, 'Failed to create education');
+    return { education_id };
+  }
+
+  @Put('education/{id}')
+  @Security('jwt')
+  public async updateEducation(@Path() id: number, @Body() body: Partial<{ education_name: string; description: string | null; status: boolean }>): Promise<{ updated: true }> {
+    const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+      `CALL sp_rec_educations('UPDATE', :id, :education_name, :description, :status, NULL)`,
+      { id, education_name: body.education_name ?? null, description: body.description ?? null, status: typeof body.status === 'boolean' ? body.status : null }
+    );
+    if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Education not found');
+    return { updated: true };
+  }
+
+  @Delete('education/{id}')
+  @Security('jwt')
+  public async disableEducation(@Path() id: number): Promise<{ disabled: true }> {
+    const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+      `CALL sp_rec_educations('DISABLE', :id, NULL, NULL, NULL, NULL)`,
+      { id }
+    );
+    if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Education not found');
+    return { disabled: true };
+  }
+
+  @Get('skills')
+  @Security('jwt')
+  public async listSkills(@Query() include_inactive?: boolean): Promise<Skill[]> {
+    return callProc<RowDataPacket & Skill>(
+      `CALL sp_rec_skills('LIST', NULL, NULL, NULL, NULL, :include_inactive)`,
+      { include_inactive: include_inactive ?? false }
+    );
+  }
+
+  @Post('skills')
+  @Security('jwt')
+  public async createSkill(@Body() body: { skill_name: string; description?: string | null; status?: boolean }): Promise<{ skill_id: number }> {
+    const rows = await callProc<RowDataPacket & { skill_id: number }>(
+      `CALL sp_rec_skills('CREATE', NULL, :skill_name, :description, :status, NULL)`,
+      { skill_name: body.skill_name, description: body.description ?? null, status: body.status ?? true }
+    );
+    const skill_id = rows[0]?.skill_id;
+    if (!skill_id) throw httpError(500, 'Failed to create skill');
+    return { skill_id };
+  }
+
+  @Put('skills/{id}')
+  @Security('jwt')
+  public async updateSkill(@Path() id: number, @Body() body: Partial<{ skill_name: string; description: string | null; status: boolean }>): Promise<{ updated: true }> {
+    const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+      `CALL sp_rec_skills('UPDATE', :id, :skill_name, :description, :status, NULL)`,
+      { id, skill_name: body.skill_name ?? null, description: body.description ?? null, status: typeof body.status === 'boolean' ? body.status : null }
+    );
+    if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Skill not found');
+    return { updated: true };
+  }
+
+  @Delete('skills/{id}')
+  @Security('jwt')
+  public async disableSkill(@Path() id: number): Promise<{ disabled: true }> {
+    const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+      `CALL sp_rec_skills('DISABLE', :id, NULL, NULL, NULL, NULL)`,
+      { id }
+    );
+    if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Skill not found');
     return { disabled: true };
   }
 }

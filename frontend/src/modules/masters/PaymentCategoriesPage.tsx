@@ -3,11 +3,11 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type PaymentCategory } from "../../common/services/mastersApi";
 
-type Form = { payment_category_id?: number; category_name: string; description: string };
+type Form = { payment_category_id?: number; category_name: string; description: string; status: boolean };
 
 export default function PaymentCategoriesPage() {
   const [rows, setRows] = useState<PaymentCategory[]>([]);
@@ -19,7 +19,7 @@ export default function PaymentCategoriesPage() {
     severity: "success",
   });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ category_name: "", description: "" });
+  const [form, setForm] = useState<Form>({ category_name: "", description: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -48,7 +48,7 @@ export default function PaymentCategoriesPage() {
         renderCell: (p: any) => (
           <Chip
             size="small"
-            label={Number(p.value) ? "Active" : "Disabled"}
+            label={Number(p.value) ? "Active" : "Inactive"}
             color={Number(p.value) ? "success" : "default"}
           />
         ),
@@ -71,6 +71,7 @@ export default function PaymentCategoriesPage() {
                     payment_category_id: r.payment_category_id,
                     category_name: r.category_name,
                     description: r.description ?? "",
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -103,16 +104,18 @@ export default function PaymentCategoriesPage() {
         await mastersApi.paymentCategories.update(form.payment_category_id, {
           category_name: form.category_name.trim(),
           description: form.description.trim() || null,
+          status: form.status,
         });
       } else {
         await mastersApi.paymentCategories.create({
           category_name: form.category_name.trim(),
           description: form.description.trim() || null,
+          status: form.status,
         });
       }
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ category_name: "", description: "" });
+      setForm({ category_name: "", description: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({
@@ -143,7 +146,7 @@ export default function PaymentCategoriesPage() {
         <AdButton
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => {
-            setForm({ category_name: "", description: "" });
+            setForm({ category_name: "", description: "", status: true });
             setModalOpen(true);
           }}
         >
@@ -185,9 +188,9 @@ export default function PaymentCategoriesPage() {
             value={form.description}
             onChange={(v) => setForm((f) => ({ ...f, description: v }))}
           />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

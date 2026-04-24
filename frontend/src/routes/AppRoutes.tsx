@@ -22,6 +22,8 @@ import EmploymentTypesPage from "../modules/settings/EmploymentTypesPage";
 import WorkModesPage from "../modules/settings/WorkModesPage";
 import CurrenciesPage from "../modules/settings/CurrenciesPage";
 import LanguagesPage from "../modules/settings/LanguagesPage";
+import EducationMasterPage from "../modules/settings/EducationMasterPage";
+import SkillsMasterPage from "../modules/settings/SkillsMasterPage";
 import MenuManagementPage from "../modules/admin/MenuManagementPage";
 import JobsPage from "../modules/job/JobsPage";
 import JobsPreviewPage from "../modules/job/JobsPreviewPage";
@@ -243,8 +245,8 @@ export default function AppRoutes() {
             <Route path="settings/languages" element={<LanguagesPage />} />
             <Route path="settings/states" element={<StatesPage />} />
             <Route path="settings/cities" element={<CitiesPage />} />
-            <Route path="settings/education" element={<PlaceholderPage title="Education Master" />} />
-            <Route path="settings/skills" element={<PlaceholderPage title="Skills Master" />} />
+            <Route path="settings/education" element={<EducationMasterPage />} />
+            <Route path="settings/skills" element={<SkillsMasterPage />} />
             <Route path="admin/menu-management" element={<MenuManagementPage />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="jobs/new" element={<JobFormPage mode="create" />} />

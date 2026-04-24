@@ -3,7 +3,7 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdDropDown, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import {
   createState,
@@ -20,6 +20,7 @@ type StateForm = {
   country_id: number | "";
   state_name: string;
   state_code: string;
+  status: boolean;
 };
 
 export default function StatesPage() {
@@ -34,7 +35,7 @@ export default function StatesPage() {
   });
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<StateForm>({ country_id: "", state_name: "", state_code: "" });
+  const [form, setForm] = useState<StateForm>({ country_id: "", state_name: "", state_code: "", status: true });
   const [filterCountryId, setFilterCountryId] = useState<number | "">("");
 
   async function refresh() {
@@ -74,7 +75,7 @@ export default function StatesPage() {
         headerName: "Status",
         width: 120,
         renderCell: (p: any) => (
-          <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} />
+          <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />
         ),
       },
       {
@@ -96,6 +97,7 @@ export default function StatesPage() {
                     country_id: r.country_id,
                     state_name: r.state_name,
                     state_code: r.state_code ?? "",
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -131,6 +133,7 @@ export default function StatesPage() {
           country_id: form.country_id,
           state_name: form.state_name.trim(),
           state_code: form.state_code.trim() || null,
+          status: form.status,
         });
         setToast({ open: true, message: "State updated", severity: "success" });
       } else {
@@ -138,11 +141,12 @@ export default function StatesPage() {
           country_id: form.country_id,
           state_name: form.state_name.trim(),
           state_code: form.state_code.trim() || null,
+          status: form.status,
         });
         setToast({ open: true, message: "State created", severity: "success" });
       }
       setModalOpen(false);
-      setForm({ country_id: "", state_name: "", state_code: "" });
+      setForm({ country_id: "", state_name: "", state_code: "", status: true });
       refresh();
     } catch (e: any) {
       const msg = (e as ApiError)?.message ?? e?.message ?? "Save failed";
@@ -174,7 +178,7 @@ export default function StatesPage() {
           <AdButton
             startIcon={<AddIcon fontSize="small" />}
             onClick={() => {
-              setForm({ country_id: typeof filterCountryId === "number" ? filterCountryId : "", state_name: "", state_code: "" });
+              setForm({ country_id: typeof filterCountryId === "number" ? filterCountryId : "", state_name: "", state_code: "", status: true });
               setModalOpen(true);
             }}
           >
@@ -219,9 +223,9 @@ export default function StatesPage() {
           />
           <AdTextBox label="State Name" required value={form.state_name} onChange={(v) => setForm((f) => ({ ...f, state_name: v }))} />
           <AdTextBox label="State Code" value={form.state_code} onChange={(v) => setForm((f) => ({ ...f, state_code: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

@@ -29,6 +29,16 @@ const items = [
     to: "/portal/masters/recruitment/languages",
   },
   {
+    title: "Education",
+    description: "Maintain education master values used in candidate profiles and filters.",
+    to: "/portal/settings/education",
+  },
+  {
+    title: "Skills",
+    description: "Maintain the skills master used across candidate profiles and jobs.",
+    to: "/portal/settings/skills",
+  },
+  {
     title: "States",
     description: "Manage states as part of the location master hierarchy.",
     to: "/portal/settings/states",

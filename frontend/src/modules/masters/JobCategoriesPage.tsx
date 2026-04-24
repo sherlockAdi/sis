@@ -3,11 +3,11 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type JobCategory } from "../../common/services/mastersApi";
 
-type Form = { category_id?: number; category_name: string; description: string };
+type Form = { category_id?: number; category_name: string; description: string; status: boolean };
 
 export default function JobCategoriesPage() {
   const [rows, setRows] = useState<JobCategory[]>([]);
@@ -15,7 +15,7 @@ export default function JobCategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({ open: false, message: "", severity: "success" });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ category_name: "", description: "" });
+  const [form, setForm] = useState<Form>({ category_name: "", description: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -34,14 +34,14 @@ export default function JobCategoriesPage() {
   const cols = useMemo(() => [
     { field: "category_name", headerName: "Category", flex: 1, minWidth: 240 },
     { field: "description", headerName: "Description", flex: 1, minWidth: 260 },
-    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} /> },
+    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} /> },
     {
       field: "__actions", headerName: "Actions", width: 220, sortable: false, filterable: false,
       renderCell: (p: any) => {
         const r = p.row as JobCategory;
         return (
           <Stack direction="row" spacing={1}>
-            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ category_id: r.category_id, category_name: r.category_name, description: r.description ?? "" }); setModalOpen(true); }}>Edit</AdButton>
+            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ category_id: r.category_id, category_name: r.category_name, description: r.description ?? "", status: Boolean(Number(r.status)) }); setModalOpen(true); }}>Edit</AdButton>
             <AdButton variant="text" startIcon={<BlockIcon fontSize="small" />} onClick={async () => { await mastersApi.jobCategories.disable(r.category_id); setToast({ open: true, message: "Disabled", severity: "success" }); refresh(); }}>Disable</AdButton>
           </Stack>
         );
@@ -52,11 +52,11 @@ export default function JobCategoriesPage() {
   const save = async () => {
     try {
       if (!form.category_name.trim()) throw new Error("Category name is required");
-      if (form.category_id) await mastersApi.jobCategories.update(form.category_id, { category_name: form.category_name.trim(), description: form.description.trim() || null });
-      else await mastersApi.jobCategories.create({ category_name: form.category_name.trim(), description: form.description.trim() || null });
+      if (form.category_id) await mastersApi.jobCategories.update(form.category_id, { category_name: form.category_name.trim(), description: form.description.trim() || null, status: form.status });
+      else await mastersApi.jobCategories.create({ category_name: form.category_name.trim(), description: form.description.trim() || null, status: form.status });
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ category_name: "", description: "" });
+      setForm({ category_name: "", description: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -71,7 +71,7 @@ export default function JobCategoriesPage() {
           <Typography variant="h5" fontWeight={900}>Job Categories</Typography>
           <Typography variant="body2" color="text.secondary">Job Master</Typography>
         </Stack>
-        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ category_name: "", description: "" }); setModalOpen(true); }}>Add</AdButton>
+        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ category_name: "", description: "", status: true }); setModalOpen(true); }}>Add</AdButton>
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
@@ -86,9 +86,9 @@ export default function JobCategoriesPage() {
         <Stack spacing={2}>
           <AdTextBox label="Category Name" required value={form.category_name} onChange={(v) => setForm((f) => ({ ...f, category_name: v }))} />
           <AdTextBox label="Description" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

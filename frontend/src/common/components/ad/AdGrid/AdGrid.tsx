@@ -243,7 +243,7 @@ function AdGridToolbar({
 export function AdGrid<Row extends GridValidRowModel = any>({
   disableRowSelectionOnClick = true,
   density = "compact",
-  pagination = false,
+  pagination = true,
   hideFooterPagination,
   pageSizeOptions = [10, 25, 50, 100],
   autoHeight = true,

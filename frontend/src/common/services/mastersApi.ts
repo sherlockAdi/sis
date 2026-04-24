@@ -55,6 +55,22 @@ export type Language = {
   created_at: string;
 };
 
+export type Education = {
+  education_id: number;
+  education_name: string;
+  description: string | null;
+  status: number;
+  created_at: string;
+};
+
+export type Skill = {
+  skill_id: number;
+  skill_name: string;
+  description: string | null;
+  status: number;
+  created_at: string;
+};
+
 export type DocumentType = {
   document_type_id: number;
   document_name: string;
@@ -117,6 +133,30 @@ export const mastersApi = {
     update: (id: number, input: Partial<{ language_name: string; status: boolean }>) =>
       apiFetch(`/masters/recruitment/languages/${id}`, { method: "PUT", body: JSON.stringify(input) }),
     disable: (id: number) => apiFetch(`/masters/recruitment/languages/${id}`, { method: "DELETE" }),
+  },
+  educations: {
+    list: (include_inactive = true) =>
+      apiFetch<Education[]>(
+        `/masters/recruitment/education?include_inactive=${include_inactive ? "true" : "false"}`,
+        { method: "GET" },
+      ),
+    create: (input: { education_name: string; description?: string | null; status?: boolean }) =>
+      apiFetch(`/masters/recruitment/education`, { method: "POST", body: JSON.stringify(input) }),
+    update: (id: number, input: Partial<{ education_name: string; description: string | null; status: boolean }>) =>
+      apiFetch(`/masters/recruitment/education/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+    disable: (id: number) => apiFetch(`/masters/recruitment/education/${id}`, { method: "DELETE" }),
+  },
+  skills: {
+    list: (include_inactive = true) =>
+      apiFetch<Skill[]>(
+        `/masters/recruitment/skills?include_inactive=${include_inactive ? "true" : "false"}`,
+        { method: "GET" },
+      ),
+    create: (input: { skill_name: string; description?: string | null; status?: boolean }) =>
+      apiFetch(`/masters/recruitment/skills`, { method: "POST", body: JSON.stringify(input) }),
+    update: (id: number, input: Partial<{ skill_name: string; description: string | null; status: boolean }>) =>
+      apiFetch(`/masters/recruitment/skills/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+    disable: (id: number) => apiFetch(`/masters/recruitment/skills/${id}`, { method: "DELETE" }),
   },
   jobCategories: {
     list: (include_inactive = true) =>

@@ -3,7 +3,7 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdDropDown, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import {
   createCity,
@@ -19,6 +19,7 @@ type CityForm = {
   city_id?: number;
   state_id: number | "";
   city_name: string;
+  status: boolean;
 };
 
 export default function CitiesPage() {
@@ -33,7 +34,7 @@ export default function CitiesPage() {
   });
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<CityForm>({ state_id: "", city_name: "" });
+  const [form, setForm] = useState<CityForm>({ state_id: "", city_name: "", status: true });
   const [filterStateId, setFilterStateId] = useState<number | "">("");
 
   async function refresh() {
@@ -73,7 +74,7 @@ export default function CitiesPage() {
         headerName: "Status",
         width: 120,
         renderCell: (p: any) => (
-          <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} />
+          <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />
         ),
       },
       {
@@ -94,6 +95,7 @@ export default function CitiesPage() {
                     city_id: r.city_id,
                     state_id: r.state_id,
                     city_name: r.city_name,
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -128,17 +130,19 @@ export default function CitiesPage() {
         await updateCity(form.city_id, {
           state_id: form.state_id,
           city_name: form.city_name.trim(),
+          status: form.status,
         });
         setToast({ open: true, message: "City updated", severity: "success" });
       } else {
         await createCity({
           state_id: form.state_id,
           city_name: form.city_name.trim(),
+          status: form.status,
         });
         setToast({ open: true, message: "City created", severity: "success" });
       }
       setModalOpen(false);
-      setForm({ state_id: "", city_name: "" });
+      setForm({ state_id: "", city_name: "", status: true });
       refresh();
     } catch (e: any) {
       const msg = (e as ApiError)?.message ?? e?.message ?? "Save failed";
@@ -170,7 +174,7 @@ export default function CitiesPage() {
           <AdButton
             startIcon={<AddIcon fontSize="small" />}
             onClick={() => {
-              setForm({ state_id: typeof filterStateId === "number" ? filterStateId : "", city_name: "" });
+              setForm({ state_id: typeof filterStateId === "number" ? filterStateId : "", city_name: "", status: true });
               setModalOpen(true);
             }}
           >
@@ -214,9 +218,9 @@ export default function CitiesPage() {
             onChange={(v) => setForm((f) => ({ ...f, state_id: Number(v) }))}
           />
           <AdTextBox label="City Name" required value={form.city_name} onChange={(v) => setForm((f) => ({ ...f, city_name: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-
