@@ -7,6 +7,21 @@ import { AdRichTextContent } from "../../../common/ad";
 import { jobsApi, type JobDetail } from "../../../common/services/jobsApi";
 import { getAuthToken } from "../../../common/services/tokenStorage";
 
+function parseJobMultiValue(value: string | null | undefined): string[] {
+  const raw = String(value ?? "").trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean);
+  } catch {
+    // keep fallback
+  }
+  return raw
+    .split(/[\n,]/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export default function PublicJobDetailPage() {
   const navigate = useNavigate();
   const { jobId } = useParams();
@@ -142,9 +157,14 @@ export default function PublicJobDetailPage() {
                     </Box>
                   </Box>
                 ) : null}
-                {data.job.min_education ? (
+                {parseJobMultiValue(data.job.min_education).length ? (
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Minimum Education: {data.job.min_education}
+                    Minimum Education: {parseJobMultiValue(data.job.min_education).join(", ")}
+                  </Typography>
+                ) : null}
+                {parseJobMultiValue(data.job.skills).length ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Skills: {parseJobMultiValue(data.job.skills).join(", ")}
                   </Typography>
                 ) : null}
                 {data.job.min_experience ? (

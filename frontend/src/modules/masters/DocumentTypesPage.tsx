@@ -7,7 +7,7 @@ import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotificati
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
 
-type Form = { document_type_id?: number; document_name: string; is_required: boolean };
+type Form = { document_type_id?: number; document_name: string; is_required: boolean; status: boolean };
 
 export default function DocumentTypesPage() {
   const [rows, setRows] = useState<DocumentType[]>([]);
@@ -15,7 +15,7 @@ export default function DocumentTypesPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({ open: false, message: "", severity: "success" });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ document_name: "", is_required: false });
+  const [form, setForm] = useState<Form>({ document_name: "", is_required: false, status: true });
 
   async function refresh() {
     setLoading(true);
@@ -34,14 +34,14 @@ export default function DocumentTypesPage() {
   const cols = useMemo(() => [
     { field: "document_name", headerName: "Document", flex: 1, minWidth: 260 },
     { field: "is_required", headerName: "Required", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Yes" : "No"} color={Number(p.value) ? "primary" : "default"} /> },
-    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} /> },
+    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} /> },
     {
       field: "__actions", headerName: "Actions", width: 220, sortable: false, filterable: false,
       renderCell: (p: any) => {
         const r = p.row as DocumentType;
         return (
           <Stack direction="row" spacing={1}>
-            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ document_type_id: r.document_type_id, document_name: r.document_name, is_required: Boolean(Number(r.is_required)) }); setModalOpen(true); }}>Edit</AdButton>
+            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ document_type_id: r.document_type_id, document_name: r.document_name, is_required: Boolean(Number(r.is_required)), status: Boolean(Number(r.status)) }); setModalOpen(true); }}>Edit</AdButton>
             <AdButton variant="text" startIcon={<BlockIcon fontSize="small" />} onClick={async () => { await mastersApi.documentTypes.disable(r.document_type_id); setToast({ open: true, message: "Disabled", severity: "success" }); refresh(); }}>Disable</AdButton>
           </Stack>
         );
@@ -52,11 +52,11 @@ export default function DocumentTypesPage() {
   const save = async () => {
     try {
       if (!form.document_name.trim()) throw new Error("Document name is required");
-      if (form.document_type_id) await mastersApi.documentTypes.update(form.document_type_id, { document_name: form.document_name.trim(), is_required: form.is_required });
-      else await mastersApi.documentTypes.create({ document_name: form.document_name.trim(), is_required: form.is_required });
+      if (form.document_type_id) await mastersApi.documentTypes.update(form.document_type_id, { document_name: form.document_name.trim(), is_required: form.is_required, status: form.status });
+      else await mastersApi.documentTypes.create({ document_name: form.document_name.trim(), is_required: form.is_required, status: form.status });
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ document_name: "", is_required: false });
+      setForm({ document_name: "", is_required: false, status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -71,7 +71,7 @@ export default function DocumentTypesPage() {
           <Typography variant="h5" fontWeight={900}>Document Types</Typography>
           <Typography variant="body2" color="text.secondary">Document Master</Typography>
         </Stack>
-        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ document_name: "", is_required: false }); setModalOpen(true); }}>Add</AdButton>
+        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ document_name: "", is_required: false, status: true }); setModalOpen(true); }}>Add</AdButton>
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
@@ -86,9 +86,9 @@ export default function DocumentTypesPage() {
         <Stack spacing={2}>
           <AdTextBox label="Document Name" required value={form.document_name} onChange={(v) => setForm((f) => ({ ...f, document_name: v }))} />
           <AdCheckBox label="Is Required" checked={form.is_required} onChange={(v) => setForm((f) => ({ ...f, is_required: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

@@ -3,11 +3,11 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type ContractDuration } from "../../common/services/mastersApi";
 
-type Form = { duration_id?: number; duration_name: string; months: string };
+type Form = { duration_id?: number; duration_name: string; months: string; status: boolean };
 
 export default function ContractDurationsPage() {
   const [rows, setRows] = useState<ContractDuration[]>([]);
@@ -15,7 +15,7 @@ export default function ContractDurationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({ open: false, message: "", severity: "success" });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ duration_name: "", months: "" });
+  const [form, setForm] = useState<Form>({ duration_name: "", months: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -34,14 +34,14 @@ export default function ContractDurationsPage() {
   const cols = useMemo(() => [
     { field: "duration_name", headerName: "Duration", flex: 1, minWidth: 220 },
     { field: "months", headerName: "Months", width: 120 },
-    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} /> },
+    { field: "status", headerName: "Status", width: 120, renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} /> },
     {
       field: "__actions", headerName: "Actions", width: 220, sortable: false, filterable: false,
       renderCell: (p: any) => {
         const r = p.row as ContractDuration;
         return (
           <Stack direction="row" spacing={1}>
-            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ duration_id: r.duration_id, duration_name: r.duration_name ?? "", months: r.months?.toString() ?? "" }); setModalOpen(true); }}>Edit</AdButton>
+            <AdButton variant="text" startIcon={<EditIcon fontSize="small" />} onClick={() => { setForm({ duration_id: r.duration_id, duration_name: r.duration_name ?? "", months: r.months?.toString() ?? "", status: Boolean(Number(r.status)) }); setModalOpen(true); }}>Edit</AdButton>
             <AdButton variant="text" startIcon={<BlockIcon fontSize="small" />} onClick={async () => { await mastersApi.contractDurations.disable(r.duration_id); setToast({ open: true, message: "Disabled", severity: "success" }); refresh(); }}>Disable</AdButton>
           </Stack>
         );
@@ -54,12 +54,12 @@ export default function ContractDurationsPage() {
       const monthsNum = form.months.trim() ? Number(form.months) : null;
       if (form.months.trim() && Number.isNaN(monthsNum)) throw new Error("Months must be a number");
 
-      if (form.duration_id) await mastersApi.contractDurations.update(form.duration_id, { duration_name: form.duration_name.trim() || null, months: monthsNum });
-      else await mastersApi.contractDurations.create({ duration_name: form.duration_name.trim() || null, months: monthsNum });
+      if (form.duration_id) await mastersApi.contractDurations.update(form.duration_id, { duration_name: form.duration_name.trim() || null, months: monthsNum, status: form.status });
+      else await mastersApi.contractDurations.create({ duration_name: form.duration_name.trim() || null, months: monthsNum, status: form.status });
 
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ duration_name: "", months: "" });
+      setForm({ duration_name: "", months: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -74,7 +74,7 @@ export default function ContractDurationsPage() {
           <Typography variant="h5" fontWeight={900}>Contract Durations</Typography>
           <Typography variant="body2" color="text.secondary">Job Master</Typography>
         </Stack>
-        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ duration_name: "", months: "" }); setModalOpen(true); }}>Add</AdButton>
+        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => { setForm({ duration_name: "", months: "", status: true }); setModalOpen(true); }}>Add</AdButton>
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
@@ -89,9 +89,9 @@ export default function ContractDurationsPage() {
         <Stack spacing={2}>
           <AdTextBox label="Duration Name" value={form.duration_name} onChange={(v) => setForm((f) => ({ ...f, duration_name: v }))} />
           <AdTextBox label="Months" type="number" value={form.months} onChange={(v) => setForm((f) => ({ ...f, months: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

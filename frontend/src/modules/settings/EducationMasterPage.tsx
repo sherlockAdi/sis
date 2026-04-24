@@ -5,12 +5,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
-import { mastersApi, type Language } from "../../common/services/mastersApi";
+import { mastersApi, type Education } from "../../common/services/mastersApi";
 
-type Form = { language_id?: number; language_name: string; status: boolean };
+type Form = { education_id?: number; education_name: string; description: string; status: boolean };
 
-export default function LanguagesPage() {
-  const [rows, setRows] = useState<Language[]>([]);
+export default function EducationMasterPage() {
+  const [rows, setRows] = useState<Education[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -19,16 +19,16 @@ export default function LanguagesPage() {
     severity: "success",
   });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ language_name: "", status: true });
+  const [form, setForm] = useState<Form>({ education_name: "", description: "", status: true });
 
   async function refresh() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await mastersApi.languages.list(true));
+      setRows(await mastersApi.educations.list(true));
     } catch (e: any) {
       const apiErr = e as ApiError;
-      setError(apiErr?.message ?? "Failed to load languages");
+      setError(apiErr?.message ?? "Failed to load education master");
     } finally {
       setLoading(false);
     }
@@ -40,14 +40,13 @@ export default function LanguagesPage() {
 
   const cols = useMemo(
     () => [
-      { field: "language_name", headerName: "Language", flex: 1, minWidth: 260 },
+      { field: "education_name", headerName: "Education", flex: 1, minWidth: 240 },
+      { field: "description", headerName: "Description", flex: 1, minWidth: 260 },
       {
         field: "status",
         headerName: "Status",
         width: 120,
-        renderCell: (p: any) => (
-          <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />
-        ),
+        renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />,
       },
       {
         field: "__actions",
@@ -56,7 +55,7 @@ export default function LanguagesPage() {
         sortable: false,
         filterable: false,
         renderCell: (p: any) => {
-          const r = p.row as Language;
+          const r = p.row as Education;
           return (
             <Stack direction="row" spacing={1}>
               <AdButton
@@ -64,8 +63,9 @@ export default function LanguagesPage() {
                 startIcon={<EditIcon fontSize="small" />}
                 onClick={() => {
                   setForm({
-                    language_id: r.language_id,
-                    language_name: r.language_name,
+                    education_id: r.education_id,
+                    education_name: r.education_name,
+                    description: r.description ?? "",
                     status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
@@ -77,8 +77,8 @@ export default function LanguagesPage() {
                 variant="text"
                 startIcon={<BlockIcon fontSize="small" />}
                 onClick={async () => {
-                  await mastersApi.languages.disable(r.language_id);
-                  setToast({ open: true, message: "Language disabled", severity: "success" });
+                  await mastersApi.educations.disable(r.education_id);
+                  setToast({ open: true, message: "Education disabled", severity: "success" });
                   refresh();
                 }}
               >
@@ -94,21 +94,23 @@ export default function LanguagesPage() {
 
   const save = async () => {
     try {
-      if (!form.language_name.trim()) throw new Error("Language name is required");
-      if (form.language_id) {
-        await mastersApi.languages.update(form.language_id, {
-          language_name: form.language_name.trim(),
+      if (!form.education_name.trim()) throw new Error("Education name is required");
+      if (form.education_id) {
+        await mastersApi.educations.update(form.education_id, {
+          education_name: form.education_name.trim(),
+          description: form.description.trim() || null,
           status: form.status,
         });
       } else {
-        await mastersApi.languages.create({
-          language_name: form.language_name.trim(),
+        await mastersApi.educations.create({
+          education_name: form.education_name.trim(),
+          description: form.description.trim() || null,
           status: form.status,
         });
       }
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ language_name: "", status: true });
+      setForm({ education_name: "", description: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -118,37 +120,33 @@ export default function LanguagesPage() {
   return (
     <Stack spacing={2.5}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
-
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Languages
+            Education Master
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            System setting master
+            Candidate profile master
           </Typography>
         </Stack>
         <AdButton
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => {
-            setForm({ language_name: "", status: true });
+            setForm({ education_name: "", description: "", status: true });
             setModalOpen(true);
           }}
         >
           Add
         </AdButton>
       </Stack>
-
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
-
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.language_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdGrid rows={rows.map((r) => ({ id: r.education_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
       </AdCard>
-
       <AdModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={form.language_id ? "Edit Language" : "Add Language"}
+        title={form.education_id ? "Edit Education" : "Add Education"}
         actions={
           <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
             <AdButton variant="text" onClick={() => setModalOpen(false)}>
@@ -159,7 +157,8 @@ export default function LanguagesPage() {
         }
       >
         <Stack spacing={2}>
-          <AdTextBox label="Language Name" required value={form.language_name} onChange={(v) => setForm((f) => ({ ...f, language_name: v }))} />
+          <AdTextBox label="Education Name" required value={form.education_name} onChange={(v) => setForm((f) => ({ ...f, education_name: v }))} />
+          <AdTextBox label="Description" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} />
           <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>

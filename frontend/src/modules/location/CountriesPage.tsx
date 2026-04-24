@@ -3,7 +3,7 @@ import { Chip, Stack, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdModal, AdNotification, AdTextBox, AdGrid } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdModal, AdNotification, AdTextBox, AdGrid } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import {
   createCountry,
@@ -18,6 +18,7 @@ type CountryForm = {
   country_name: string;
   country_code: string;
   iso_code: string;
+  status: boolean;
 };
 
 export default function CountriesPage() {
@@ -31,7 +32,7 @@ export default function CountriesPage() {
   });
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<CountryForm>({ country_name: "", country_code: "", iso_code: "" });
+  const [form, setForm] = useState<CountryForm>({ country_name: "", country_code: "", iso_code: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -61,7 +62,7 @@ export default function CountriesPage() {
         headerName: "Status",
         width: 120,
         renderCell: (p: any) => (
-          <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} />
+          <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />
         ),
       },
       {
@@ -83,6 +84,7 @@ export default function CountriesPage() {
                     country_name: r.country_name,
                     country_code: r.country_code ?? "",
                     iso_code: r.iso_code ?? "",
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -116,6 +118,7 @@ export default function CountriesPage() {
           country_name: form.country_name.trim(),
           country_code: form.country_code.trim() || null,
           iso_code: form.iso_code.trim() || null,
+          status: form.status,
         });
         setToast({ open: true, message: "Country updated", severity: "success" });
       } else {
@@ -123,11 +126,12 @@ export default function CountriesPage() {
           country_name: form.country_name.trim(),
           country_code: form.country_code.trim() || null,
           iso_code: form.iso_code.trim() || null,
+          status: form.status,
         });
         setToast({ open: true, message: "Country created", severity: "success" });
       }
       setModalOpen(false);
-      setForm({ country_name: "", country_code: "", iso_code: "" });
+      setForm({ country_name: "", country_code: "", iso_code: "", status: true });
       refresh();
     } catch (e: any) {
       const msg = (e as ApiError)?.message ?? e?.message ?? "Save failed";
@@ -152,7 +156,7 @@ export default function CountriesPage() {
         <AdButton
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => {
-            setForm({ country_name: "", country_code: "", iso_code: "" });
+            setForm({ country_name: "", country_code: "", iso_code: "", status: true });
             setModalOpen(true);
           }}
         >
@@ -190,9 +194,9 @@ export default function CountriesPage() {
           <AdTextBox label="Country Name" required value={form.country_name} onChange={(v) => setForm((f) => ({ ...f, country_name: v }))} />
           <AdTextBox label="Country Code" value={form.country_code} onChange={(v) => setForm((f) => ({ ...f, country_code: v }))} />
           <AdTextBox label="ISO Code" value={form.iso_code} onChange={(v) => setForm((f) => ({ ...f, iso_code: v }))} />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>
   );
 }
-

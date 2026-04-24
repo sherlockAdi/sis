@@ -58,6 +58,7 @@ CALL sp_job_jobs(
   'We are hiring Security Guards for UAE sites (commercial + residential).\n\nResponsibilities:\n- Access control & visitor management\n- Patrols and incident reporting\n- CCTV monitoring and coordination with site supervisor\n\nEligibility:\n- Minimum 2 years experience\n- Basic English communication\n- Physically fit; willing to work in shifts\n\nProcess: Apply → Screening → Interview → Medical → Visa → Deployment.',
   'Open',
   1,
+  NULL,
   NULL
 );
 
@@ -113,4 +114,3 @@ COMMIT;
 -- CALL sp_job_requirements('LIST_BY_JOB', NULL, @job_id, NULL, NULL);
 -- CALL sp_job_benefits('LIST_BY_JOB', NULL, @job_id, NULL, NULL);
 -- CALL sp_job_documents('LIST_BY_JOB', NULL, @job_id, NULL, NULL);
-

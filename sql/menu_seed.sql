@@ -242,7 +242,9 @@ VALUES
   ('Notification Settings', 'ADM_SET_NOTIF', @m_settings, '/settings/notifications', 'settings', 115, TRUE),
   ('Integration Settings', 'ADM_SET_INTEG', @m_settings, '/settings/integrations', 'settings', 116, TRUE),
   ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 117, TRUE),
-  ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 118, TRUE)
+  ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 118, TRUE),
+  ('Education', 'ADM_SET_EDUCATION', @m_settings, '/settings/education', 'school', 119, TRUE),
+  ('Skills', 'ADM_SET_SKILLS', @m_settings, '/settings/skills', 'handyman', 120, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

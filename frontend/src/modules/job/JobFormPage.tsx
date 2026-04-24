@@ -21,9 +21,11 @@ import {
   mastersApi,
   type ContractDuration,
   type DocumentType,
+  type Education,
   type EmploymentType,
   type JobCategory,
   type Language,
+  type Skill,
   type WorkMode,
   type Currency,
 } from "../../common/services/mastersApi";
@@ -51,7 +53,8 @@ type Form = {
   country_id: string;
   state_id: string;
   city_id: string;
-  min_education: string;
+  min_education: string[];
+  skills: string[];
   min_experience: string;
   min_age: string;
   max_age: string;
@@ -61,6 +64,23 @@ type Form = {
   documents: Record<number, { include: boolean; is_required: boolean }>;
   job_specific_documents: Array<{ id?: number; document_name: string; is_required: boolean }>;
 };
+
+function parseMultiValue(value: string | null | undefined): string[] {
+  const raw = String(value ?? "").trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // fall through
+  }
+  return raw
+    .split(/[\n,]/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 function lines(s: string): string[] {
   return s
@@ -95,6 +115,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const [employmentTypes, setEmploymentTypes] = useState<EmploymentType[]>([]);
   const [workModes, setWorkModes] = useState<WorkMode[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [educations, setEducations] = useState<Education[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [partners, setPartners] = useState<PartnerRow[]>([]);
 
@@ -116,7 +138,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     country_id: "",
     state_id: "",
     city_id: "",
-    min_education: "",
+    min_education: [],
+    skills: [],
     min_experience: "",
     min_age: "",
     max_age: "",
@@ -136,10 +159,12 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           mastersApi.documentTypes.list(true),
           listCountries(true),
         ]);
-        const [et, wm, langs, curs] = await Promise.all([
+        const [et, wm, langs, edus, sks, curs] = await Promise.all([
           mastersApi.employmentTypes.list(true),
           mastersApi.workModes.list(true),
           mastersApi.languages.list(true),
+          mastersApi.educations.list(true),
+          mastersApi.skills.list(true),
           mastersApi.currencies.list(true),
         ]);
         setCategories(cats);
@@ -149,6 +174,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         setEmploymentTypes(et);
         setWorkModes(wm);
         setLanguages(langs);
+        setEducations(edus);
+        setSkills(sks);
         setCurrencies(curs);
         if (!isPartner) {
           setPartners(await partnersApi.list(true));
@@ -197,7 +224,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           country_id: loc?.country_id ? String(loc.country_id) : d.job.country_id ? String(d.job.country_id) : "",
           state_id: loc?.state_id ? String(loc.state_id) : "",
           city_id: loc?.city_id ? String(loc.city_id) : "",
-          min_education: d.job.min_education ?? "",
+          min_education: parseMultiValue(d.job.min_education),
+          skills: parseMultiValue((d.job as any).skills),
           min_experience: d.job.min_experience ?? "",
           min_age: d.job.min_age != null ? String(d.job.min_age) : "",
           max_age: d.job.max_age != null ? String(d.job.max_age) : "",
@@ -369,7 +397,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       if (!form.currency_id) throw new Error("Currency is required");
       if (!form.salary_min || !form.salary_max) throw new Error("Salary range is required");
       if (!richTextHasContent(form.compensation_text)) throw new Error("Compensation details are required");
-      if (!form.min_education.trim()) throw new Error("Minimum education is required");
+      if (form.min_education.length === 0) throw new Error("Minimum education is required");
+      if (form.skills.length === 0) throw new Error("Skills are required");
       if (!form.min_experience.trim()) throw new Error("Minimum experience is required");
       if (!form.min_age || !form.max_age) throw new Error("Age range is required");
       if (form.language_ids.length === 0) throw new Error("At least one language is required");
@@ -394,7 +423,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         vacancy: form.vacancy ? Number(form.vacancy) : null,
         salary_min: form.salary_min ? Number(form.salary_min) : null,
         salary_max: form.salary_max ? Number(form.salary_max) : null,
-        min_education: form.min_education.trim() || null,
+        min_education: JSON.stringify(form.min_education),
+        skills: JSON.stringify(form.skills),
         min_experience: form.min_experience.trim() || null,
         min_age: form.min_age ? Number(form.min_age) : null,
         max_age: form.max_age ? Number(form.max_age) : null,
@@ -552,11 +582,11 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 alignItems: "start",
               }}
             >
-              <AdTextBox
+              <AdSearchableDropDownMulti
                 variant="standard"
                 label="Minimum Education"
                 required
-                size="small"
+                options={educations.map((e) => ({ label: e.education_name, value: e.education_name }))}
                 value={form.min_education}
                 onChange={(v) => setForm((f) => ({ ...f, min_education: v }))}
               />
@@ -586,6 +616,14 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 options={languages.map((l) => ({ label: l.language_name, value: String(l.language_id) }))}
                 value={form.language_ids}
                 onChange={(v) => setForm((f) => ({ ...f, language_ids: v }))}
+              />
+              <AdSearchableDropDownMulti
+                variant="standard"
+                label="Skills"
+                required
+                options={skills.map((s) => ({ label: s.skill_name, value: s.skill_name }))}
+                value={form.skills}
+                onChange={(v) => setForm((f) => ({ ...f, skills: v }))}
               />
               <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                 <AdTextArea

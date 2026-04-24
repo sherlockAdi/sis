@@ -3,7 +3,7 @@ import { Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification, AdSearchableDropDown, AdTextBox } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdCheckBox, AdGrid, AdModal, AdNotification, AdSearchableDropDown, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { listCountries, type Country } from "../../common/services/locationApi";
 import { mastersApi, type Currency } from "../../common/services/mastersApi";
@@ -14,6 +14,7 @@ type Form = {
   currency_name: string;
   symbol: string;
   country_id: string;
+  status: boolean;
 };
 
 export default function CurrenciesPage() {
@@ -27,7 +28,7 @@ export default function CurrenciesPage() {
     severity: "success",
   });
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Form>({ currency_code: "", currency_name: "", symbol: "", country_id: "" });
+  const [form, setForm] = useState<Form>({ currency_code: "", currency_name: "", symbol: "", country_id: "", status: true });
 
   async function refresh() {
     setLoading(true);
@@ -63,7 +64,7 @@ export default function CurrenciesPage() {
         field: "status",
         headerName: "Status",
         width: 120,
-        renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Disabled"} color={Number(p.value) ? "success" : "default"} />,
+        renderCell: (p: any) => <Chip size="small" label={Number(p.value) ? "Active" : "Inactive"} color={Number(p.value) ? "success" : "default"} />,
       },
       {
         field: "__actions",
@@ -85,6 +86,7 @@ export default function CurrenciesPage() {
                     currency_name: r.currency_name ?? "",
                     symbol: r.symbol ?? "",
                     country_id: r.country_id ? String(r.country_id) : "",
+                    status: Boolean(Number(r.status)),
                   });
                   setModalOpen(true);
                 }}
@@ -120,6 +122,7 @@ export default function CurrenciesPage() {
           currency_name: form.currency_name.trim(),
           symbol: form.symbol.trim() || null,
           country_id: form.country_id ? Number(form.country_id) : null,
+          status: form.status,
         });
       } else {
         await mastersApi.currencies.create({
@@ -127,11 +130,12 @@ export default function CurrenciesPage() {
           currency_name: form.currency_name.trim(),
           symbol: form.symbol.trim() || null,
           country_id: form.country_id ? Number(form.country_id) : null,
+          status: form.status,
         });
       }
       setToast({ open: true, message: "Saved", severity: "success" });
       setModalOpen(false);
-      setForm({ currency_code: "", currency_name: "", symbol: "", country_id: "" });
+      setForm({ currency_code: "", currency_name: "", symbol: "", country_id: "", status: true });
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
@@ -154,7 +158,7 @@ export default function CurrenciesPage() {
         <AdButton
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => {
-            setForm({ currency_code: "", currency_name: "", symbol: "", country_id: "" });
+            setForm({ currency_code: "", currency_name: "", symbol: "", country_id: "", status: true });
             setModalOpen(true);
           }}
         >
@@ -191,6 +195,7 @@ export default function CurrenciesPage() {
             value={form.country_id}
             onChange={(v) => setForm((f) => ({ ...f, country_id: String(v) }))}
           />
+          <AdCheckBox label="Active" checked={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
         </Stack>
       </AdModal>
     </Stack>

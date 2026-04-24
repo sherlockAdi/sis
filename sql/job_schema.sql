@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
     work_mode_id INT DEFAULT NULL,
     compensation_text TEXT,
     currency_id INT DEFAULT NULL,
-    min_education VARCHAR(150),
+    min_education TEXT,
+    skills TEXT,
     min_experience VARCHAR(150),
     min_age INT DEFAULT NULL,
     max_age INT DEFAULT NULL,
@@ -209,7 +210,8 @@ CREATE PROCEDURE sp_job_jobs(
   IN p_work_mode_id INT,
   IN p_currency_id INT,
   IN p_compensation_text TEXT,
-  IN p_min_education VARCHAR(150),
+  IN p_min_education TEXT,
+  IN p_skills TEXT,
   IN p_min_experience VARCHAR(150),
   IN p_min_age INT,
   IN p_max_age INT,
@@ -244,6 +246,7 @@ BEGIN
       cur.currency_name,
       cur.symbol,
       j.min_education,
+      j.skills,
       j.min_experience,
       j.min_age,
       j.max_age,
@@ -297,6 +300,7 @@ BEGIN
       cur.currency_name,
       cur.symbol,
       j.min_education,
+      j.skills,
       j.min_experience,
       j.min_age,
       j.max_age,
@@ -353,6 +357,7 @@ BEGIN
       cur.symbol,
       j.compensation_text,
       j.min_education,
+      j.skills,
       j.min_experience,
       j.min_age,
       j.max_age,
@@ -385,12 +390,12 @@ BEGIN
     INSERT INTO JOB_T01_jobs (
       job_code, job_title, category_id, country_id, contract_duration_id,
       vacancy, salary_min, salary_max, job_description, partner_id, employment_type_id,
-      work_mode_id, currency_id, compensation_text, min_education, min_experience,
+      work_mode_id, currency_id, compensation_text, min_education, skills, min_experience,
       min_age, max_age, gender_requirement, status, created_by
     ) VALUES (
       NULLIF(p_job_code, ''), p_job_title, p_category_id, p_country_id, p_contract_duration_id,
       p_vacancy, p_salary_min, p_salary_max, p_job_description, p_partner_id, p_employment_type_id,
-      p_work_mode_id, p_currency_id, p_compensation_text, p_min_education, p_min_experience,
+      p_work_mode_id, p_currency_id, p_compensation_text, p_min_education, p_skills, p_min_experience,
       p_min_age, p_max_age, p_gender_requirement, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
     );
 
@@ -425,6 +430,7 @@ BEGIN
       currency_id = COALESCE(p_currency_id, currency_id),
       compensation_text = COALESCE(p_compensation_text, compensation_text),
       min_education = COALESCE(p_min_education, min_education),
+      skills = COALESCE(p_skills, skills),
       min_experience = COALESCE(p_min_experience, min_experience),
       min_age = COALESCE(p_min_age, min_age),
       max_age = COALESCE(p_max_age, max_age),

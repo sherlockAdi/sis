@@ -26,6 +26,7 @@ export type JobListRow = {
   currency_name?: string | null;
   symbol?: string | null;
   min_education?: string | null;
+  skills?: string | null;
   min_experience?: string | null;
   min_age?: number | null;
   max_age?: number | null;
@@ -59,6 +60,7 @@ export type JobDetail = {
     symbol?: string | null;
     compensation_text?: string | null;
     min_education?: string | null;
+    skills?: string | null;
     min_experience?: string | null;
     min_age?: number | null;
     max_age?: number | null;
@@ -110,6 +112,7 @@ export type JobUpsert = {
   currency_id?: number | null;
   compensation_text?: string | null;
   min_education?: string | null;
+  skills?: string | null;
   min_experience?: string | null;
   min_age?: number | null;
   max_age?: number | null;
