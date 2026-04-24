@@ -60,6 +60,7 @@ VALUES
   ('Ticketing & Helpdesk', 'ADM_HELPDESK', NULL, NULL, 'receipt_long', 60, TRUE),
   ('Customer Management', 'ADM_CUSTOMERS', NULL, NULL, 'business', 70, TRUE),
   ('Partner Management', 'ADM_PARTNERS', NULL, NULL, 'people', 80, TRUE),
+  ('Employee Zone', 'ADM_EMPLOYEE_ZONE', NULL, NULL, 'people', 85, TRUE),
   ('Reports & Analytics', 'ADM_REPORTS', NULL, NULL, 'description', 90, TRUE),
   ('Compliance & Documents', 'ADM_COMPLIANCE', NULL, NULL, 'receipt_long', 100, TRUE),
   ('System Settings', 'ADM_SETTINGS', NULL, NULL, 'settings', 110, TRUE)
@@ -79,6 +80,7 @@ SET @m_attendance := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_
 SET @m_helpdesk := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_HELPDESK' LIMIT 1);
 SET @m_customers := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_CUSTOMERS' LIMIT 1);
 SET @m_partners := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_PARTNERS' LIMIT 1);
+SET @m_employee := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_EMPLOYEE_ZONE' LIMIT 1);
 SET @m_reports := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_REPORTS' LIMIT 1);
 SET @m_compliance := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_COMPLIANCE' LIMIT 1);
 SET @m_settings := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_SETTINGS' LIMIT 1);
@@ -195,6 +197,23 @@ VALUES
   ('Partner List', 'ADM_PART_LIST', @m_partners, '/partners/list', 'people', 81, TRUE),
   ('Candidate Referrals', 'ADM_PART_REF', @m_partners, '/partners/referrals', 'people', 82, TRUE),
   ('Performance Tracking', 'ADM_PART_PERF', @m_partners, '/partners/performance', 'description', 83, TRUE)
+ON DUPLICATE KEY UPDATE
+  menu_name = VALUES(menu_name),
+  parent_menu_id = VALUES(parent_menu_id),
+  menu_path = VALUES(menu_path),
+  icon = VALUES(icon),
+  menu_order = VALUES(menu_order),
+  status = VALUES(status);
+
+-- Employee Zone
+INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
+VALUES
+  ('Dashboard', 'ADM_EMP_DASH', @m_employee, '/employees/dashboard', 'dashboard', 86, TRUE),
+  ('List of Employee', 'ADM_EMPLOYEE_LIST', @m_employee, '/employees', 'people', 87, TRUE),
+  ('Profile', 'ADM_EMP_PROFILE', @m_employee, '/employees/profile', 'badge', 88, TRUE),
+  ('Attendance', 'ADM_EMP_ATT', @m_employee, '/employees/attendance', 'schedule', 89, TRUE),
+  ('Helpdesk', 'ADM_EMP_HELPDESK', @m_employee, '/employees/helpdesk', 'receipt_long', 90, TRUE),
+  ('Settings', 'ADM_EMP_SETTINGS', @m_employee, '/employees/settings', 'settings', 91, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

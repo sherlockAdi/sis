@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Divider, IconButton, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Chip, Divider, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useLocation } from "react-router-dom";
 import dayjs, { type Dayjs } from "dayjs";
 import { AdAlertBox, AdButton, AdCard, AdDatePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
+import { employeesApi } from "../../common/services/employeesApi";
 import { mastersApi, type VisaType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 
@@ -44,6 +46,20 @@ export default function DeploymentManagementPage() {
   const [activeRow, setActiveRow] = useState<DeploymentRow | null>(null);
   const [visaForm, setVisaForm] = useState<Partial<VisaDetailRow>>({});
   const [visaLoading, setVisaLoading] = useState(false);
+  const [employeeOpen, setEmployeeOpen] = useState(false);
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [employeeSaving, setEmployeeSaving] = useState(false);
+  const [employeeForm, setEmployeeForm] = useState<{
+    employment_status: string;
+    date_of_joining: string;
+    date_of_confirmation: string;
+    shift_timing: string;
+  }>({
+    employment_status: "Active",
+    date_of_joining: dayjs().format("YYYY-MM-DD"),
+    date_of_confirmation: "",
+    shift_timing: "",
+  });
   const [uploading, setUploading] = useState<{ offer: boolean; passport: boolean; visa: boolean; ticket: boolean }>({
     offer: false,
     passport: false,
@@ -97,7 +113,7 @@ export default function DeploymentManagementPage() {
         width: 150,
         renderCell: (p: any) => {
           const status = normalizeStatus(p.value);
-          return <Chip size="small" label={String(p.value ?? "")} color={status === "offered" ? "success" : "default"} />;
+          return <Chip size="small" label={String(p.value ?? "")} color={["offered", "visa approved", "ticket confirmed", "deployed", "employee"].includes(status) ? "success" : "default"} />;
         },
       },
       { field: "visa_type_name", headerName: "Visa", width: 140 },
@@ -114,8 +130,7 @@ export default function DeploymentManagementPage() {
           const canUploadTicket = activeStage === "Travel Booked" && (status === "travel booked" || status === "visa approved" || status === "ticket confirmed");
           const canFinalizeDeployment = activeStage === "Deployed" && status === "ticket confirmed";
           const canApproveVisa = activeStage === "Visa Processing" && status === "visa processing";
-          const canUploadVisa =
-            activeStage === "Visa Processing" && (status === "offered" || status === "visa processing" || status === "visa approved");
+          const canUploadVisa = activeStage === "Visa Processing" && ["offered", "visa processing", "visa approved"].includes(status);
           return (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ width: "100%" }}>
               {canUploadOffer ? (
@@ -168,25 +183,23 @@ export default function DeploymentManagementPage() {
               ) : null}
               {canFinalizeDeployment ? (
                 <IconButton
-                  aria-label="Finalize deployment"
+                  aria-label="Confirm as employee"
                   size="small"
                   onClick={async () => {
                     setActiveRow(r);
-                    setVisaOpen(true);
-                    setVisaLoading(true);
-                    try {
-                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
-                      setVisaForm(details ?? { deployment_id: r.deployment_id });
-                    } catch (e: any) {
-                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load deployment details", severity: "error" });
-                      setVisaForm({ deployment_id: r.deployment_id });
-                    } finally {
-                      setVisaLoading(false);
-                    }
+                    setEmployeeOpen(true);
+                    setEmployeeLoading(true);
+                    setEmployeeForm({
+                      employment_status: "Active",
+                      date_of_joining: dayjs().format("YYYY-MM-DD"),
+                      date_of_confirmation: "",
+                      shift_timing: "",
+                    });
+                    setEmployeeLoading(false);
                   }}
                   sx={{ alignSelf: "center" }}
                 >
-                  <CheckCircleOutlineIcon fontSize="small" />
+                  <PersonAddAlt1Icon fontSize="small" />
                 </IconButton>
               ) : null}
               {canApproveVisa ? (
@@ -211,35 +224,42 @@ export default function DeploymentManagementPage() {
                 </IconButton>
               ) : null}
               {canUploadVisa ? (
-                <IconButton
-                  aria-label="Upload visa details"
-                  size="small"
-                  disabled={uploading.passport || uploading.visa}
-                  onClick={async () => {
-                    setActiveRow(r);
-                    setVisaOpen(true);
-                    setVisaLoading(true);
-                    try {
-                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
-                      setVisaForm(details ?? { deployment_id: r.deployment_id });
-                    } catch (e: any) {
-                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
-                      setVisaForm({ deployment_id: r.deployment_id });
-                    } finally {
-                      setVisaLoading(false);
-                    }
-                  }}
-                  sx={{ alignSelf: "center" }}
-                >
-                  <UploadFileIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="Upload visa details">
+                  <IconButton
+                    aria-label="Upload visa details"
+                    size="small"
+                    disabled={uploading.passport || uploading.visa}
+                    onClick={async () => {
+                      setActiveRow(r);
+                      setVisaOpen(true);
+                      setVisaLoading(true);
+                      try {
+                        const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                        setVisaForm(details ?? { deployment_id: r.deployment_id });
+                      } catch (e: any) {
+                        setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
+                        setVisaForm({ deployment_id: r.deployment_id });
+                      } finally {
+                        setVisaLoading(false);
+                      }
+                    }}
+                    sx={{
+                      alignSelf: "center",
+                      bgcolor: "rgba(25,118,210,0.08)",
+                      border: "1px solid rgba(25,118,210,0.18)",
+                      "&:hover": { bgcolor: "rgba(25,118,210,0.14)" },
+                    }}
+                  >
+                    <UploadFileIcon fontSize="small" color="primary" />
+                  </IconButton>
+                </Tooltip>
               ) : null}
             </Stack>
           );
         },
       },
     ],
-    [uploading.offer, uploading.passport, uploading.visa],
+    [uploading.offer, uploading.passport, uploading.visa, uploading.ticket, activeStage],
   );
 
   const visibility = useMemo(
@@ -386,6 +406,27 @@ export default function DeploymentManagementPage() {
     }
   };
 
+  const confirmEmployee = async () => {
+    if (!activeRow) return;
+    try {
+      setEmployeeSaving(true);
+      await employeesApi.confirmFromDeployment({
+        deployment_id: activeRow.deployment_id,
+        employment_status: employeeForm.employment_status,
+        date_of_joining: employeeForm.date_of_joining || null,
+        date_of_confirmation: employeeForm.date_of_confirmation || null,
+        shift_timing: employeeForm.shift_timing.trim() || null,
+      });
+      setToast({ open: true, message: "Employee created", severity: "success" });
+      setEmployeeOpen(false);
+      refresh();
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to create employee", severity: "error" });
+    } finally {
+      setEmployeeSaving(false);
+    }
+  };
+
   const visibleRows = useMemo(
     () =>
       rows.filter((row) => {
@@ -394,7 +435,7 @@ export default function DeploymentManagementPage() {
         if (activeStage === "Visa Processing") return status === "visa processing" || status === "visa approved" || status === "offered";
         if (activeStage === "Ready") return status === "ready" || status === "offered" || status === "visa approved";
         if (activeStage === "Travel Booked") return status === "travel booked" || status === "visa approved" || status === "ticket confirmed";
-        if (activeStage === "Deployed") return status === "ticket confirmed" || status === "deployed";
+        if (activeStage === "Deployed") return status === "ticket confirmed" || status === "deployed" || status === "employee";
         return status === normalizeStatus(activeStage);
       }),
     [activeStage, rows],
@@ -617,6 +658,73 @@ export default function DeploymentManagementPage() {
             </AdButton>
             <AdButton onClick={saveVisaDetails}>
               {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : activeStage === "Deployed" ? "Mark Deployed" : "Save Visa Details"}
+            </AdButton>
+          </Stack>
+        </Stack>
+      </AdModal>
+
+      <AdModal
+        open={employeeOpen}
+        onClose={() => setEmployeeOpen(false)}
+        title="Confirm as Employee"
+        subtitle={activeRow ? `Deployment ID: ${activeRow.deployment_id}` : ""}
+        maxWidth="md"
+      >
+        <Stack spacing={2}>
+          {employeeLoading ? (
+            <Typography variant="body2" color="text.secondary">
+              Loading...
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
+                <Typography fontWeight={900} sx={{ mb: 1 }}>
+                  Employee Details
+                </Typography>
+                <Stack spacing={1.25}>
+                  <AdDropDown
+                    label="Employment Status"
+                    options={[
+                      { label: "Active", value: "Active" },
+                      { label: "Inactive", value: "Inactive" },
+                    ]}
+                    value={employeeForm.employment_status}
+                    onChange={(v) => setEmployeeForm((f) => ({ ...f, employment_status: String(v) }))}
+                  />
+                  <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                    <AdDatePicker
+                      label="Date of Joining"
+                      value={employeeForm.date_of_joining ? dayjs(employeeForm.date_of_joining) : null}
+                      onChange={(v: Dayjs | null) => setEmployeeForm((f) => ({ ...f, date_of_joining: v ? v.format("YYYY-MM-DD") : "" }))}
+                    />
+                    <AdDatePicker
+                      label="Date of Confirmation"
+                      value={employeeForm.date_of_confirmation ? dayjs(employeeForm.date_of_confirmation) : null}
+                      onChange={(v: Dayjs | null) => setEmployeeForm((f) => ({ ...f, date_of_confirmation: v ? v.format("YYYY-MM-DD") : "" }))}
+                    />
+                  </Box>
+                  <AdTextArea
+                    label="Shift Timing"
+                    minRows={1}
+                    value={employeeForm.shift_timing}
+                    onChange={(v) => setEmployeeForm((f) => ({ ...f, shift_timing: v }))}
+                  />
+                </Stack>
+              </Box>
+              <Box sx={{ px: 1.25, py: 0.8, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Saving this will insert the employee record and move the candidate into the employee zone.
+                </Typography>
+              </Box>
+            </Stack>
+          )}
+
+          <Stack direction="row" justifyContent="flex-end" spacing={1}>
+            <AdButton variant="text" onClick={() => setEmployeeOpen(false)}>
+              Close
+            </AdButton>
+            <AdButton onClick={confirmEmployee} disabled={employeeSaving}>
+              Confirm as Employee
             </AdButton>
           </Stack>
         </Stack>
