@@ -63,6 +63,16 @@ async function upsertCandidateProfile(candidate_id: number, body: CandidateProfi
   );
 }
 
+async function linkCandidateUser(candidate_id: number, user_id: number): Promise<void> {
+  const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+    `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+    { candidate_id, user_id }
+  );
+  if ((rows[0]?.affected_rows ?? 0) === 0) {
+    throw httpError(500, 'Failed to link candidate to user');
+  }
+}
+
 function randomPassword(len = 10): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#%*';
   let out = '';
@@ -173,6 +183,9 @@ export class PublicCandidateSignupController extends Controller {
         );
         user_id = userRows[0]?.user_id ?? null;
         user_created = Boolean(user_id);
+        if (user_id) {
+          await linkCandidateUser(candidate_id, user_id);
+        }
       } catch (e: any) {
         if (e?.code === 'ER_DUP_ENTRY') {
           auth_error = 'User already exists for this username/email';

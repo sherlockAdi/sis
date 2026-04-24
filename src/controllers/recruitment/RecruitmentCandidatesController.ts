@@ -107,6 +107,16 @@ async function upsertCandidateProfile(candidate_id: number, body: CandidateProfi
   );
 }
 
+async function linkCandidateUser(candidate_id: number, user_id: number): Promise<void> {
+  const rows = await callProc<RowDataPacket & { affected_rows: number }>(
+    `CALL sp_rec_candidates('SET_USER', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id)`,
+    { candidate_id, user_id }
+  );
+  if ((rows[0]?.affected_rows ?? 0) === 0) {
+    throw httpError(500, 'Failed to link candidate to user');
+  }
+}
+
 function randomPassword(len = 10): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#%*';
   let out = '';
@@ -201,40 +211,48 @@ export class RecruitmentCandidatesController extends Controller {
       );
       role_id = r[0]?.role_id;
     }
-    // Create AUTH user with default password
-    const plainPassword = randomPassword(10);
-    const password_hash = await hashPassword(plainPassword);
-
-    let user_id: number | null = null;
+    let user_id: number | null = body.user_id ?? null;
     let user_created = false;
-    const existing_user_used = false;
+    const existing_user_used = Boolean(body.user_id);
     let auth_error: string | null = null;
-    if (role_id) {
-      try {
-        const userRows = await callProc<RowDataPacket & { user_id: number }>(
-          `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
-          {
-            role_id,
-            first_name: candidate.first_name ?? null,
-            last_name: candidate.last_name ?? null,
-            username,
-            email: candidate.email ?? null,
-            phone: candidate.phone ?? null,
-            password_hash,
-            status: true
-          }
-        );
-        user_id = userRows[0]?.user_id ?? null;
-        user_created = Boolean(user_id);
-      } catch (e: any) {
-        if (e?.code === 'ER_DUP_ENTRY') {
-          auth_error = 'User already exists for this username/email';
-        } else {
-          auth_error = String(e?.message ?? 'Failed to create user');
-        }
-      }
+    let plainPassword: string | null = null;
+    if (user_id) {
+      await linkCandidateUser(candidate_id, user_id);
     } else {
-      auth_error = 'Candidate role is not configured';
+      // Create AUTH user with default password
+      plainPassword = randomPassword(10);
+      const password_hash = await hashPassword(plainPassword);
+
+      if (role_id) {
+        try {
+          const userRows = await callProc<RowDataPacket & { user_id: number }>(
+            `CALL sp_users_create(:role_id, :first_name, :last_name, :username, :email, :phone, :password_hash, :status)`,
+            {
+              role_id,
+              first_name: candidate.first_name ?? null,
+              last_name: candidate.last_name ?? null,
+              username,
+              email: candidate.email ?? null,
+              phone: candidate.phone ?? null,
+              password_hash,
+              status: true
+            }
+          );
+          user_id = userRows[0]?.user_id ?? null;
+          user_created = Boolean(user_id);
+          if (user_id) {
+            await linkCandidateUser(candidate_id, user_id);
+          }
+        } catch (e: any) {
+          if (e?.code === 'ER_DUP_ENTRY') {
+            auth_error = 'User already exists for this username/email';
+          } else {
+            auth_error = String(e?.message ?? 'Failed to create user');
+          }
+        }
+      } else {
+        auth_error = 'Candidate role is not configured';
+      }
     }
 
     // Email credentials (best-effort)
@@ -257,7 +275,7 @@ export class RecruitmentCandidatesController extends Controller {
             text: credentialsEmailText({
               name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
               username,
-              temporaryPassword: plainPassword,
+              temporaryPassword: plainPassword ?? '',
               portalLabel: 'Candidate',
             }),
           }
