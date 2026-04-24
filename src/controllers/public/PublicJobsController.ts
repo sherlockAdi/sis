@@ -39,6 +39,12 @@ type PublicJobRow = {
   salary_max: string | null;
   job_description?: string | null;
   compensation_text?: string | null;
+  min_education?: string | null;
+  skills?: string | null;
+  min_experience?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_requirement?: string | null;
   status: string | null;
   created_by: number | null;
   created_at: string;
@@ -125,7 +131,7 @@ export class PublicJobsController extends Controller {
     locations: PublicJobLocation[];
   }> {
     const jobRows = await callProc<RowDataPacket & PublicJobRow>(
-      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     const job = jobRows[0];
