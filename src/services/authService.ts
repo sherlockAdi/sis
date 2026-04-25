@@ -49,16 +49,34 @@ export async function findExistingUserByUsernameOrEmail(username: string, email?
   return rows[0] ?? null;
 }
 
-export async function loginWithPassword(username: string, password: string): Promise<{ token: string }> {
-  const rows = await callProc<UserRow>(`CALL sp_auth_get_user_for_login(:username)`, { username });
+async function resolveLoginUser(identifier: string): Promise<UserRow & { email: string | null }> {
+  const loginId = String(identifier ?? '').trim();
+  if (!loginId) throw httpError(400, 'username or email is required');
+
+  const existing = await findExistingUserByUsernameOrEmail(loginId, loginId);
+  if (!existing) throw httpError(404, 'User not found');
+
+  const [rows] = await pool.query<(RowDataPacket & UserRow & { email: string | null })[]>(
+    `SELECT user_id, role_id, username, email, password_hash, status
+     FROM AUTH_U04_users
+     WHERE user_id = :user_id
+     LIMIT 1`,
+    { user_id: existing.user_id },
+  );
 
   const user = rows[0];
-  if (!user) throw Object.assign(new Error('Invalid username or password'), { status: 401 });
+  if (!user) throw httpError(404, 'User not found');
+  return user;
+}
+
+export async function loginWithPassword(username: string, password: string): Promise<{ token: string }> {
+  const user = await resolveLoginUser(username);
+  if (!user) throw Object.assign(new Error('Invalid username/email or password'), { status: 401 });
   if (!user.status) throw Object.assign(new Error('User is disabled'), { status: 403 });
   if (!user.password_hash) throw Object.assign(new Error('User has no password set'), { status: 401 });
 
   const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) throw Object.assign(new Error('Invalid username or password'), { status: 401 });
+  if (!ok) throw Object.assign(new Error('Invalid username/email or password'), { status: 401 });
 
   await callProc(`CALL sp_auth_update_last_login(:user_id)`, { user_id: user.user_id });
 
@@ -90,18 +108,9 @@ function toMysqlDateTime(d: Date) {
 
 export async function requestLoginOtp(username: string): Promise<{ sent: true; to: string }> {
   const uname = String(username ?? '').trim();
-  if (!uname) throw httpError(400, 'username is required');
+  if (!uname) throw httpError(400, 'username or email is required');
 
-  const [userRows] = await pool.query<UserForOtpRow[]>(
-    `SELECT user_id, role_id, username, email, status
-     FROM AUTH_U04_users
-     WHERE username = :username
-     LIMIT 1`,
-    { username: uname },
-  );
-
-  const user = userRows[0];
-  if (!user) throw httpError(404, 'User not found');
+  const user = await resolveLoginUser(uname);
   if (!user.status) throw httpError(403, 'User is disabled');
   if (!user.email) throw httpError(400, 'No email is configured for this user');
 
@@ -159,18 +168,10 @@ export async function requestLoginOtp(username: string): Promise<{ sent: true; t
 export async function loginWithOtp(username: string, otp: string): Promise<{ token: string }> {
   const uname = String(username ?? '').trim();
   const code = String(otp ?? '').trim();
-  if (!uname) throw httpError(400, 'username is required');
+  if (!uname) throw httpError(400, 'username or email is required');
   if (!code) throw httpError(400, 'otp is required');
 
-  const [userRows] = await pool.query<UserForOtpRow[]>(
-    `SELECT user_id, role_id, username, email, status
-     FROM AUTH_U04_users
-     WHERE username = :username
-     LIMIT 1`,
-    { username: uname },
-  );
-  const user = userRows[0];
-  if (!user) throw httpError(404, 'User not found');
+  const user = await resolveLoginUser(uname);
   if (!user.status) throw httpError(403, 'User is disabled');
 
   const otpType = 'login_email';

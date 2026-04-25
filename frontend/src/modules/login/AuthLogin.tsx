@@ -120,7 +120,7 @@ export default function AuthLogin() {
   const handlePasswordLogin = async () => {
     setError(null);
     if (!username.trim() || !password) {
-      setError("Username and password are required.");
+      setError("Username or email and password are required.");
       return;
     }
 
@@ -143,7 +143,7 @@ export default function AuthLogin() {
   const handleSendOtp = async () => {
     setError(null);
     if (!username.trim()) {
-      setError("Username is required.");
+      setError("Username or email is required.");
       return;
     }
 
@@ -163,7 +163,7 @@ export default function AuthLogin() {
   const handleVerify = async () => {
     setError(null);
     if (!username.trim()) {
-      setError("Username is required.");
+      setError("Username or email is required.");
       return;
     }
     if (!otp.trim()) {
@@ -398,7 +398,7 @@ export default function AuthLogin() {
 
                   <AdTextBox
                     label="Username"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                     required
                     value={username}
                     onChange={(v) => {

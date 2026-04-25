@@ -37,27 +37,27 @@ export type MeResponse = {
   menus: SelfMenu[];
 };
 
-export async function login(username: string, password: string): Promise<LoginResponse> {
+export async function login(identifier: string, password: string): Promise<LoginResponse> {
   return apiFetch<LoginResponse>("/auth/login", {
     method: "POST",
     auth: false,
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ identifier, password }),
   });
 }
 
-export async function requestLoginOtp(username: string): Promise<OtpRequestResponse> {
+export async function requestLoginOtp(identifier: string): Promise<OtpRequestResponse> {
   return apiFetch<OtpRequestResponse>("/auth/otp/request", {
     method: "POST",
     auth: false,
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ identifier }),
   });
 }
 
-export async function verifyLoginOtp(username: string, otp: string): Promise<LoginResponse> {
+export async function verifyLoginOtp(identifier: string, otp: string): Promise<LoginResponse> {
   return apiFetch<LoginResponse>("/auth/otp/verify", {
     method: "POST",
     auth: false,
-    body: JSON.stringify({ username, otp }),
+    body: JSON.stringify({ identifier, otp }),
   });
 }
 

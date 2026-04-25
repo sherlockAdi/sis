@@ -48,6 +48,8 @@ import CandidateOnboardingOfferPage from "../modules/candidate/CandidateOnboardi
 import CandidateOnboardingVisaDetailsPage from "../modules/candidate/CandidateOnboardingVisaDetailsPage";
 import CandidateOnboardingTicketsPage from "../modules/candidate/CandidateOnboardingTicketsPage";
 import EmployeesPage from "../modules/employees/EmployeesPage";
+import EmployeeProfilePage from "../modules/employees/EmployeeProfilePage";
+import EmployeeDocumentsPage from "../modules/employees/EmployeeDocumentsPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
@@ -364,10 +366,18 @@ export default function AppRoutes() {
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="employees/*" element={<EmployeesPage />} />
             <Route path="employees/dashboard" element={<PlaceholderPage title="Employee Dashboard" description="Employee summary and quick actions will live here." />} />
-            <Route path="employees/profile" element={<PlaceholderPage title="Employee Profile" description="Personal info, local information, and documents will live here." />} />
+            <Route path="employees/profile" element={<EmployeeProfilePage />} />
+            <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />
+            <Route path="employees/profile/additional-local-information" element={<PlaceholderPage title="Employee Additional Local Information" description="Local address and contact details will live here." />} />
+            <Route path="employees/profile/view-documents" element={<EmployeeDocumentsPage />} />
             <Route path="employees/attendance" element={<PlaceholderPage title="Employee Attendance" description="Daily attendance and attendance history will live here." />} />
+            <Route path="employees/attendance/daily-attendance" element={<PlaceholderPage title="Employee Daily Attendance" description="Time zone, face verification, and attendance punch will live here." />} />
+            <Route path="employees/attendance/view-attendance" element={<PlaceholderPage title="Employee Attendance History" description="Attendance history and audit logs will live here." />} />
             <Route path="employees/helpdesk" element={<PlaceholderPage title="Employee Helpdesk" description="Employee tickets and support will live here." />} />
+            <Route path="employees/helpdesk/open-ticket" element={<PlaceholderPage title="Employee Open Ticket" description="Open a support ticket or view ticket details here." />} />
+            <Route path="employees/helpdesk/ticket-status" element={<PlaceholderPage title="Employee Ticket Status" description="Track employee helpdesk ticket status here." />} />
             <Route path="employees/settings" element={<PlaceholderPage title="Employee Settings" description="Password and account settings will live here." />} />
+            <Route path="employees/settings/change-password" element={<PlaceholderPage title="Employee Change Password" description="Update employee password here." />} />
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />

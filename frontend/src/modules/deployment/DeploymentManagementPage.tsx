@@ -57,7 +57,7 @@ export default function DeploymentManagementPage() {
   }>({
     employment_status: "Active",
     date_of_joining: dayjs().format("YYYY-MM-DD"),
-    date_of_confirmation: "",
+    date_of_confirmation: dayjs().format("YYYY-MM-DD"),
     shift_timing: "",
   });
   const [uploading, setUploading] = useState<{ offer: boolean; passport: boolean; visa: boolean; ticket: boolean }>({
@@ -128,7 +128,8 @@ export default function DeploymentManagementPage() {
           const status = normalizeStatus(r.current_status);
           const canUploadOffer = activeStage === "Ready" && status === "ready";
           const canUploadTicket = activeStage === "Travel Booked" && (status === "travel booked" || status === "visa approved" || status === "ticket confirmed");
-          const canFinalizeDeployment = activeStage === "Deployed" && status === "ticket confirmed";
+          const canMarkDeployed = activeStage === "Deployed" && status === "ticket confirmed";
+          const canConfirmEmployee = activeStage === "Deployed" && status === "deployed";
           const canApproveVisa = activeStage === "Visa Processing" && status === "visa processing";
           const canUploadVisa = activeStage === "Visa Processing" && ["offered", "visa processing", "visa approved"].includes(status);
           return (
@@ -181,26 +182,61 @@ export default function DeploymentManagementPage() {
                   <UploadFileIcon fontSize="small" />
                 </IconButton>
               ) : null}
-              {canFinalizeDeployment ? (
-                <IconButton
-                  aria-label="Confirm as employee"
-                  size="small"
-                  onClick={async () => {
-                    setActiveRow(r);
-                    setEmployeeOpen(true);
-                    setEmployeeLoading(true);
+              {canMarkDeployed ? (
+                <Tooltip title="Mark as deployed">
+                  <IconButton
+                    aria-label="Mark deployed"
+                    size="small"
+                    onClick={async () => {
+                      try {
+                        await deploymentApi.setStatus(r.deployment_id, {
+                          status: "Deployed",
+                          remarks: r.remarks ?? null,
+                        });
+                        setToast({ open: true, message: "Status changed to Deployed", severity: "success" });
+                        refresh();
+                      } catch (e: any) {
+                        setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark deployed", severity: "error" });
+                      }
+                    }}
+                    sx={{
+                      alignSelf: "center",
+                      bgcolor: "rgba(46,125,50,0.08)",
+                      border: "1px solid rgba(46,125,50,0.18)",
+                      "&:hover": { bgcolor: "rgba(46,125,50,0.14)" },
+                    }}
+                  >
+                    <CheckCircleOutlineIcon fontSize="small" color="success" />
+                  </IconButton>
+                </Tooltip>
+              ) : null}
+              {canConfirmEmployee ? (
+                <Tooltip title="Confirm as employee">
+                  <IconButton
+                    aria-label="Confirm as employee"
+                    size="small"
+                    onClick={async () => {
+                      setActiveRow(r);
+                      setEmployeeOpen(true);
+                      setEmployeeLoading(true);
                     setEmployeeForm({
                       employment_status: "Active",
                       date_of_joining: dayjs().format("YYYY-MM-DD"),
-                      date_of_confirmation: "",
+                      date_of_confirmation: dayjs().format("YYYY-MM-DD"),
                       shift_timing: "",
                     });
-                    setEmployeeLoading(false);
-                  }}
-                  sx={{ alignSelf: "center" }}
-                >
-                  <PersonAddAlt1Icon fontSize="small" />
-                </IconButton>
+                      setEmployeeLoading(false);
+                    }}
+                    sx={{
+                      alignSelf: "center",
+                      bgcolor: "rgba(25,118,210,0.08)",
+                      border: "1px solid rgba(25,118,210,0.18)",
+                      "&:hover": { bgcolor: "rgba(25,118,210,0.14)" },
+                    }}
+                  >
+                    <PersonAddAlt1Icon fontSize="small" color="primary" />
+                  </IconButton>
+                </Tooltip>
               ) : null}
               {canApproveVisa ? (
                 <IconButton
@@ -657,7 +693,7 @@ export default function DeploymentManagementPage() {
               Close
             </AdButton>
             <AdButton onClick={saveVisaDetails}>
-              {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : activeStage === "Deployed" ? "Mark Deployed" : "Save Visa Details"}
+              {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : "Save Visa Details"}
             </AdButton>
           </Stack>
         </Stack>

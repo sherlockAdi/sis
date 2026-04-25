@@ -3,7 +3,9 @@ import { bootstrapFirstAdmin, getSelfProfile, loginWithOtp, loginWithPassword, r
 import { httpError } from '../../utils/httpErrors';
 
 type LoginRequest = {
-  username: string;
+  username?: string;
+  email?: string;
+  identifier?: string;
   password: string;
 };
 
@@ -12,11 +14,15 @@ type LoginResponse = {
 };
 
 type LoginOtpRequest = {
-  username: string;
+  username?: string;
+  email?: string;
+  identifier?: string;
 };
 
 type LoginOtpVerifyRequest = {
-  username: string;
+  username?: string;
+  email?: string;
+  identifier?: string;
   otp: string;
 };
 
@@ -43,18 +49,18 @@ type RegisterRequest = {
 export class AuthController extends Controller {
   @Post('login')
   public async login(@Body() body: LoginRequest): Promise<LoginResponse> {
-    return loginWithPassword(body.username, body.password);
+    return loginWithPassword(body.identifier ?? body.username ?? body.email ?? '', body.password);
   }
 
   @Post('otp/request')
   public async requestOtp(@Body() body: LoginOtpRequest): Promise<LoginOtpRequestResponse> {
-    await requestLoginOtp(body.username);
+    await requestLoginOtp(body.identifier ?? body.username ?? body.email ?? '');
     return { sent: true };
   }
 
   @Post('otp/verify')
   public async verifyOtp(@Body() body: LoginOtpVerifyRequest): Promise<LoginResponse> {
-    return loginWithOtp(body.username, body.otp);
+    return loginWithOtp(body.identifier ?? body.username ?? body.email ?? '', body.otp);
   }
 
   @Post('register')
