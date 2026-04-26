@@ -1,27 +1,4 @@
--- Employee conversion flow from deployed candidates.
-
-CREATE TABLE IF NOT EXISTS EMP_T01_employees (
-  employee_id INT AUTO_INCREMENT PRIMARY KEY,
-  employee_code VARCHAR(50) NOT NULL UNIQUE,
-  employee_name VARCHAR(200) NOT NULL,
-  employee_contact_number VARCHAR(30) DEFAULT NULL,
-  address1 VARCHAR(255) DEFAULT NULL,
-  address2 VARCHAR(255) DEFAULT NULL,
-  pin_code VARCHAR(20) DEFAULT NULL,
-  industry VARCHAR(150) DEFAULT NULL,
-  work_location VARCHAR(255) DEFAULT NULL,
-  employment_status VARCHAR(50) DEFAULT 'Active',
-  date_of_joining DATE DEFAULT NULL,
-  date_of_confirmation DATE DEFAULT NULL,
-  candidate_id INT NOT NULL UNIQUE,
-  deployment_id INT DEFAULT NULL UNIQUE,
-  shift_timing VARCHAR(100) DEFAULT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL DEFAULT NULL,
-  FOREIGN KEY (candidate_id) REFERENCES REC_T01_candidates(candidate_id),
-  FOREIGN KEY (deployment_id) REFERENCES DEP_T01_deployments(deployment_id)
-);
+-- Fix employee conversion so old candidates without candidate.user_id still get the employee role.
 
 DROP PROCEDURE IF EXISTS sp_emp_employees;
 DELIMITER $$
@@ -88,7 +65,6 @@ BEGIN
       c.education,
       c.experience,
       c.industry_type,
-      c.resume_file_path,
       c.passport_expiry_date,
       c.passport_file_path,
       c.aadhar_number,
@@ -135,7 +111,6 @@ BEGIN
       LEFT JOIN LOC_M03_cities ci ON ci.city_id = loc_row.city_id
       LEFT JOIN LOC_M02_states st ON st.state_id = loc_row.state_id
       LEFT JOIN LOC_M01_countries co ON co.country_id = loc_row.country_id
-      WHERE d.deployment_id = p_deployment_id
       LIMIT 1;
 
       IF v_candidate_id IS NULL THEN
@@ -171,47 +146,9 @@ BEGIN
       SELECT employee_id INTO v_employee_id
       FROM EMP_T01_employees
       WHERE candidate_id = v_candidate_id
-         OR deployment_id = p_deployment_id
-      ORDER BY employee_id ASC
       LIMIT 1;
 
       IF v_employee_id IS NOT NULL THEN
-        UPDATE EMP_T01_employees
-        SET employee_code = COALESCE(NULLIF(TRIM(v_employee_code), ''), employee_code),
-            employee_name = COALESCE(NULLIF(TRIM(v_employee_name), ''), employee_name),
-            employee_contact_number = COALESCE(v_contact, employee_contact_number),
-            address1 = COALESCE(v_address1, address1),
-            address2 = COALESCE(v_address2, address2),
-            pin_code = COALESCE(v_pin_code, pin_code),
-            industry = COALESCE(v_industry, industry),
-            work_location = COALESCE(v_work_location, work_location),
-            employment_status = COALESCE(NULLIF(p_employment_status, ''), employment_status, 'Active'),
-            date_of_joining = COALESCE(p_date_of_joining, date_of_joining, CURRENT_DATE),
-            date_of_confirmation = COALESCE(p_date_of_confirmation, date_of_confirmation, CURRENT_DATE),
-            candidate_id = v_candidate_id,
-            deployment_id = p_deployment_id,
-            shift_timing = p_shift_timing
-        WHERE employee_id = v_employee_id;
-
-        UPDATE REC_T01_candidates
-        SET status = 'Employee',
-            user_id = COALESCE(user_id, v_user_id),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE candidate_id = v_candidate_id;
-
-        IF v_user_id IS NOT NULL THEN
-          UPDATE AUTH_U04_users
-          SET role_id = v_employee_role_id
-          WHERE user_id = v_user_id;
-        END IF;
-
-        UPDATE DEP_T01_deployments
-        SET current_status = 'Employee', updated_by = p_user_id
-        WHERE deployment_id = p_deployment_id;
-
-        INSERT INTO DEP_T02_deployment_history (deployment_id, status, remarks, changed_by)
-        VALUES (p_deployment_id, 'Employee', 'Converted to employee', p_user_id);
-
         SELECT v_employee_id AS employee_id;
       ELSE
         IF v_employee_code IS NULL OR TRIM(v_employee_code) = '' THEN

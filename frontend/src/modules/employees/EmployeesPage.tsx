@@ -19,6 +19,9 @@ export default function EmployeesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<EmployeeDetailRow | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [credentialModalOpen, setCredentialModalOpen] = useState(false);
+  const [credentialSaving, setCredentialSaving] = useState(false);
+  const [credentialForm, setCredentialForm] = useState({ username: "", email: "", password: "" });
 
   const refresh = async () => {
     setLoading(true);
@@ -143,10 +146,27 @@ export default function EmployeesPage() {
           </Typography>
         ) : selected ? (
           <Stack spacing={2}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <AdButton
+                variant="outlined"
+                onClick={() => {
+                  setCredentialForm({
+                    username: selected.login_username ?? "",
+                    email: selected.login_email ?? selected.email ?? "",
+                    password: "",
+                  });
+                  setCredentialModalOpen(true);
+                }}
+              >
+                Update Login
+              </AdButton>
+            </Stack>
             <BoxGrid>
               <Field label="Employee Name" value={selected.employee_name} />
               <Field label="Contact" value={selected.employee_contact_number ?? "-"} />
               <Field label="Email" value={selected.email ?? "-"} />
+              <Field label="Login Username" value={selected.login_username ?? "-"} />
+              <Field label="Login Email" value={selected.login_email ?? selected.email ?? "-"} />
               <Field label="Work Location" value={selected.work_location ?? "-"} />
               <Field label="Industry" value={selected.industry ?? "-"} />
               <Field label="Employment Status" value={selected.employment_status ?? "-"} />
@@ -163,6 +183,68 @@ export default function EmployeesPage() {
             </Typography>
           </Stack>
         ) : null}
+      </AdModal>
+
+      <AdModal
+        open={credentialModalOpen}
+        onClose={() => setCredentialModalOpen(false)}
+        title="Update Login Credentials"
+        subtitle="Change the linked username, email, or password for this employee"
+        maxWidth="sm"
+        actions={
+          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
+            <AdButton variant="text" onClick={() => setCredentialModalOpen(false)} disabled={credentialSaving}>
+              Cancel
+            </AdButton>
+            <AdButton
+              onClick={async () => {
+                if (!selected) return;
+                setCredentialSaving(true);
+                try {
+                  await employeesApi.updateCredentials(selected.employee_id, {
+                    username: credentialForm.username.trim() || null,
+                    email: credentialForm.email.trim() || null,
+                    password: credentialForm.password.trim() || null,
+                  });
+                  setToast({ open: true, message: "Login credentials updated", severity: "success" });
+                  setCredentialModalOpen(false);
+                  setModalOpen(false);
+                  await refresh();
+                } catch (e: any) {
+                  setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to update login credentials", severity: "error" });
+                } finally {
+                  setCredentialSaving(false);
+                }
+              }}
+              disabled={credentialSaving}
+            >
+              Save Credentials
+            </AdButton>
+          </Stack>
+        }
+      >
+        <Stack spacing={2}>
+          <AdTextBox
+            label="Username"
+            value={credentialForm.username}
+            onChange={(v) => setCredentialForm((f) => ({ ...f, username: v }))}
+            placeholder="Enter username"
+          />
+          <AdTextBox
+            label="Email"
+            type="email"
+            value={credentialForm.email}
+            onChange={(v) => setCredentialForm((f) => ({ ...f, email: v }))}
+            placeholder="Enter email"
+          />
+          <AdTextBox
+            label="New Password"
+            type="password"
+            value={credentialForm.password}
+            onChange={(v) => setCredentialForm((f) => ({ ...f, password: v }))}
+            placeholder="Leave blank to keep current password"
+          />
+        </Stack>
       </AdModal>
     </Stack>
   );

@@ -60,7 +60,6 @@ VALUES
   ('Ticketing & Helpdesk', 'ADM_HELPDESK', NULL, NULL, 'receipt_long', 60, TRUE),
   ('Customer Management', 'ADM_CUSTOMERS', NULL, NULL, 'business', 70, TRUE),
   ('Partner Management', 'ADM_PARTNERS', NULL, NULL, 'people', 80, TRUE),
-  ('Employee Zone', 'ADM_EMPLOYEE_ZONE', NULL, NULL, 'people', 85, TRUE),
   ('Reports & Analytics', 'ADM_REPORTS', NULL, NULL, 'description', 90, TRUE),
   ('Compliance & Documents', 'ADM_COMPLIANCE', NULL, NULL, 'receipt_long', 100, TRUE),
   ('System Settings', 'ADM_SETTINGS', NULL, NULL, 'settings', 110, TRUE)
@@ -80,7 +79,6 @@ SET @m_attendance := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_
 SET @m_helpdesk := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_HELPDESK' LIMIT 1);
 SET @m_customers := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_CUSTOMERS' LIMIT 1);
 SET @m_partners := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_PARTNERS' LIMIT 1);
-SET @m_employee := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_EMPLOYEE_ZONE' LIMIT 1);
 SET @m_reports := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_REPORTS' LIMIT 1);
 SET @m_compliance := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_COMPLIANCE' LIMIT 1);
 SET @m_settings := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'ADM_SETTINGS' LIMIT 1);
@@ -205,23 +203,6 @@ ON DUPLICATE KEY UPDATE
   menu_order = VALUES(menu_order),
   status = VALUES(status);
 
--- Employee Zone
-INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
-VALUES
-  ('Dashboard', 'ADM_EMP_DASH', @m_employee, '/employees/dashboard', 'dashboard', 86, TRUE),
-  ('List of Employee', 'ADM_EMPLOYEE_LIST', @m_employee, '/employees', 'people', 87, TRUE),
-  ('Profile', 'ADM_EMP_PROFILE', @m_employee, '/employees/profile', 'badge', 88, TRUE),
-  ('Attendance', 'ADM_EMP_ATT', @m_employee, '/employees/attendance', 'schedule', 89, TRUE),
-  ('Helpdesk', 'ADM_EMP_HELPDESK', @m_employee, '/employees/helpdesk', 'receipt_long', 90, TRUE),
-  ('Settings', 'ADM_EMP_SETTINGS', @m_employee, '/employees/settings', 'settings', 91, TRUE)
-ON DUPLICATE KEY UPDATE
-  menu_name = VALUES(menu_name),
-  parent_menu_id = VALUES(parent_menu_id),
-  menu_path = VALUES(menu_path),
-  icon = VALUES(icon),
-  menu_order = VALUES(menu_order),
-  status = VALUES(status);
-
 -- Reports & Analytics
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
 VALUES
@@ -298,6 +279,7 @@ VALUES
   ('Jobs', 'CAND_JOBS', NULL, '/candidate/jobs', 'work', 220, TRUE),
   ('Onboarding Process', 'CAND_ONBOARDING', NULL, '/candidate/onboarding/offer', 'menu_book', 230, TRUE),
   ('Accounts', 'CAND_ACCOUNTS', NULL, '/candidate/accounts/payments', 'payments', 240, TRUE),
+  ('Helpdesk', 'CAND_HELPDESK', NULL, '/candidate/profile/helpdesk', 'receipt_long', 245, TRUE),
   ('Settings', 'CAND_SETTINGS', NULL, '/candidate/profile/settings', 'settings', 250, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
@@ -311,6 +293,7 @@ SET @cand_profile_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'C
 SET @cand_jobs_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'CAND_JOBS' LIMIT 1);
 SET @cand_onboarding_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'CAND_ONBOARDING' LIMIT 1);
 SET @cand_accounts_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'CAND_ACCOUNTS' LIMIT 1);
+SET @cand_helpdesk_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'CAND_HELPDESK' LIMIT 1);
 SET @cand_settings_id := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'CAND_SETTINGS' LIMIT 1);
 
 -- Profile children
@@ -368,6 +351,19 @@ ON DUPLICATE KEY UPDATE
   menu_order = VALUES(menu_order),
   status = VALUES(status);
 
+-- Helpdesk children
+INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
+VALUES
+  ('Open Ticket/ View ticket', 'CAND_HELP_OPEN', @cand_helpdesk_id, '/candidate/profile/helpdesk/open-ticket', 'confirmation_number', 246, TRUE),
+  ('Ticket Status', 'CAND_HELP_STATUS', @cand_helpdesk_id, '/candidate/profile/helpdesk/ticket-status', 'info', 247, TRUE)
+ON DUPLICATE KEY UPDATE
+  menu_name = VALUES(menu_name),
+  parent_menu_id = VALUES(parent_menu_id),
+  menu_path = VALUES(menu_path),
+  icon = VALUES(icon),
+  menu_order = VALUES(menu_order),
+  status = VALUES(status);
+
 -- Settings child
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
 VALUES
@@ -388,6 +384,7 @@ VALUES
   ('Dashboard', 'SRC_DASHBOARD', NULL, '/partner/dashboard', 'dashboard', 300, TRUE),
   ('Job', 'SRC_JOB', NULL, NULL, 'work', 310, TRUE),
   ('Applied Candidate', 'SRC_APPLIED_CANDIDATE', NULL, NULL, 'people', 320, TRUE),
+  ('Helpdesk', 'SRC_HELPDESK', NULL, '/partner/helpdesk', 'receipt_long', 325, TRUE),
   ('Reports', 'SRC_REPORTS', NULL, NULL, 'description', 330, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
@@ -399,6 +396,7 @@ ON DUPLICATE KEY UPDATE
 
 SET @m_emp_job := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'SRC_JOB' LIMIT 1);
 SET @m_emp_applied := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'SRC_APPLIED_CANDIDATE' LIMIT 1);
+SET @m_emp_helpdesk := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'SRC_HELPDESK' LIMIT 1);
 SET @m_emp_reports := (SELECT menu_id FROM AUTH_U02_menus WHERE menu_code = 'SRC_REPORTS' LIMIT 1);
 
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
@@ -418,6 +416,19 @@ VALUES
   ('Applied Candidate List', 'SRC_APPLIED_LIST', @m_emp_applied, '/partner/my-submissions', 'receipt_long', 321, TRUE),
   ('Interview Process', 'SRC_APPLIED_INTERVIEW', @m_emp_applied, '/partner/interviews', 'video_call', 322, TRUE),
   ('Deployment Zone', 'SRC_APPLIED_DEPLOY', @m_emp_applied, '/partner/deployment-zone', 'public', 323, TRUE)
+ON DUPLICATE KEY UPDATE
+  menu_name = VALUES(menu_name),
+  parent_menu_id = VALUES(parent_menu_id),
+  menu_path = VALUES(menu_path),
+  icon = VALUES(icon),
+  menu_order = VALUES(menu_order),
+  status = VALUES(status);
+
+INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
+VALUES
+  ('Open Ticket/ View ticket', 'SRC_HELP_OPEN', @m_emp_helpdesk, '/partner/helpdesk/open-ticket', 'confirmation_number', 326, TRUE),
+  ('Ticket Status', 'SRC_HELP_STATUS', @m_emp_helpdesk, '/partner/helpdesk/ticket-status', 'info', 327, TRUE),
+  ('Ticket Regarding Job', 'SRC_HELP_JOB', @m_emp_helpdesk, '/partner/helpdesk/job-tickets', 'work', 328, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

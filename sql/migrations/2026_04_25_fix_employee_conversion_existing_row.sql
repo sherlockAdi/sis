@@ -1,27 +1,4 @@
--- Employee conversion flow from deployed candidates.
-
-CREATE TABLE IF NOT EXISTS EMP_T01_employees (
-  employee_id INT AUTO_INCREMENT PRIMARY KEY,
-  employee_code VARCHAR(50) NOT NULL UNIQUE,
-  employee_name VARCHAR(200) NOT NULL,
-  employee_contact_number VARCHAR(30) DEFAULT NULL,
-  address1 VARCHAR(255) DEFAULT NULL,
-  address2 VARCHAR(255) DEFAULT NULL,
-  pin_code VARCHAR(20) DEFAULT NULL,
-  industry VARCHAR(150) DEFAULT NULL,
-  work_location VARCHAR(255) DEFAULT NULL,
-  employment_status VARCHAR(50) DEFAULT 'Active',
-  date_of_joining DATE DEFAULT NULL,
-  date_of_confirmation DATE DEFAULT NULL,
-  candidate_id INT NOT NULL UNIQUE,
-  deployment_id INT DEFAULT NULL UNIQUE,
-  shift_timing VARCHAR(100) DEFAULT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL DEFAULT NULL,
-  FOREIGN KEY (candidate_id) REFERENCES REC_T01_candidates(candidate_id),
-  FOREIGN KEY (deployment_id) REFERENCES DEP_T01_deployments(deployment_id)
-);
+-- Backfill employee conversion so existing employee rows are updated for a new deployment instead of being returned unchanged.
 
 DROP PROCEDURE IF EXISTS sp_emp_employees;
 DELIMITER $$
@@ -135,7 +112,6 @@ BEGIN
       LEFT JOIN LOC_M03_cities ci ON ci.city_id = loc_row.city_id
       LEFT JOIN LOC_M02_states st ON st.state_id = loc_row.state_id
       LEFT JOIN LOC_M01_countries co ON co.country_id = loc_row.country_id
-      WHERE d.deployment_id = p_deployment_id
       LIMIT 1;
 
       IF v_candidate_id IS NULL THEN

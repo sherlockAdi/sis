@@ -33,6 +33,7 @@ export type EmployeeDetailRow = EmployeeRow & {
   education?: string | null;
   experience?: string | null;
   industry_type?: string | null;
+  resume_file_path?: string | null;
   passport_expiry_date?: string | null;
   passport_file_path?: string | null;
   aadhar_number?: string | null;
@@ -46,12 +47,24 @@ export type EmployeeDetailRow = EmployeeRow & {
   candidate_address1?: string | null;
   candidate_address2?: string | null;
   candidate_pincode?: string | null;
+  user_id?: number | null;
+  login_username?: string | null;
+  login_email?: string | null;
 };
 
 export const employeesApi = {
   list: () => apiFetch<EmployeeRow[]>(`/employees`, { method: "GET" }),
+  me: () => apiFetch<EmployeeDetailRow | null>(`/employees/me`, { method: "GET" }),
   get: (employee_id: number) => apiFetch<EmployeeDetailRow | null>(`/employees/${employee_id}`, { method: "GET" }),
   disable: (employee_id: number) => apiFetch<{ disabled: true }>(`/employees/${employee_id}`, { method: "DELETE" }),
+  updateCredentials: (employee_id: number, input: {
+    username?: string | null;
+    email?: string | null;
+    password?: string | null;
+  }) => apiFetch<{ updated: true }>(`/employees/${employee_id}/credentials`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  }),
   confirmFromDeployment: (input: {
     deployment_id: number;
     employment_status?: string | null;

@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Container,
-  Divider,
   MenuItem,
   Stack,
   TextField,
@@ -306,54 +305,6 @@ export default function PublicRegisterPage() {
                     </MenuItem>
                   ))}
                 </TextField>
-              </Stack>
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle1" fontWeight={900}>
-                Profile Fields
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField label="Father's Name" value={form.father_name} onChange={(e) => setForm((f) => ({ ...f, father_name: e.target.value }))} fullWidth />
-                <TextField
-                  label="Languages Known"
-                  value={form.languages_known}
-                  onChange={(e) => setForm((f) => ({ ...f, languages_known: e.target.value }))}
-                  fullWidth
-                />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField label="Address 1" value={form.address1} onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))} fullWidth multiline minRows={2} />
-                <TextField label="Address 2" value={form.address2} onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))} fullWidth multiline minRows={2} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField label="Pincode" value={form.pincode} onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))} fullWidth />
-                <TextField label="Skills" value={form.skills} onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))} fullWidth />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField label="Education" value={form.education} onChange={(e) => setForm((f) => ({ ...f, education: e.target.value }))} fullWidth />
-                <TextField label="Experience" value={form.experience} onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))} fullWidth />
-                <TextField
-                  label="Industry Type"
-                  value={form.industry_type}
-                  onChange={(e) => setForm((f) => ({ ...f, industry_type: e.target.value }))}
-                  fullWidth
-                />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField
-                  label="Passport Expiry Date"
-                  type="date"
-                  value={form.passport_expiry_date}
-                  onChange={(e) => setForm((f) => ({ ...f, passport_expiry_date: e.target.value }))}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField label="Aadhar Number" value={form.aadhar_number} onChange={(e) => setForm((f) => ({ ...f, aadhar_number: e.target.value }))} fullWidth />
-                <TextField label="PAN No." value={form.pan_number} onChange={(e) => setForm((f) => ({ ...f, pan_number: e.target.value }))} fullWidth />
-                <TextField label="Voter ID Number" value={form.voter_id_number} onChange={(e) => setForm((f) => ({ ...f, voter_id_number: e.target.value }))} fullWidth />
               </Stack>
             </Stack>
 

@@ -16,6 +16,7 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import InfoIcon from "@mui/icons-material/Info";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import VideoCallIcon from "@mui/icons-material/VideoCall";
 import BadgeIcon from "@mui/icons-material/Badge";
@@ -225,6 +226,20 @@ export default function AppShellLayout() {
             children: [
               { label: "Payments", to: withPortalBase("/candidate/accounts/payments"), icon: <PaymentsIcon fontSize="small" /> },
               { label: "Download Receipts", to: withPortalBase("/candidate/accounts/receipts"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "HELPDESK",
+        items: [
+          {
+            label: "Helpdesk",
+            to: withPortalBase("/candidate/profile/helpdesk"),
+            icon: <ReceiptLongIcon fontSize="small" />,
+            children: [
+              { label: "Open Ticket/ View ticket", to: withPortalBase("/candidate/profile/helpdesk/open-ticket"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Ticket Status", to: withPortalBase("/candidate/profile/helpdesk/ticket-status"), icon: <InfoIcon fontSize="small" /> },
             ],
           },
         ],

@@ -42,23 +42,28 @@ import CandidateProfilePage from "../modules/candidate/CandidateProfilePage";
 import CandidateProfileDocumentsPage from "../modules/candidate/CandidateProfileDocumentsPage";
 import CandidateProfileTradeTestPage from "../modules/candidate/CandidateProfileTradeTestPage";
 import CandidateProfileDeploymentPage from "../modules/candidate/CandidateProfileDeploymentPage";
-import CandidateProfileHelpdeskPage from "../modules/candidate/CandidateProfileHelpdeskPage";
 import CandidateProfileSettingsPage from "../modules/candidate/CandidateProfileSettingsPage";
 import CandidateOnboardingOfferPage from "../modules/candidate/CandidateOnboardingOfferPage";
 import CandidateOnboardingVisaDetailsPage from "../modules/candidate/CandidateOnboardingVisaDetailsPage";
 import CandidateOnboardingTicketsPage from "../modules/candidate/CandidateOnboardingTicketsPage";
 import EmployeesPage from "../modules/employees/EmployeesPage";
+import EmployeeProfilePage from "../modules/employees/EmployeeProfilePage";
+import EmployeeDocumentsPage from "../modules/employees/EmployeeDocumentsPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
 import PartnerMySubmissionsPage from "../modules/partner/PartnerMySubmissionsPage";
 import PartnerPerformancePage from "../modules/partner/PartnerPerformancePage";
 import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
-import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
 import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
+import TicketCenterPage from "../modules/tickets/TicketCenterPage";
+import TicketDetailPage from "../modules/tickets/TicketDetailPage";
+import TicketListPage from "../modules/tickets/TicketListPage";
+import TicketCreatePage from "../modules/tickets/TicketCreatePage";
+import TicketStatusPage from "../modules/tickets/TicketStatusPage";
 import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
@@ -267,7 +272,9 @@ export default function AppRoutes() {
             <Route path="candidate/profile/documents" element={<CandidateProfileDocumentsPage />} />
             <Route path="candidate/profile/trade-test" element={<CandidateProfileTradeTestPage />} />
             <Route path="candidate/profile/deployment" element={<CandidateProfileDeploymentPage />} />
-            <Route path="candidate/profile/helpdesk" element={<CandidateProfileHelpdeskPage />} />
+            <Route path="candidate/profile/helpdesk" element={<TicketListPage />} />
+            <Route path="candidate/profile/helpdesk/open-ticket" element={<TicketListPage />} />
+            <Route path="candidate/profile/helpdesk/ticket-status" element={<TicketStatusPage />} />
             <Route path="candidate/profile/settings" element={<CandidateProfileSettingsPage />} />
             <Route path="candidate/onboarding/offer" element={<CandidateOnboardingOfferPage />} />
             <Route path="candidate/onboarding/visa-details" element={<CandidateOnboardingVisaDetailsPage />} />
@@ -290,7 +297,10 @@ export default function AppRoutes() {
             <Route path="partner/my-submissions" element={<PartnerMySubmissionsPage />} />
             <Route path="partner/performance" element={<PartnerPerformancePage />} />
             <Route path="partner/earnings" element={<PartnerEarningsPage />} />
-            <Route path="partner/helpdesk" element={<PartnerHelpdeskPage />} />
+            <Route path="partner/helpdesk" element={<TicketListPage />} />
+            <Route path="partner/helpdesk/open-ticket" element={<TicketListPage />} />
+            <Route path="partner/helpdesk/job-tickets" element={<TicketListPage />} />
+            <Route path="partner/helpdesk/ticket-status" element={<TicketStatusPage />} />
             <Route path="partner/profile" element={<PartnerProfilePage />} />
             <Route
               path="partner/deployment-zone"
@@ -354,9 +364,12 @@ export default function AppRoutes() {
             <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
             <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />
 
-            <Route path="helpdesk" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
-            <Route path="helpdesk/*" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
-            <Route path="helpdesk/chatbot" element={<PlaceholderPage title="Chatbot" description="SIS Global and employers can interact here. Conversation history will be stored." />} />
+            <Route path="helpdesk" element={<TicketListPage />} />
+            <Route path="helpdesk/open" element={<TicketListPage />} />
+            <Route path="helpdesk/create" element={<TicketCreatePage />} />
+            <Route path="helpdesk/escalations" element={<TicketCenterPage />} />
+            <Route path="helpdesk/closed" element={<TicketStatusPage />} />
+            <Route path="helpdesk/chatbot" element={<TicketCenterPage />} />
 
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
@@ -364,10 +377,20 @@ export default function AppRoutes() {
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="employees/*" element={<EmployeesPage />} />
             <Route path="employees/dashboard" element={<PlaceholderPage title="Employee Dashboard" description="Employee summary and quick actions will live here." />} />
-            <Route path="employees/profile" element={<PlaceholderPage title="Employee Profile" description="Personal info, local information, and documents will live here." />} />
+            <Route path="employees/profile" element={<EmployeeProfilePage />} />
+            <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />
+            <Route path="employees/profile/additional-local-information" element={<PlaceholderPage title="Employee Additional Local Information" description="Local address and contact details will live here." />} />
+            <Route path="employees/profile/view-documents" element={<EmployeeDocumentsPage />} />
             <Route path="employees/attendance" element={<PlaceholderPage title="Employee Attendance" description="Daily attendance and attendance history will live here." />} />
-            <Route path="employees/helpdesk" element={<PlaceholderPage title="Employee Helpdesk" description="Employee tickets and support will live here." />} />
+            <Route path="employees/attendance/daily-attendance" element={<PlaceholderPage title="Employee Daily Attendance" description="Time zone, face verification, and attendance punch will live here." />} />
+            <Route path="employees/attendance/view-attendance" element={<PlaceholderPage title="Employee Attendance History" description="Attendance history and audit logs will live here." />} />
+            <Route path="employees/helpdesk" element={<TicketListPage />} />
+            <Route path="employees/helpdesk/open-ticket" element={<TicketListPage />} />
+            <Route path="employees/helpdesk/create" element={<TicketCreatePage />} />
+            <Route path="employees/helpdesk/ticket-status" element={<TicketStatusPage />} />
+            <Route path="employees/helpdesk/ticket/:ticketId" element={<TicketDetailPage />} />
             <Route path="employees/settings" element={<PlaceholderPage title="Employee Settings" description="Password and account settings will live here." />} />
+            <Route path="employees/settings/change-password" element={<PlaceholderPage title="Employee Change Password" description="Update employee password here." />} />
 
             <Route path="partners" element={<PartnersPage />} />
             <Route path="partners/list" element={<PartnersPage />} />
