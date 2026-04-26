@@ -121,6 +121,16 @@ type TicketCreateBody = {
   attachment_file_name?: string | null;
 };
 
+type TicketUpdateBody = {
+  subject?: string | null;
+  description?: string | null;
+  priority?: string | null;
+  related_job_id?: number | null;
+  related_deployment_id?: number | null;
+  related_candidate_id?: number | null;
+  related_employee_id?: number | null;
+};
+
 type TicketStatusUpdateBody = {
   ticket_status_code: string;
   remarks?: string | null;
@@ -359,10 +369,41 @@ function defaultVisibilityScope(role_group: TicketRoleGroup, ticketTypeCode: str
   return 'ADMIN_AND_OWNER';
 }
 
-function allowRelatedJob(ctx: CurrentUserContext, related_job_id?: number | null): boolean {
+async function allowRelatedJob(ctx: CurrentUserContext, related_job_id?: number | null): Promise<boolean> {
   if (!related_job_id) return true;
   if (ctx.role_group === 'ADMIN') return true;
-  return ctx.partner_job_ids.includes(Number(related_job_id));
+  const jobId = Number(related_job_id);
+  if (!Number.isFinite(jobId)) return false;
+  if (ctx.role_group === 'EMPLOYER') return ctx.partner_job_ids.includes(jobId);
+  if (ctx.role_group === 'CANDIDATE') {
+    const [rows] = await pool.query<(RowDataPacket & { allowed: number })[]>(
+      `SELECT 1 AS allowed
+       FROM JOB_T01_jobs j
+       LEFT JOIN REC_T02_applications a
+         ON a.job_id = j.job_id
+        AND a.candidate_id = :candidate_id
+       WHERE j.job_id = :job_id
+         AND (
+           UPPER(COALESCE(j.status, '')) = 'OPEN'
+           OR a.application_id IS NOT NULL
+         )
+       LIMIT 1`,
+      { candidate_id: ctx.candidate_id, job_id: jobId }
+    );
+    return rows.length > 0;
+  }
+  if (ctx.role_group === 'EMPLOYEE') {
+    const [rows] = await pool.query<(RowDataPacket & { allowed: number })[]>(
+      `SELECT 1 AS allowed
+       FROM JOB_T01_jobs j
+       WHERE j.job_id = :job_id
+         AND UPPER(COALESCE(j.status, '')) = 'OPEN'
+       LIMIT 1`,
+      { job_id: jobId }
+    );
+    return rows.length > 0;
+  }
+  return false;
 }
 
 @Route('tickets')
@@ -507,7 +548,7 @@ export class TicketsController extends Controller {
     if (!subject) throw httpError(400, 'subject is required');
 
     const relatedJobId = typeof body.related_job_id === 'number' ? body.related_job_id : null;
-    if (!allowRelatedJob(ctx, relatedJobId)) throw httpError(403, 'You are not allowed to link this job');
+    if (!(await allowRelatedJob(ctx, relatedJobId))) throw httpError(403, 'You are not allowed to link this job');
 
     const relatedCandidateId =
       typeof body.related_candidate_id === 'number'
@@ -657,6 +698,80 @@ export class TicketsController extends Controller {
         }
       );
     }
+
+    return { updated: true };
+  }
+
+  @Put('{ticketId}')
+  @Security('jwt')
+  public async update(
+    @Path() ticketId: number,
+    @Request() req: any,
+    @Body() body: TicketUpdateBody
+  ): Promise<{ updated: true }> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    if (!user?.user_id) throw httpError(401, 'Unauthorized');
+
+    const ctx = await resolveCurrentUserContext(user.user_id);
+    const ticket = await fetchTicketById(ticketId);
+    if (!ticket) throw httpError(404, 'Ticket not found');
+    if (!(ctx.role_group === 'ADMIN' || ticket.raised_by_user_id === ctx.user_id || ticket.assigned_to_user_id === ctx.user_id)) {
+      throw httpError(403, 'Forbidden');
+    }
+
+    const subject = String(body.subject ?? '').trim();
+    if (!subject) throw httpError(400, 'subject is required');
+
+    const relatedJobId = typeof body.related_job_id === 'number' ? body.related_job_id : null;
+    if (!(await allowRelatedJob(ctx, relatedJobId))) throw httpError(403, 'You are not allowed to link this job');
+
+    const relatedCandidateId =
+      typeof body.related_candidate_id === 'number'
+        ? body.related_candidate_id
+        : ctx.role_group === 'CANDIDATE'
+          ? ctx.candidate_id
+          : null;
+    if (ctx.role_group === 'CANDIDATE' && relatedCandidateId && Number(relatedCandidateId) !== Number(ctx.candidate_id ?? 0)) {
+      throw httpError(403, 'You can only edit your own candidate ticket');
+    }
+
+    const relatedEmployeeId =
+      typeof body.related_employee_id === 'number'
+        ? body.related_employee_id
+        : ctx.role_group === 'EMPLOYEE'
+          ? ctx.employee_id
+          : null;
+    if (ctx.role_group === 'EMPLOYEE' && relatedEmployeeId && Number(relatedEmployeeId) !== Number(ctx.employee_id ?? 0)) {
+      throw httpError(403, 'You can only edit your own employee ticket');
+    }
+
+    const relatedDeploymentId = typeof body.related_deployment_id === 'number' ? body.related_deployment_id : null;
+
+    await pool.query(
+      `
+        UPDATE TCK_T01_tickets
+        SET
+          subject = :subject,
+          description = :description,
+          priority = :priority,
+          related_job_id = :related_job_id,
+          related_deployment_id = :related_deployment_id,
+          related_candidate_id = :related_candidate_id,
+          related_employee_id = :related_employee_id,
+          updated_at = NOW()
+        WHERE ticket_id = :ticket_id
+      `,
+      {
+        ticket_id: ticketId,
+        subject,
+        description: String(body.description ?? '').trim() || null,
+        priority: String(body.priority ?? 'Normal').trim() || 'Normal',
+        related_job_id: relatedJobId,
+        related_deployment_id: relatedDeploymentId,
+        related_candidate_id: relatedCandidateId,
+        related_employee_id: relatedEmployeeId,
+      }
+    );
 
     return { updated: true };
   }

@@ -19,6 +19,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { AdButton, AdCard, AdDropDown, AdGrid, AdNotification, AdTextArea, AdTextBox } from "../../common/ad";
 import { me as getMe, type MeResponse } from "../../common/services/authApi";
 import { ticketsApi, type TicketDetail, type TicketMeta, type TicketRow } from "../../common/services/ticketsApi";
+import { useParams } from "react-router-dom";
 
 type TicketForm = {
   ticket_type_id: number | "";
@@ -79,6 +80,7 @@ function prettyDate(value: string | null | undefined) {
 }
 
 export default function TicketCenterPage() {
+  const params = useParams<{ ticketId?: string }>();
   const [me, setMe] = useState<MeResponse | null>(null);
   const [meta, setMeta] = useState<TicketMeta | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
@@ -89,6 +91,8 @@ export default function TicketCenterPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [commentDraft, setCommentDraft] = useState("");
+  const [editForm, setEditForm] = useState<TicketForm | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
   const [form, setForm] = useState<TicketForm>({
     ticket_type_id: "",
@@ -148,6 +152,16 @@ export default function TicketCenterPage() {
     try {
       const data = await ticketsApi.get(ticketId);
       setDetail(data);
+      setEditForm({
+        ticket_type_id: data.ticket_type_id,
+        subject: data.subject ?? "",
+        description: data.description ?? "",
+        priority: data.priority ?? "Normal",
+        related_job_id: data.related_job_id ? String(data.related_job_id) : "",
+        related_deployment_id: data.related_deployment_id ? String(data.related_deployment_id) : "",
+        related_candidate_id: data.related_candidate_id ? String(data.related_candidate_id) : "",
+        related_employee_id: data.related_employee_id ? String(data.related_employee_id) : "",
+      });
       setCommentDraft("");
     } catch (e) {
       setToast({
@@ -162,6 +176,13 @@ export default function TicketCenterPage() {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStatus]);
+
+  useEffect(() => {
+    const ticketId = params.ticketId ? Number(params.ticketId) : null;
+    if (ticketId && Number.isFinite(ticketId)) {
+      setSelectedTicketId(ticketId);
+    }
+  }, [params.ticketId]);
 
   useEffect(() => {
     if (selectedTicketId) void loadDetail(selectedTicketId);
@@ -227,6 +248,36 @@ export default function TicketCenterPage() {
       });
     } finally {
       setCommentSaving(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!selectedTicketId || !detail || !editForm || !String(editForm.subject).trim()) {
+      setToast({ open: true, message: "Subject is required", severity: "warning" });
+      return;
+    }
+    setEditSaving(true);
+    try {
+      await ticketsApi.update(selectedTicketId, {
+        subject: editForm.subject,
+        description: editForm.description || null,
+        priority: editForm.priority,
+        related_job_id: editForm.related_job_id ? Number(editForm.related_job_id) : null,
+        related_deployment_id: editForm.related_deployment_id ? Number(editForm.related_deployment_id) : null,
+        related_candidate_id: editForm.related_candidate_id ? Number(editForm.related_candidate_id) : null,
+        related_employee_id: editForm.related_employee_id ? Number(editForm.related_employee_id) : null,
+      });
+      setToast({ open: true, message: "Ticket updated", severity: "success" });
+      await refresh();
+      await loadDetail(selectedTicketId);
+    } catch (e) {
+      setToast({
+        open: true,
+        message: (e as any)?.message ?? "Failed to update ticket",
+        severity: "error",
+      });
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -493,6 +544,86 @@ export default function TicketCenterPage() {
                         </Typography>
                       </CardContent>
                     </Card>
+
+                    {editForm ? (
+                      <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                        <CardContent>
+                          <Stack spacing={1.5}>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+                              <Box>
+                                <Typography fontWeight={900}>Edit Ticket</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  Update the subject, description, priority, or linked records.
+                                </Typography>
+                              </Box>
+                              <AdButton onClick={saveEdit} loading={editSaving}>
+                                Save Changes
+                              </AdButton>
+                            </Box>
+
+                            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, gap: 1.25 }}>
+                              <AdDropDown
+                                variant="standard"
+                                label="Priority"
+                                value={editForm.priority}
+                                options={priorityOptions}
+                                onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, priority: String(value) }) : prev)}
+                              />
+                              <AdTextBox
+                                variant="standard"
+                                label="Job ID"
+                                type="number"
+                                size="small"
+                                value={editForm.related_job_id}
+                                onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, related_job_id: String(value) }) : prev)}
+                              />
+                              <AdTextBox
+                                variant="standard"
+                                label="Deployment ID"
+                                type="number"
+                                size="small"
+                                value={editForm.related_deployment_id}
+                                onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, related_deployment_id: String(value) }) : prev)}
+                              />
+                              <AdTextBox
+                                variant="standard"
+                                label="Candidate ID"
+                                type="number"
+                                size="small"
+                                value={editForm.related_candidate_id}
+                                onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, related_candidate_id: String(value) }) : prev)}
+                              />
+                              <AdTextBox
+                                variant="standard"
+                                label="Employee ID"
+                                type="number"
+                                size="small"
+                                value={editForm.related_employee_id}
+                                onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, related_employee_id: String(value) }) : prev)}
+                              />
+                              <Box sx={{ gridColumn: { xs: "1 / -1", md: "1 / -1" } }}>
+                                <AdTextBox
+                                  variant="standard"
+                                  label="Subject"
+                                  required
+                                  size="small"
+                                  value={editForm.subject}
+                                  onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, subject: String(value) }) : prev)}
+                                />
+                              </Box>
+                              <Box sx={{ gridColumn: { xs: "1 / -1", md: "1 / -1" } }}>
+                                <AdTextArea
+                                  label="Description"
+                                  minRows={3}
+                                  value={editForm.description}
+                                  onChange={(value) => setEditForm((prev) => prev ? ({ ...prev, description: String(value) }) : prev)}
+                                />
+                              </Box>
+                            </Box>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ) : null}
 
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 1.25 }}>
                       <Card variant="outlined" sx={{ borderRadius: 3 }}>

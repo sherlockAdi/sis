@@ -110,6 +110,15 @@ export const ticketsApi = {
     attachment_file_path?: string | null;
     attachment_file_name?: string | null;
   }) => apiFetch<{ ticket_id: number; ticket_code: string }>("/tickets", { method: "POST", body: JSON.stringify(input) }),
+  update: (ticketId: number, input: {
+    subject?: string | null;
+    description?: string | null;
+    priority?: string | null;
+    related_job_id?: number | null;
+    related_deployment_id?: number | null;
+    related_candidate_id?: number | null;
+    related_employee_id?: number | null;
+  }) => apiFetch<{ updated: true }>(`/tickets/${ticketId}`, { method: "PUT", body: JSON.stringify(input) }),
   updateStatus: (ticketId: number, input: { ticket_status_code: string; remarks?: string | null }) =>
     apiFetch<{ updated: true }>(`/tickets/${ticketId}/status`, { method: "PUT", body: JSON.stringify(input) }),
   comments: {
