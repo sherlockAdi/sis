@@ -42,7 +42,6 @@ import CandidateProfilePage from "../modules/candidate/CandidateProfilePage";
 import CandidateProfileDocumentsPage from "../modules/candidate/CandidateProfileDocumentsPage";
 import CandidateProfileTradeTestPage from "../modules/candidate/CandidateProfileTradeTestPage";
 import CandidateProfileDeploymentPage from "../modules/candidate/CandidateProfileDeploymentPage";
-import CandidateProfileHelpdeskPage from "../modules/candidate/CandidateProfileHelpdeskPage";
 import CandidateProfileSettingsPage from "../modules/candidate/CandidateProfileSettingsPage";
 import CandidateOnboardingOfferPage from "../modules/candidate/CandidateOnboardingOfferPage";
 import CandidateOnboardingVisaDetailsPage from "../modules/candidate/CandidateOnboardingVisaDetailsPage";
@@ -56,11 +55,11 @@ import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidat
 import PartnerMySubmissionsPage from "../modules/partner/PartnerMySubmissionsPage";
 import PartnerPerformancePage from "../modules/partner/PartnerPerformancePage";
 import PartnerEarningsPage from "../modules/partner/PartnerEarningsPage";
-import PartnerHelpdeskPage from "../modules/partner/PartnerHelpdeskPage";
 import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
 import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
+import TicketCenterPage from "../modules/tickets/TicketCenterPage";
 import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
@@ -269,7 +268,7 @@ export default function AppRoutes() {
             <Route path="candidate/profile/documents" element={<CandidateProfileDocumentsPage />} />
             <Route path="candidate/profile/trade-test" element={<CandidateProfileTradeTestPage />} />
             <Route path="candidate/profile/deployment" element={<CandidateProfileDeploymentPage />} />
-            <Route path="candidate/profile/helpdesk" element={<CandidateProfileHelpdeskPage />} />
+            <Route path="candidate/profile/helpdesk" element={<TicketCenterPage />} />
             <Route path="candidate/profile/settings" element={<CandidateProfileSettingsPage />} />
             <Route path="candidate/onboarding/offer" element={<CandidateOnboardingOfferPage />} />
             <Route path="candidate/onboarding/visa-details" element={<CandidateOnboardingVisaDetailsPage />} />
@@ -292,7 +291,7 @@ export default function AppRoutes() {
             <Route path="partner/my-submissions" element={<PartnerMySubmissionsPage />} />
             <Route path="partner/performance" element={<PartnerPerformancePage />} />
             <Route path="partner/earnings" element={<PartnerEarningsPage />} />
-            <Route path="partner/helpdesk" element={<PartnerHelpdeskPage />} />
+            <Route path="partner/helpdesk" element={<TicketCenterPage />} />
             <Route path="partner/profile" element={<PartnerProfilePage />} />
             <Route
               path="partner/deployment-zone"
@@ -356,9 +355,9 @@ export default function AppRoutes() {
             <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
             <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />
 
-            <Route path="helpdesk" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
-            <Route path="helpdesk/*" element={<PlaceholderPage title="Ticketing & Helpdesk" />} />
-            <Route path="helpdesk/chatbot" element={<PlaceholderPage title="Chatbot" description="SIS Global and employers can interact here. Conversation history will be stored." />} />
+            <Route path="helpdesk" element={<TicketCenterPage />} />
+            <Route path="helpdesk/*" element={<TicketCenterPage />} />
+            <Route path="helpdesk/chatbot" element={<TicketCenterPage />} />
 
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
@@ -373,9 +372,9 @@ export default function AppRoutes() {
             <Route path="employees/attendance" element={<PlaceholderPage title="Employee Attendance" description="Daily attendance and attendance history will live here." />} />
             <Route path="employees/attendance/daily-attendance" element={<PlaceholderPage title="Employee Daily Attendance" description="Time zone, face verification, and attendance punch will live here." />} />
             <Route path="employees/attendance/view-attendance" element={<PlaceholderPage title="Employee Attendance History" description="Attendance history and audit logs will live here." />} />
-            <Route path="employees/helpdesk" element={<PlaceholderPage title="Employee Helpdesk" description="Employee tickets and support will live here." />} />
-            <Route path="employees/helpdesk/open-ticket" element={<PlaceholderPage title="Employee Open Ticket" description="Open a support ticket or view ticket details here." />} />
-            <Route path="employees/helpdesk/ticket-status" element={<PlaceholderPage title="Employee Ticket Status" description="Track employee helpdesk ticket status here." />} />
+            <Route path="employees/helpdesk" element={<TicketCenterPage />} />
+            <Route path="employees/helpdesk/open-ticket" element={<TicketCenterPage />} />
+            <Route path="employees/helpdesk/ticket-status" element={<TicketCenterPage />} />
             <Route path="employees/settings" element={<PlaceholderPage title="Employee Settings" description="Password and account settings will live here." />} />
             <Route path="employees/settings/change-password" element={<PlaceholderPage title="Employee Change Password" description="Update employee password here." />} />
 
