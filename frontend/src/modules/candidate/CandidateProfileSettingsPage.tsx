@@ -363,8 +363,8 @@ export default function CandidateProfileSettingsPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 1, md: 2 } }}>
-      <Stack spacing={2.5}>
+    <Container maxWidth="lg" sx={{ py: { xs: 1, md: 1.5 } }}>
+      <Stack spacing={1.5}>
         <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
@@ -394,9 +394,17 @@ export default function CandidateProfileSettingsPage() {
           </Alert>
         ) : null}
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Stack spacing={2}>
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(148, 163, 184, 0.42)",
+            bgcolor: "#fff",
+            boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Stack spacing={1.5}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
                 <Typography fontWeight={950}>Profile Summary</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -407,14 +415,15 @@ export default function CandidateProfileSettingsPage() {
 
               <Divider />
 
-              <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
-                <TextField label="First Name" value={form.first_name} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} fullWidth />
-                <TextField label="Last Name" value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} fullWidth />
-                <TextField label="Mobile" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} fullWidth />
-                <TextField label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
-                <TextField label="Passport Number" value={form.passport_number} onChange={(e) => setForm((f) => ({ ...f, passport_number: e.target.value }))} fullWidth />
+              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
+                <TextField variant="standard" label="First Name" value={form.first_name} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Last Name" value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Mobile" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Passport Number" value={form.passport_number} onChange={(e) => setForm((f) => ({ ...f, passport_number: e.target.value }))} fullWidth />
                 <Box>
                   <AdSearchableDropDown
+                    variant="standard"
                     label="Country"
                     options={countryOptions}
                     value={form.country_id}
@@ -423,6 +432,7 @@ export default function CandidateProfileSettingsPage() {
                 </Box>
                 <Box>
                   <AdSearchableDropDown
+                    variant="standard"
                     label="State"
                     options={stateOptions}
                     disabled={!form.country_id}
@@ -432,6 +442,7 @@ export default function CandidateProfileSettingsPage() {
                 </Box>
                 <Box>
                   <AdSearchableDropDown
+                    variant="standard"
                     label="City"
                     options={cityOptions}
                     disabled={!form.state_id}
@@ -444,26 +455,35 @@ export default function CandidateProfileSettingsPage() {
           </CardContent>
         </Card>
 
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
-          <Card variant="outlined" sx={{ borderRadius: 4 }}>
-            <CardContent>
-              <Stack spacing={2}>
+        <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 0,
+              borderColor: "rgba(148, 163, 184, 0.42)",
+              bgcolor: "#fff",
+              boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+              <Stack spacing={1.5}>
                 <Typography fontWeight={950}>Personal Details</Typography>
-                <TextField label="Father's Name" value={form.father_name} onChange={(e) => setForm((f) => ({ ...f, father_name: e.target.value }))} fullWidth />
-                <TextField label="Address 1" value={form.address1} onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))} fullWidth multiline minRows={2} />
-                <TextField label="Address 2" value={form.address2} onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))} fullWidth multiline minRows={2} />
-                <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
-                  <TextField label="Pincode" value={form.pincode} onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))} fullWidth />
-                  <TextField label="DOB" type="date" value={form.dob} onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
+                <TextField variant="standard" label="Father's Name" value={form.father_name} onChange={(e) => setForm((f) => ({ ...f, father_name: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Address 1" value={form.address1} onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))} fullWidth multiline minRows={2} />
+                <TextField variant="standard" label="Address 2" value={form.address2} onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))} fullWidth multiline minRows={2} />
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
+                  <TextField variant="standard" label="Pincode" value={form.pincode} onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))} fullWidth />
+                  <TextField variant="standard" label="DOB" type="date" value={form.dob} onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
                 </Box>
-                <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
-                  <TextField select label="Gender" value={form.gender} onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))} fullWidth>
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
+                  <TextField variant="standard" select label="Gender" value={form.gender} onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))} fullWidth>
                     <MenuItem value="">Select</MenuItem>
                     <MenuItem value="Male">Male</MenuItem>
                     <MenuItem value="Female">Female</MenuItem>
                     <MenuItem value="Other">Other</MenuItem>
                   </TextField>
                   <AdSearchableDropDown
+                    variant="standard"
                     label="Education"
                     options={educationOptions}
                     value={form.education}
@@ -471,19 +491,22 @@ export default function CandidateProfileSettingsPage() {
                   />
                 </Box>
                 <AdSearchableDropDownMulti
+                  variant="standard"
                   label="Skills"
                   options={skillOptions}
                   value={form.skills}
                   onChange={(v) => setForm((f) => ({ ...f, skills: v }))}
                 />
-                <TextField label="Experience" value={form.experience} onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))} fullWidth multiline minRows={3} />
+                <TextField variant="standard" label="Experience" value={form.experience} onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))} fullWidth multiline minRows={3} />
                 <AdSearchableDropDown
+                  variant="standard"
                   label="Job Category"
                   options={jobCategoryOptions}
                   value={form.industry_type}
                   onChange={(v) => setForm((f) => ({ ...f, industry_type: String(v) }))}
                 />
                 <AdSearchableDropDownMulti
+                  variant="standard"
                   label="Languages Known"
                   options={languageOptions}
                   value={form.languages_known}
@@ -493,8 +516,16 @@ export default function CandidateProfileSettingsPage() {
             </CardContent>
           </Card>
 
-          <Card variant="outlined" sx={{ borderRadius: 4 }}>
-            <CardContent>
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 0,
+              borderColor: "rgba(148, 163, 184, 0.42)",
+              bgcolor: "#fff",
+              boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
               <Stack spacing={2}>
                 <Typography fontWeight={950}>Documents</Typography>
 
@@ -542,6 +573,7 @@ export default function CandidateProfileSettingsPage() {
                 })}
 
                 <TextField
+                  variant="standard"
                   label="Passport Expiry Date"
                   type="date"
                   value={form.passport_expiry_date}
@@ -550,16 +582,24 @@ export default function CandidateProfileSettingsPage() {
                   InputLabelProps={{ shrink: true }}
                 />
 
-                <TextField label="Aadhaar Number" value={form.aadhar_number} onChange={(e) => setForm((f) => ({ ...f, aadhar_number: e.target.value }))} fullWidth />
-                <TextField label="PAN Number" value={form.pan_number} onChange={(e) => setForm((f) => ({ ...f, pan_number: e.target.value }))} fullWidth />
-                <TextField label="Voter ID Number" value={form.voter_id_number} onChange={(e) => setForm((f) => ({ ...f, voter_id_number: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Aadhaar Number" value={form.aadhar_number} onChange={(e) => setForm((f) => ({ ...f, aadhar_number: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="PAN Number" value={form.pan_number} onChange={(e) => setForm((f) => ({ ...f, pan_number: e.target.value }))} fullWidth />
+                <TextField variant="standard" label="Voter ID Number" value={form.voter_id_number} onChange={(e) => setForm((f) => ({ ...f, voter_id_number: e.target.value }))} fullWidth />
               </Stack>
             </CardContent>
           </Card>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(148, 163, 184, 0.42)",
+            bgcolor: "#fff",
+            boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1.5} alignItems={{ sm: "center" }}>
               <Box>
                 <Typography fontWeight={950}>System Fields</Typography>
