@@ -24,6 +24,29 @@ function runValidation(props: AdTextBoxProps, val: string) {
   return "";
 }
 
+function normalizeNumberInput(val: string) {
+  return val.replace(/-/g, "");
+}
+
+function clampNumberInput(val: string, min?: number, max?: number) {
+  if (!val.trim()) return val;
+  const num = Number(val);
+  if (!Number.isFinite(num)) return val;
+  let next = num;
+  if (typeof min === "number" && next < min) next = min;
+  if (typeof max === "number" && next > max) next = max;
+  return String(next);
+}
+
+function readNumericBound(bound: unknown): number | undefined {
+  if (typeof bound === "number" && Number.isFinite(bound)) return bound;
+  if (typeof bound === "string" && bound.trim()) {
+    const parsed = Number(bound);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
 export default function AdTextBox({
   label,
   name,
@@ -40,6 +63,7 @@ export default function AdTextBox({
   autoFocus,
   helperText,
   error,
+  inputProps,
   clearable,
   showPasswordToggle,
   prefixIcon,
@@ -70,7 +94,13 @@ export default function AdTextBox({
   const resolvedError = useMemo(() => error ?? (touched ? internalError : ""), [error, internalError, touched]);
 
   const handleChange: TextFieldProps["onChange"] = (e) => {
-    const val = e.target.value;
+    const rawVal = e.target.value;
+    const numericMin = readNumericBound(inputProps?.min);
+    const numericMax = readNumericBound(inputProps?.max);
+    const val =
+      type === "number"
+        ? clampNumberInput(normalizeNumberInput(rawVal), numericMin, numericMax)
+        : rawVal;
     if (!isControlled) setInnerValue(val);
     if (!touched) setTouched(true);
 
@@ -84,12 +114,23 @@ export default function AdTextBox({
   };
 
   const handleKeyDown: TextFieldProps["onKeyDown"] = (e) => {
+    if (type === "number" && (e.key === "-" || e.key === "Minus" || e.key === "Subtract")) {
+      e.preventDefault();
+      return;
+    }
     if (e.key === "Enter") onEnter?.();
   };
 
   const handleBlur: TextFieldProps["onBlur"] = (e) => {
     setTouched(true);
-    const val = e.target.value;
+    const numericMin = readNumericBound(inputProps?.min);
+    const numericMax = readNumericBound(inputProps?.max);
+    const val =
+      type === "number"
+        ? clampNumberInput(normalizeNumberInput(e.target.value), numericMin, numericMax)
+        : e.target.value;
+    if (!isControlled && type === "number") setInnerValue(val);
+    if (type === "number" && val !== e.target.value) onChange?.(val);
     setInternalError(runValidation({ required, minLength, maxLength, pattern, type }, val));
     onBlur?.(e);
   };
@@ -107,7 +148,7 @@ export default function AdTextBox({
       type={inputType}
       required={required}
       disabled={disabled}
-      inputProps={{ readOnly, maxLength }}
+      inputProps={{ readOnly, maxLength, ...inputProps }}
       autoFocus={autoFocus}
       size={size}
       variant={variant}

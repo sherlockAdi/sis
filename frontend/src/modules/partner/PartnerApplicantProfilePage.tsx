@@ -8,6 +8,7 @@ import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
 import { partnerPortalApi, type PartnerApplicationRow, type PartnerCandidateDocumentRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
+import { formatJsonList } from "../../common/utils/jsonList";
 
 type PartnerInterviewRow = {
   interview_id: number;
@@ -410,11 +411,11 @@ export default function PartnerApplicantProfilePage() {
                     <ProfileField label="Father's Name" value={candidate.father_name} />
                     <ProfileField label="DOB" value={candidate.dob} />
                     <ProfileField label="Gender" value={candidate.gender} />
-                    <ProfileField label="Skills" value={candidate.skills} />
+                    <ProfileField label="Skills" value={formatJsonList(candidate.skills)} />
                     <ProfileField label="Education" value={candidate.education} />
                     <ProfileField label="Experience" value={candidate.experience} />
                     <ProfileField label="Industry Type" value={candidate.industry_type} />
-                    <ProfileField label="Languages Known" value={candidate.languages_known} />
+                    <ProfileField label="Languages Known" value={formatJsonList(candidate.languages_known)} />
                   </SectionCard>
 
                   <SectionCard title="Verification Files">

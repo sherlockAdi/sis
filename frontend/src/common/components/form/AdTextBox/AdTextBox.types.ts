@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { type TextFieldProps } from "@mui/material";
 
 export type AdTextBoxType = "text" | "password" | "email" | "number";
 
@@ -21,6 +22,7 @@ export interface AdTextBoxProps {
 
   helperText?: string;
   error?: string;
+  inputProps?: TextFieldProps["inputProps"];
 
   clearable?: boolean;
   showPasswordToggle?: boolean;

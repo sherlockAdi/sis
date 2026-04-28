@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Autocomplete, Checkbox, TextField } from "@mui/material";
 import type { AdDropDownOption } from "../AdDropDown/AdDropDown";
 
@@ -28,7 +29,11 @@ export function AdSearchableDropDownMulti({
   variant = "outlined",
   onChange,
 }: AdSearchableDropDownMultiProps) {
-  const selected = options.filter((opt) => value.includes(String(opt.value)));
+  const [selected, setSelected] = useState(() => options.filter((opt) => value.includes(String(opt.value))));
+
+  useEffect(() => {
+    setSelected(options.filter((opt) => value.includes(String(opt.value))));
+  }, [options, value]);
 
   return (
     <Autocomplete
@@ -41,7 +46,11 @@ export function AdSearchableDropDownMulti({
       disableCloseOnSelect
       isOptionEqualToValue={(option, current) => String(option.value) === String(current.value)}
       getOptionLabel={(option) => option.label}
-      onChange={(_, next) => onChange?.(next.map((opt) => String(opt.value)))}
+      onChange={(_, next) => {
+        const nextSelected = next.map((opt) => String(opt.value));
+        setSelected(next);
+        onChange?.(nextSelected);
+      }}
       renderOption={(props, option, { selected }) => (
         <li {...props} key={option.value}>
           <Checkbox checked={selected} sx={{ mr: 1 }} />

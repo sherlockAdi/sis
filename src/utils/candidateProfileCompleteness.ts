@@ -64,6 +64,15 @@ function hasValue(value: unknown): boolean {
   if (value == null) return false;
   if (typeof value === "number") return Number.isFinite(value) && value > 0;
   const s = String(value).trim();
+  if (!s) return false;
+  if (s.startsWith("[") && s.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed.length > 0;
+    } catch {
+      // fall through to plain string handling
+    }
+  }
   return s.length > 0;
 }
 
