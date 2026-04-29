@@ -12,6 +12,7 @@ import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
 type CandidateProfileForm = {
   candidate_id: number | null;
   candidate_code: string;
+  is_verified: boolean;
   first_name: string;
   last_name: string;
   phone: string;
@@ -52,6 +53,7 @@ type CandidateProfileForm = {
 const emptyForm: CandidateProfileForm = {
   candidate_id: null,
   candidate_code: "",
+  is_verified: false,
   first_name: "",
   last_name: "",
   phone: "",
@@ -93,6 +95,7 @@ function mapProfile(row: Awaited<ReturnType<typeof candidateApi.profile.me>>): C
   return {
     candidate_id: row.candidate_id ?? null,
     candidate_code: row.candidate_code ?? "",
+    is_verified: Boolean((row as any).is_verified),
     first_name: row.first_name ?? "",
     last_name: row.last_name ?? "",
     phone: row.phone ?? "",
@@ -391,6 +394,11 @@ export default function CandidateProfileSettingsPage() {
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                   {form.candidate_code ? <Chip size="small" label={`Code: ${form.candidate_code}`} /> : null}
                   <Chip size="small" label={profileComplete ? "Complete" : "Incomplete"} color={profileComplete ? "success" : "warning"} />
+                  <Chip
+                    size="small"
+                    label={form.is_verified ? "Verified" : "Pending Approval"}
+                    color={form.is_verified ? "success" : "warning"}
+                  />
                   <AdButton variant="contained" onClick={save} disabled={saving || loading}>
                     {saving ? "Saving..." : "Save Profile"}
                   </AdButton>
@@ -420,9 +428,8 @@ export default function CandidateProfileSettingsPage() {
                   value={form.gender}
                   onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
                 />
-              </Box>
-
-              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, alignItems: "start" }}>
+                <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
+                <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
                 <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
                 <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
                 <TextField

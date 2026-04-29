@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS REC_T01_candidates (
     languages_known TEXT,
 
     status VARCHAR(50) DEFAULT 'New',
+    is_verified BOOLEAN DEFAULT FALSE,
 
     user_id INT DEFAULT NULL,
 
@@ -235,6 +236,7 @@ BEGIN
       c.profile_photo_file_path,
       c.languages_known,
       c.status,
+      c.is_verified,
       c.user_id,
       c.created_at,
       c.updated_at,
@@ -365,6 +367,21 @@ BEGIN
   ELSE
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sp_rec_candidate_profiles: invalid action';
   END IF;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_rec_candidate_verification $$
+CREATE PROCEDURE sp_rec_candidate_verification(
+  IN p_candidate_id INT,
+  IN p_is_verified BOOLEAN
+)
+BEGIN
+  UPDATE REC_T01_candidates
+  SET
+    is_verified = COALESCE(p_is_verified, is_verified),
+    updated_at = CURRENT_TIMESTAMP
+  WHERE candidate_id = p_candidate_id;
+
+  SELECT ROW_COUNT() AS affected_rows;
 END $$
 
 

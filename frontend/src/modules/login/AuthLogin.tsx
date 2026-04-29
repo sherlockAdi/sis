@@ -129,7 +129,7 @@ export default function AuthLogin() {
       const res = await login(username.trim(), password);
       setAuthToken(res.token, remember);
       await me();
-      const rawTo = (location.state as any)?.from ?? withPortalBase("/dashboard");
+      const rawTo = (location.state as any)?.from ?? getDefaultTarget();
       const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
       navigate(to, { replace: true });
     } catch (e: any) {
@@ -176,7 +176,7 @@ export default function AuthLogin() {
       const res = await verifyLoginOtp(username.trim(), otp.trim());
       setAuthToken(res.token, remember);
       await me();
-      const rawTo = (location.state as any)?.from ?? withPortalBase("/dashboard");
+      const rawTo = (location.state as any)?.from ?? getDefaultTarget();
       const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
       navigate(to, { replace: true });
     } catch (e: any) {
@@ -188,6 +188,7 @@ export default function AuthLogin() {
   };
 
   const showCandidateSignup = portal === "candidate";
+  const getDefaultTarget = () => (portal === "candidate" ? withPortalBase("/candidate/home") : withPortalBase("/dashboard"));
 
   return (
     <Box

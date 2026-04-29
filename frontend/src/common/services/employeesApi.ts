@@ -15,6 +15,7 @@ export type EmployeeRow = {
   date_of_confirmation: string | null;
   candidate_id: number;
   deployment_id: number | null;
+  partner_id: number | null;
   shift_timing: string | null;
   created_at: string;
   updated_at: string;

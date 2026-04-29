@@ -15,6 +15,13 @@ type CandidateProfileRow = CandidateProfileLike & {
   user_id: number | null;
 };
 
+function normalizeCandidate(row: CandidateProfileRow): CandidateProfileRow {
+  return {
+    ...row,
+    is_verified: Boolean((row as any).is_verified),
+  } as CandidateProfileRow;
+}
+
 type CandidateApplicationRow = {
   application_id: number;
   candidate_id: number;
@@ -72,7 +79,7 @@ async function getCandidateProfileForUser(user_id: number, username: string): Pr
       `Candidate profile not found. Link this user to a candidate (user_id=${user_id}, username=${username}) via sp_rec_candidates('SET_USER', ...).`
     );
   }
-  return candidate;
+  return normalizeCandidate(candidate);
 }
 
 async function assertOwnsApplication(application_id: number, candidate_id: number): Promise<void> {
@@ -92,9 +99,22 @@ async function assertCandidateProfileComplete(candidate_id: number): Promise<voi
   );
   const candidate = candidateRows[0] as CandidateProfileRow | undefined;
   if (!candidate) throw httpError(404, 'Candidate profile not found');
-  const missingFields = getCandidateProfileMissingFields(candidate);
+  const missingFields = getCandidateProfileMissingFields(normalizeCandidate(candidate));
   if (missingFields.length) {
     throw httpError(400, `Complete your profile before applying. Missing: ${missingFields.join(', ')}`);
+  }
+}
+
+async function assertCandidateVerified(candidate_id: number): Promise<void> {
+  const candidateRows = await callProc<RowDataPacket & CandidateProfileRow>(
+    `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    { candidate_id }
+  );
+  const candidate = candidateRows[0] as CandidateProfileRow | undefined;
+  if (!candidate) throw httpError(404, 'Candidate profile not found');
+  const normalized = normalizeCandidate(candidate);
+  if (!Boolean((normalized as any).is_verified)) {
+    throw httpError(403, 'Your profile is awaiting admin verification');
   }
 }
 
@@ -153,6 +173,7 @@ export class CandidateApplicationsController extends Controller {
   public async start(@Request() req: any, @Body() body: { job_id: number }): Promise<{ application_id: number }> {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
+    await assertCandidateVerified(candidate_id);
     await assertCandidateProfileComplete(candidate_id);
     const job_id = Number((body as any)?.job_id);
     if (!job_id) throw httpError(400, 'job_id is required');
@@ -176,6 +197,7 @@ export class CandidateApplicationsController extends Controller {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
     await assertOwnsApplication(applicationId, candidate_id);
+    await assertCandidateVerified(candidate_id);
     await assertCandidateProfileComplete(candidate_id);
 
     const consent = Boolean((body as any)?.consent);
@@ -210,6 +232,7 @@ export class CandidateApplicationsController extends Controller {
   public async apply(@Request() req: any, @Body() body: { job_id: number }): Promise<{ application_id: number }> {
     const user = requireUser(req);
     const candidate_id = await getCandidateIdForUser(user.user_id, user.username);
+    await assertCandidateVerified(candidate_id);
     await assertCandidateProfileComplete(candidate_id);
     const job_id = Number((body as any)?.job_id);
     if (!job_id) throw httpError(400, 'job_id is required');

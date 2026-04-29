@@ -48,6 +48,14 @@ type Form = {
   languages_known: string;
 };
 
+type FieldErrors = {
+  phone?: string;
+  email?: string;
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\d{10}$/;
+
 const emptyForm: Form = {
   first_name: "",
   last_name: "",
@@ -83,6 +91,7 @@ export default function PublicRegisterPage() {
   const [cities, setCities] = useState<CityRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [signup, setSignup] = useState<{ candidate_id: number; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null } | null>(null);
 
   useEffect(() => {
@@ -153,9 +162,30 @@ export default function PublicRegisterPage() {
     [form.email, form.first_name, form.last_name, form.passport_number, form.phone],
   );
 
+  const validateField = (name: "phone" | "email", value: string): string | null => {
+    const trimmed = value.trim();
+    if (name === "phone") {
+      if (!trimmed) return "Mobile number is required";
+      if (!PHONE_RE.test(trimmed)) return "Enter a valid 10-digit mobile number";
+      return null;
+    }
+    if (!trimmed) return "Email is required";
+    if (!EMAIL_RE.test(trimmed)) return "Enter a valid email address";
+    return null;
+  };
+
+  const normalizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10);
+
   const submit = async () => {
     setError(null);
     if (!canSubmit || submitting) return;
+    const nextErrors: FieldErrors = {
+      phone: validateField("phone", form.phone),
+      email: validateField("email", form.email),
+    };
+    const hasErrors = Boolean(nextErrors.phone || nextErrors.email);
+    setFieldErrors(nextErrors);
+    if (hasErrors) return;
     setSubmitting(true);
     try {
       const res = await recruitmentApi.public.candidateSignup({
@@ -240,8 +270,35 @@ export default function PublicRegisterPage() {
                 <TextField label="Last Name" value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} fullWidth />
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField label="Mobile" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} fullWidth />
-                <TextField label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
+                <TextField
+                  label="Mobile"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => {
+                    const value = normalizePhone(e.target.value);
+                    setForm((f) => ({ ...f, phone: value }));
+                    setFieldErrors((errs) => ({ ...errs, phone: value && PHONE_RE.test(value) ? undefined : errs.phone }));
+                  }}
+                  onBlur={() => setFieldErrors((errs) => ({ ...errs, phone: validateField("phone", form.phone) ?? undefined }))}
+                  error={Boolean(fieldErrors.phone)}
+                  helperText={fieldErrors.phone}
+                  inputProps={{ inputMode: "numeric", maxLength: 10, pattern: "\\d{10}" }}
+                  fullWidth
+                />
+                <TextField
+                  label="Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setForm((f) => ({ ...f, email: value }));
+                    setFieldErrors((errs) => ({ ...errs, email: value && EMAIL_RE.test(value.trim()) ? undefined : errs.email }));
+                  }}
+                  onBlur={() => setFieldErrors((errs) => ({ ...errs, email: validateField("email", form.email) ?? undefined }))}
+                  error={Boolean(fieldErrors.email)}
+                  helperText={fieldErrors.email}
+                  fullWidth
+                />
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
                 <TextField label="Passport Number" value={form.passport_number} onChange={(e) => setForm((f) => ({ ...f, passport_number: e.target.value }))} fullWidth />

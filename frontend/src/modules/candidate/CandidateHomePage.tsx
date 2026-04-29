@@ -23,9 +23,14 @@ import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useNavigate } from "react-router-dom";
 import { candidateApi } from "../../common/services/candidateApi";
+import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
 import { formatJsonList } from "../../common/utils/jsonList";
 
 type CandidateProfile = Awaited<ReturnType<typeof candidateApi.profile.me>>;
+
+function isVerifiedCandidate(candidate: CandidateProfile | null | undefined): boolean {
+  return Boolean(candidate?.is_verified);
+}
 
 function initials(firstName?: string | null, lastName?: string | null): string {
   const a = String(firstName ?? "").trim().charAt(0);
@@ -199,6 +204,9 @@ export default function CandidateHomePage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [states, setStates] = useState<StateRow[]>([]);
+  const [cities, setCities] = useState<CityRow[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -219,8 +227,59 @@ export default function CandidateHomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setCountries(await listCountries(true));
+      } catch {
+        if (alive) setCountries([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!profile?.country_id) {
+        setStates([]);
+        return;
+      }
+      try {
+        setStates(await listStates(profile.country_id, true));
+      } catch {
+        if (alive) setStates([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [profile?.country_id]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!profile?.state_id) {
+        setCities([]);
+        return;
+      }
+      try {
+        setCities(await listCities(profile.state_id, true));
+      } catch {
+        if (alive) setCities([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [profile?.state_id]);
+
   const missingFields = profile?.missing_fields ?? [];
   const profileComplete = Boolean(profile?.profile_complete) && missingFields.length === 0;
+  const canApply = profileComplete && isVerifiedCandidate(profile);
   const completionScore = profileComplete ? 100 : Math.max(0, 100 - missingFields.length * 3);
   const docCount = useMemo(
     () =>
@@ -235,8 +294,13 @@ export default function CandidateHomePage() {
     [profile],
   );
   const locationText = useMemo(
-    () => [profile?.city_name, profile?.state_name, profile?.country_name].filter(Boolean).join(", ") || "—",
-    [profile?.city_name, profile?.state_name, profile?.country_name],
+    () => {
+      const countryName = countries.find((c) => c.country_id === profile?.country_id)?.country_name ?? profile?.country_name ?? "";
+      const stateName = states.find((s) => s.state_id === profile?.state_id)?.state_name ?? profile?.state_name ?? "";
+      const cityName = cities.find((c) => c.city_id === profile?.city_id)?.city_name ?? profile?.city_name ?? "";
+      return [cityName, stateName, countryName].filter(Boolean).join(", ") || "—";
+    },
+    [cities, countries, profile?.city_id, profile?.country_id, profile?.country_name, profile?.state_id, profile?.state_name, profile?.city_name],
   );
 
   if (loading && !profile) {
@@ -341,6 +405,12 @@ export default function CandidateHomePage() {
                         bgcolor: "#f4f6f9",
                       }}
                     />
+                    <Chip
+                      size="small"
+                      label={isVerifiedCandidate(profile) ? "Verified" : "Pending Approval"}
+                      color={isVerifiedCandidate(profile) ? "success" : "warning"}
+                      sx={{ mt: 0.6, height: 22, fontWeight: 800 }}
+                    />
                   </Box>
                 </Stack>
 
@@ -395,7 +465,13 @@ export default function CandidateHomePage() {
                     </Stack>
                     <Box sx={{ mt: 1.15, pt: 0.9, borderTop: "1px solid rgba(148,163,184,0.34)" }}>
                       <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.35 }}>
-                      Complete: {profileComplete ? "You can apply now" : "Complete profile before applying"}
+                        Complete: {
+                          canApply
+                            ? "You can apply now"
+                            : !profileComplete
+                              ? "Complete profile before applying"
+                              : "Awaiting admin verification"
+                        }
                       </Typography>
                     </Box>
                   </CardContent>
@@ -499,9 +575,9 @@ export default function CandidateHomePage() {
           </CompactCard>
 
           <CompactCard title="Location & Address" sx={{ gridColumn: { md: "span 4" } }}>
-            <FieldRow label="Country" value={profile?.country_name} />
-            <FieldRow label="State" value={profile?.state_name} />
-            <FieldRow label="City" value={profile?.city_name} />
+            <FieldRow label="Country" value={countries.find((c) => c.country_id === profile?.country_id)?.country_name ?? profile?.country_name} />
+            <FieldRow label="State" value={states.find((s) => s.state_id === profile?.state_id)?.state_name ?? profile?.state_name} />
+            <FieldRow label="City" value={cities.find((c) => c.city_id === profile?.city_id)?.city_name ?? profile?.city_name} />
             <FieldRow label="Address 1" value={profile?.address1} />
             <FieldRow label="Address 2" value={profile?.address2} />
             <FieldRow label="Pincode" value={profile?.pincode} />
