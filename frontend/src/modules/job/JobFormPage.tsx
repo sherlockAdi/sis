@@ -216,6 +216,38 @@ function validateJobForm(form: Form): FormErrors {
   return errors;
 }
 
+const FIELD_LABELS: Record<keyof FormErrors, string> = {
+  job_code: "Job Code",
+  job_title: "Job Title",
+  category_id: "Category",
+  contract_duration_id: "Contract Duration",
+  employment_type_id: "Employment Type",
+  work_mode_id: "Work Mode",
+  country_id: "Country",
+  state_id: "State",
+  city_id: "City",
+  vacancy: "Number Of Openings",
+  salary_min: "Salary Min",
+  salary_max: "Salary Max",
+  compensation_text: "Compensation Details",
+  min_education: "Minimum Education",
+  skills: "Skills",
+  min_experience: "Minimum Experience",
+  min_age: "Min Age",
+  max_age: "Max Age",
+  job_description: "Job Description",
+  language_ids: "Language Requirement",
+};
+
+function buildMissingFieldToast(errors: FormErrors): string {
+  const labels = Object.entries(errors)
+    .filter(([, value]) => Boolean(value))
+    .map(([key]) => FIELD_LABELS[key as keyof FormErrors] ?? key)
+    .filter(Boolean);
+  if (!labels.length) return "";
+  return `Please fill required fields: ${labels.join(", ")}`;
+}
+
 export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const params = useParams();
@@ -516,7 +548,10 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     try {
       const nextErrors = validateJobForm(form);
       setFieldErrors(nextErrors);
-      if (Object.keys(nextErrors).length > 0) return;
+      if (Object.keys(nextErrors).length > 0) {
+        setToast({ open: true, message: buildMissingFieldToast(nextErrors), severity: "warning" });
+        return;
+      }
       setSaving(true);
 
       const compensationText = sanitizeRichTextHtml(form.compensation_text).trim();
@@ -590,16 +625,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         animate={false}
         title={mode === "edit" ? "Edit Job" : "Add Job"}
         subtitle={mode === "edit" ? "Update job details" : "Create a new job posting"}
-        headerRight={
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <AdButton variant="text" onClick={() => navigate(-1)}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={save} disabled={saving || loading}>
-              {saving ? "Saving..." : "Save Job"}
-            </AdButton>
-          </Stack>
-        }
+        headerRight={null}
         sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }}
         contentSx={{ p: { xs: 1.5, md: 2 } }}
       >
@@ -990,6 +1016,17 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                   </IconButton>
                 </Box>
               ))}
+            </Stack>
+
+            <Divider />
+
+            <Stack direction="row" justifyContent="flex-end" spacing={1}>
+              <AdButton variant="text" onClick={() => navigate(-1)}>
+                Cancel
+              </AdButton>
+              <AdButton onClick={save} disabled={saving || loading}>
+                {saving ? "Saving..." : "Save Job"}
+              </AdButton>
             </Stack>
           </Stack>
         )}

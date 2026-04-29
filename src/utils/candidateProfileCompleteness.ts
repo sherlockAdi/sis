@@ -27,6 +27,7 @@ export type CandidateProfileLike = {
   voter_id_file_path?: string | null;
   profile_photo_file_path?: string | null;
   languages_known?: string | null;
+  is_verified?: boolean | number | null;
 };
 
 const REQUIRED_FIELDS: Array<{ key: keyof CandidateProfileLike; label: string; kind?: "text" | "number" }> = [

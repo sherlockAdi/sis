@@ -92,8 +92,9 @@ INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, ico
 VALUES
   ('Job Management', 'ADM_REC_JOBS', @m_recruitment, '/recruitment/job-management', 'work', 11, TRUE),
   ('Candidate Management', 'ADM_REC_CAND', @m_recruitment, '/recruitment/candidates', 'people', 12, TRUE),
-  ('Screening & Interviews', 'ADM_REC_SCREEN', @m_recruitment, '/recruitment/screening-interviews', 'video_call', 13, TRUE),
-  ('Applications', 'ADM_REC_APPS', @m_recruitment, '/recruitment/applications', 'receipt_long', 14, TRUE)
+  ('Candidate List', 'ADM_REC_CAND_LIST', @m_recruitment, '/recruitment/candidates', 'people', 13, TRUE),
+  ('Screening & Interviews', 'ADM_REC_SCREEN', @m_recruitment, '/recruitment/screening-interviews', 'video_call', 14, TRUE),
+  ('Applications', 'ADM_REC_APPS', @m_recruitment, '/recruitment/applications', 'receipt_long', 15, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

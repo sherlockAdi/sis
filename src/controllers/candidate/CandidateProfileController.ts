@@ -55,6 +55,13 @@ type CandidateProfileResponse = CandidateProfileRow & {
   missing_fields: string[];
 };
 
+function normalizeCandidate(row: CandidateProfileRow): CandidateProfileRow {
+  return {
+    ...row,
+    is_verified: Boolean(row.is_verified),
+  } as CandidateProfileRow;
+}
+
 function requireUser(req: any): JwtPayload {
   const user = (req as any).user as JwtPayload | undefined;
   if (!user?.user_id) throw httpError(401, 'Unauthorized');
@@ -114,7 +121,7 @@ export class CandidateProfileController extends Controller {
   @Security('jwt')
   public async me(@Request() req: any): Promise<CandidateProfileResponse> {
     const user = requireUser(req);
-    const candidate = await getCandidateForUser(user.user_id);
+    const candidate = normalizeCandidate(await getCandidateForUser(user.user_id));
     const missing_fields = getCandidateProfileMissingFields(candidate);
     return {
       ...candidate,

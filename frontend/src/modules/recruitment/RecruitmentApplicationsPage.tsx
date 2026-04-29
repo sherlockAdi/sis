@@ -524,6 +524,7 @@ export default function RecruitmentApplicationsPage() {
                   <ProfileField label="Candidate Code" value={candidateProfile.candidate_code} />
                   <ProfileField label="Mobile" value={candidateProfile.phone} />
                   <ProfileField label="Email" value={candidateProfile.email} />
+                  <ProfileField label="Verified" value={candidateProfile.is_verified ? "Yes" : "No"} />
                   <ProfileField label="Passport Number" value={candidateProfile.passport_number} />
                   <ProfileField label="Status" value={candidateProfile.status} />
                 </Box>

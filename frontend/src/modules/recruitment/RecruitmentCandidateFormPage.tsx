@@ -8,6 +8,7 @@ import {
   AdAlertBox,
   AdButton,
   AdCard,
+  AdCheckBox,
   AdDatePicker,
   AdNotification,
   AdSearchableDropDown,
@@ -29,6 +30,7 @@ type Form = {
   state_id: string;
   city_id: string;
   status: string;
+  is_verified: boolean;
   father_name: string;
   address1: string;
   address2: string;
@@ -70,6 +72,7 @@ const emptyForm: Form = {
   state_id: "",
   city_id: "",
   status: "New",
+  is_verified: false,
   father_name: "",
   address1: "",
   address2: "",
@@ -127,6 +130,7 @@ function mapCandidateForm(candidate: CandidateRow): Form {
     state_id: candidate.state_id ? String(candidate.state_id) : "",
     city_id: candidate.city_id ? String(candidate.city_id) : "",
     status: candidate.status ?? "New",
+    is_verified: Boolean(candidate.is_verified),
     father_name: candidate.father_name ?? "",
     address1: candidate.address1 ?? "",
     address2: candidate.address2 ?? "",
@@ -243,11 +247,11 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
   );
   const statusOptions = useMemo(
     () => [
-      { label: "New", value: "New" },
-      { label: "Active", value: "Active" },
-      { label: "Inactive", value: "Inactive" },
-    ],
-    [],
+    { label: "New", value: "New" },
+    { label: "Active", value: "Active" },
+    { label: "Inactive", value: "Inactive" },
+  ],
+  [],
   );
   const genderOptions = useMemo(
     () => [
@@ -320,6 +324,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
     state_id: form.state_id ? Number(form.state_id) : null,
     city_id: form.city_id ? Number(form.city_id) : null,
     status: form.status,
+    is_verified: form.is_verified,
     father_name: toNull(form.father_name),
     address1: toNull(form.address1),
     address2: toNull(form.address2),
@@ -490,6 +495,11 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                   options={statusOptions}
                   value={form.status}
                   onChange={(v) => setForm((f) => ({ ...f, status: String(v) || "New" }))}
+                />
+                <AdCheckBox
+                  label="Verified"
+                  checked={form.is_verified}
+                  onChange={(checked) => setForm((f) => ({ ...f, is_verified: checked }))}
                 />
                 <AdTextBox
                   label="Passport Number"

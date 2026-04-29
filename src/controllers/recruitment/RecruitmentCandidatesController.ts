@@ -43,10 +43,18 @@ type CandidateRow = {
   profile_photo_file_path?: string | null;
   languages_known?: string | null;
   status: string | null;
+  is_verified: boolean | 0 | 1 | null;
   created_at: string;
   updated_at?: string | null;
   deleted_at?: string | null;
 };
+
+function normalizeCandidateRow(row: CandidateRow): CandidateRow {
+  return {
+    ...row,
+    is_verified: Boolean(row.is_verified),
+  };
+}
 
 type CandidateProfileBody = {
   father_name?: string | null;
@@ -70,6 +78,7 @@ type CandidateProfileBody = {
   voter_id_file_path?: string | null;
   profile_photo_file_path?: string | null;
   languages_known?: string | null;
+  is_verified?: boolean | 0 | 1 | null;
 };
 
 function toNull(value: string | null | undefined): string | null {
@@ -117,6 +126,13 @@ async function linkCandidateUser(candidate_id: number, user_id: number): Promise
   }
 }
 
+async function setCandidateVerified(candidate_id: number, is_verified: boolean): Promise<void> {
+  await callProc<RowDataPacket & { affected_rows: number }>(
+    `CALL sp_rec_candidate_verification(:candidate_id, :is_verified)`,
+    { candidate_id, is_verified }
+  );
+}
+
 function randomPassword(len = 10): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#%*';
   let out = '';
@@ -132,9 +148,10 @@ export class RecruitmentCandidatesController extends Controller {
   @Get()
   @Security('jwt')
   public async list(): Promise<CandidateRow[]> {
-    return callProc<RowDataPacket & CandidateRow>(
+    const rows = await callProc<RowDataPacket & CandidateRow>(
       `CALL sp_rec_candidates('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
     );
+    return rows.map((row) => normalizeCandidateRow(row));
   }
 
   @Get('{candidateId}')
@@ -144,7 +161,7 @@ export class RecruitmentCandidatesController extends Controller {
       `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { candidate_id: candidateId }
     );
-    const candidate = rows[0];
+    const candidate = rows[0] ? normalizeCandidateRow(rows[0]) : undefined;
     if (!candidate) throw httpError(404, 'Candidate not found');
     return candidate;
   }
@@ -164,6 +181,7 @@ export class RecruitmentCandidatesController extends Controller {
       city_id?: number | null;
       status?: string | null;
       user_id?: number | null;
+      is_verified?: boolean | null;
     }
   ): Promise<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
     const existingUser = body.email ? await findExistingUserByUsernameOrEmail('', body.email) : null;
@@ -188,13 +206,16 @@ export class RecruitmentCandidatesController extends Controller {
     if (!candidate_id) throw httpError(500, 'Failed to create candidate');
 
     await upsertCandidateProfile(candidate_id, body);
+    if (typeof body.is_verified === 'boolean') {
+      await setCandidateVerified(candidate_id, body.is_verified);
+    }
 
     // Load candidate_code/email
     const candidateRows = await callProc<RowDataPacket & CandidateRow>(
       `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { candidate_id }
     );
-    const candidate = candidateRows[0];
+    const candidate = candidateRows[0] ? normalizeCandidateRow(candidateRows[0]) : undefined;
     if (!candidate) throw httpError(500, 'Candidate created but not found');
     const username = candidate.candidate_code ?? `cand${candidate_id}`;
 
@@ -312,6 +333,9 @@ export class RecruitmentCandidatesController extends Controller {
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Candidate not found');
     await upsertCandidateProfile(candidateId, body);
+    if (typeof body.is_verified === 'boolean') {
+      await setCandidateVerified(candidateId, body.is_verified);
+    }
     return { updated: true };
   }
 

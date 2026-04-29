@@ -28,6 +28,10 @@ import { formatJsonList } from "../../common/utils/jsonList";
 
 type CandidateProfile = Awaited<ReturnType<typeof candidateApi.profile.me>>;
 
+function isVerifiedCandidate(candidate: CandidateProfile | null | undefined): boolean {
+  return Boolean(candidate?.is_verified);
+}
+
 function initials(firstName?: string | null, lastName?: string | null): string {
   const a = String(firstName ?? "").trim().charAt(0);
   const b = String(lastName ?? "").trim().charAt(0);
@@ -275,6 +279,7 @@ export default function CandidateHomePage() {
 
   const missingFields = profile?.missing_fields ?? [];
   const profileComplete = Boolean(profile?.profile_complete) && missingFields.length === 0;
+  const canApply = profileComplete && isVerifiedCandidate(profile);
   const completionScore = profileComplete ? 100 : Math.max(0, 100 - missingFields.length * 3);
   const docCount = useMemo(
     () =>
@@ -400,6 +405,12 @@ export default function CandidateHomePage() {
                         bgcolor: "#f4f6f9",
                       }}
                     />
+                    <Chip
+                      size="small"
+                      label={isVerifiedCandidate(profile) ? "Verified" : "Pending Approval"}
+                      color={isVerifiedCandidate(profile) ? "success" : "warning"}
+                      sx={{ mt: 0.6, height: 22, fontWeight: 800 }}
+                    />
                   </Box>
                 </Stack>
 
@@ -454,7 +465,13 @@ export default function CandidateHomePage() {
                     </Stack>
                     <Box sx={{ mt: 1.15, pt: 0.9, borderTop: "1px solid rgba(148,163,184,0.34)" }}>
                       <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.35 }}>
-                      Complete: {profileComplete ? "You can apply now" : "Complete profile before applying"}
+                        Complete: {
+                          canApply
+                            ? "You can apply now"
+                            : !profileComplete
+                              ? "Complete profile before applying"
+                              : "Awaiting admin verification"
+                        }
                       </Typography>
                     </Box>
                   </CardContent>

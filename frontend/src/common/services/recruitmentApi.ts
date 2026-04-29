@@ -36,6 +36,7 @@ export type CandidateRow = {
   profile_photo_file_path?: string | null;
   languages_known?: string | null;
   status: string | null;
+  is_verified?: boolean | 0 | 1 | null;
   user_id: number | null;
   created_at: string;
   updated_at?: string | null;
@@ -109,6 +110,7 @@ export const recruitmentApi = {
       profile_photo_file_path?: string | null;
       languages_known?: string | null;
       status?: string | null;
+      is_verified?: boolean | null;
     }) =>
       apiFetch<{ candidate_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }>(
         `/recruitment/candidates`,

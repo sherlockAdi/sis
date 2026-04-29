@@ -52,6 +52,10 @@ function latestDocs(rows: CandidateApplicationDocRow[]): CandidateApplicationDoc
   return Array.from(byType.values());
 }
 
+function isVerifiedCandidate(profile: Awaited<ReturnType<typeof candidateApi.profile.me>> | null): boolean {
+  return Boolean(profile?.is_verified);
+}
+
 export default function CandidateJobApplyPage() {
   const navigate = useNavigate();
   const { jobId } = useParams();
@@ -73,6 +77,7 @@ export default function CandidateJobApplyPage() {
   const [profile, setProfile] = useState<Awaited<ReturnType<typeof candidateApi.profile.me>> | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const profileComplete = Boolean(profile?.profile_complete) && (profile?.missing_fields?.length ?? 0) === 0;
+  const candidateVerified = isVerifiedCandidate(profile);
 
   const [docs, setDocs] = useState<CandidateApplicationDocRow[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -110,6 +115,7 @@ export default function CandidateJobApplyPage() {
 
   const applyDisabledReason = useMemo(() => {
     if (profileLoading) return "Loading profile...";
+    if (!candidateVerified) return "Your profile is awaiting admin verification.";
     if (!profileComplete) {
       const missing = profile?.missing_fields?.length ? profile.missing_fields.join(", ") : "profile details and uploads";
       return `Complete your profile before applying. Missing: ${missing}.`;
@@ -120,7 +126,7 @@ export default function CandidateJobApplyPage() {
     if (!consent) return "Consent is required.";
     if (String(application?.status ?? "").toLowerCase() === "applied") return "You already applied for this job.";
     return null;
-  }, [application?.status, applicationId, consent, docsLoading, missingDocNames, profile, profileComplete, profileLoading]);
+  }, [application?.status, applicationId, candidateVerified, consent, docsLoading, missingDocNames, profile, profileComplete, profileLoading]);
 
   const loadJob = async () => {
     if (!Number.isFinite(id) || id <= 0) return;
@@ -170,6 +176,22 @@ export default function CandidateJobApplyPage() {
 
   const start = async () => {
     if (!Number.isFinite(id) || id <= 0) return;
+    if (profileLoading) {
+      setToast({ open: true, message: "Loading profile...", severity: "info" });
+      return;
+    }
+    if (!profileComplete) {
+      setToast({
+        open: true,
+        message: `Complete your profile before applying. Missing: ${profile?.missing_fields?.join(", ") || "profile details and uploads"}.`,
+        severity: "warning",
+      });
+      return;
+    }
+    if (!candidateVerified) {
+      setToast({ open: true, message: "Admin doesn't verify your profile yet.", severity: "warning" });
+      return;
+    }
     setAppLoading(true);
     try {
       const res = await candidateApi.applications.start(id);
@@ -284,6 +306,8 @@ export default function CandidateJobApplyPage() {
             Complete your profile before applying. Missing: {profile?.missing_fields?.join(", ") || "profile details and uploads"}.
           </Alert>
         ) : null}
+
+        {!candidateVerified ? <Alert severity="info">Your profile is awaiting admin verification. You can review the job, but applying is disabled until approval.</Alert> : null}
 
         {!applicationId && job ? (
           <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.86)" }} contentSx={{ p: 2 }}>
@@ -412,7 +436,11 @@ export default function CandidateJobApplyPage() {
             </Box>
 
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <AdButton variant="outlined" disabled={appLoading || !Number.isFinite(id) || id <= 0 || !profileComplete} onClick={start}>
+              <AdButton
+                variant="outlined"
+                disabled={appLoading || !Number.isFinite(id) || id <= 0}
+                onClick={start}
+              >
                 {applicationId ? "Refresh" : appLoading ? "Starting..." : "Start Application"}
               </AdButton>
               <AdButton variant="contained" disabled={Boolean(applyDisabledReason) || submitting} onClick={submit}>

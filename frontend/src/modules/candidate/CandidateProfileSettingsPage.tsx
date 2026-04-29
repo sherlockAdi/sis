@@ -12,6 +12,7 @@ import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
 type CandidateProfileForm = {
   candidate_id: number | null;
   candidate_code: string;
+  is_verified: boolean;
   first_name: string;
   last_name: string;
   phone: string;
@@ -52,6 +53,7 @@ type CandidateProfileForm = {
 const emptyForm: CandidateProfileForm = {
   candidate_id: null,
   candidate_code: "",
+  is_verified: false,
   first_name: "",
   last_name: "",
   phone: "",
@@ -93,6 +95,7 @@ function mapProfile(row: Awaited<ReturnType<typeof candidateApi.profile.me>>): C
   return {
     candidate_id: row.candidate_id ?? null,
     candidate_code: row.candidate_code ?? "",
+    is_verified: Boolean((row as any).is_verified),
     first_name: row.first_name ?? "",
     last_name: row.last_name ?? "",
     phone: row.phone ?? "",
@@ -391,6 +394,11 @@ export default function CandidateProfileSettingsPage() {
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                   {form.candidate_code ? <Chip size="small" label={`Code: ${form.candidate_code}`} /> : null}
                   <Chip size="small" label={profileComplete ? "Complete" : "Incomplete"} color={profileComplete ? "success" : "warning"} />
+                  <Chip
+                    size="small"
+                    label={form.is_verified ? "Verified" : "Pending Approval"}
+                    color={form.is_verified ? "success" : "warning"}
+                  />
                   <AdButton variant="contained" onClick={save} disabled={saving || loading}>
                     {saving ? "Saving..." : "Save Profile"}
                   </AdButton>

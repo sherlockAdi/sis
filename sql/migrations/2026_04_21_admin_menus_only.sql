@@ -74,7 +74,8 @@ VALUES
   ('Employer List', 'ADM_EMP_LIST', @m_employer, '/partners/list', 'people', 21, TRUE),
   ('Create Employer', 'ADM_EMP_CREATE', @m_employer, '/partners/new', 'add', 22, TRUE),
   ('View Jobs', 'ADM_EMP_JOBS', @m_employer, '/jobs', 'work', 23, TRUE),
-  ('Applied Candidate', 'ADM_EMP_APPS', @m_employer, '/recruitment/applications', 'receipt_long', 24, TRUE)
+  ('Applied Candidate', 'ADM_EMP_APPS', @m_employer, '/recruitment/applications', 'receipt_long', 24, TRUE),
+  ('Candidate List', 'ADM_EMP_CAND_LIST', @m_employer, '/recruitment/candidates', 'people', 25, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),
