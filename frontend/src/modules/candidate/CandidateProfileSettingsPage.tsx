@@ -420,9 +420,8 @@ export default function CandidateProfileSettingsPage() {
                   value={form.gender}
                   onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
                 />
-              </Box>
-
-              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, alignItems: "start" }}>
+                <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
+                <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
                 <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
                 <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
                 <TextField

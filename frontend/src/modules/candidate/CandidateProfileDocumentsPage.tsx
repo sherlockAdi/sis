@@ -3,11 +3,23 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useEffect, useState } from "react";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
-import { candidateApi, type CandidateDocumentRow } from "../../common/services/candidateApi";
+import { candidateApi, type CandidateApplicationDocRow } from "../../common/services/candidateApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 
+type UnifiedDocumentRow = {
+  id: string;
+  source: string;
+  scope: string;
+  job_title: string;
+  application_id: number | null;
+  document_name: string;
+  uploaded_at: string | null;
+  file_path: string | null;
+  status: string;
+};
+
 export default function CandidateProfileDocumentsPage() {
-  const [rows, setRows] = useState<CandidateDocumentRow[]>([]);
+  const [rows, setRows] = useState<UnifiedDocumentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
@@ -21,7 +33,55 @@ export default function CandidateProfileDocumentsPage() {
       setLoading(true);
       setError(null);
       try {
-        setRows(await candidateApi.documents.list());
+        const [profileDocs, applicationDocs, deployments] = await Promise.all([
+          candidateApi.documents.list(),
+          candidateApi.applications.list().then(async (apps) => {
+            const docs: Array<CandidateApplicationDocRow & { application_id: number; job_title: string; status?: string | null }> = [];
+            for (const app of apps) {
+              try {
+                const rows = await candidateApi.applications.documents(app.application_id);
+                docs.push(
+                  ...rows.map((doc) => ({
+                    ...doc,
+                    application_id: app.application_id,
+                    job_title: app.job_title,
+                    status: app.status ?? null,
+                  })),
+                );
+              } catch {
+                // ignore document load errors for a single application
+              }
+            }
+            return docs;
+          }),
+        ]);
+
+        const unified: UnifiedDocumentRow[] = [
+          ...profileDocs.map((r) => ({
+            id: `profile-${r.id}`,
+            source: "Profile",
+            scope: "Profile",
+            job_title: "Profile Upload",
+            application_id: r.application_id,
+            document_name: r.document_name ?? "Document",
+            uploaded_at: r.uploaded_at,
+            file_path: r.file_path,
+            status: r.file_path ? "Uploaded" : "Missing",
+          })),
+          ...applicationDocs.map((r) => ({
+            id: `app-${r.application_id}-${r.document_type_id ?? r.job_specific_document_id ?? r.document_name}`,
+            source: "Job",
+            scope: r.application_id ? `Application #${r.application_id}` : "Job",
+            job_title: r.job_title,
+            application_id: r.application_id,
+            document_name: r.document_name,
+            uploaded_at: r.uploaded_at,
+            file_path: r.file_path,
+            status: r.file_path ? "Uploaded" : Number(r.job_is_required) ? "Pending" : "Optional",
+          })),
+        ];
+
+        setRows(unified);
       } catch (e: any) {
         setError((e as ApiError)?.message ?? "Failed to load documents");
       } finally {
@@ -60,7 +120,11 @@ export default function CandidateProfileDocumentsPage() {
             <AdGrid
               rows={rows.map((r) => ({ ...r, id: r.id }))}
               columns={[
+                { field: "source", headerName: "Source", width: 110 },
+                { field: "scope", headerName: "Scope", flex: 1, minWidth: 160 },
+                { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
                 { field: "document_name", headerName: "Document", flex: 1, minWidth: 220 },
+                { field: "status", headerName: "Status", width: 120 },
                 { field: "uploaded_at", headerName: "Uploaded", width: 180 },
                 {
                   field: "__actions",
@@ -69,7 +133,7 @@ export default function CandidateProfileDocumentsPage() {
                   sortable: false,
                   filterable: false,
                   renderCell: (p: any) => {
-                    const r = p.row as CandidateDocumentRow;
+                    const r = p.row as UnifiedDocumentRow;
                     if (!r.file_path) return "—";
                     return (
                       <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => openDoc(String(r.file_path))}>

@@ -420,6 +420,13 @@ export default function CandidateJobApplyPage() {
               </AdButton>
             </Stack>
 
+            <AdCheckBox
+              label="I confirm the above information and documents are correct, and I consent to submit this application."
+              checked={consent}
+              onChange={setConsent}
+              disabled={!applicationId || docsLoading}
+            />
+
             {applyDisabledReason && applicationId ? <Alert severity="info">{applyDisabledReason}</Alert> : null}
           </Stack>
         </AdCard>
@@ -489,17 +496,8 @@ export default function CandidateJobApplyPage() {
                   </Box>
                 ))}
               </Stack>
-
-              <Divider />
-
-              <AdCheckBox
-                label="I confirm the above information and documents are correct, and I consent to submit this application."
-                checked={consent}
-                onChange={setConsent}
-                disabled={!applicationId || docsLoading}
-              />
-            </Stack>
-          </AdCard>
+          </Stack>
+        </AdCard>
         ) : null}
       </Stack>
     </Container>
