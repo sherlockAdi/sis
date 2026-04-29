@@ -23,6 +23,7 @@ import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useNavigate } from "react-router-dom";
 import { candidateApi } from "../../common/services/candidateApi";
+import { formatJsonList } from "../../common/utils/jsonList";
 
 type CandidateProfile = Awaited<ReturnType<typeof candidateApi.profile.me>>;
 
@@ -510,11 +511,11 @@ export default function CandidateHomePage() {
             <FieldRow label="Father's Name" value={profile?.father_name} />
             <FieldRow label="DOB" value={profile?.dob} />
             <FieldRow label="Gender" value={profile?.gender} />
-            <FieldRow label="Skills" value={profile?.skills} />
+            <FieldRow label="Skills" value={formatJsonList(profile?.skills)} />
             <FieldRow label="Education" value={profile?.education} />
             <FieldRow label="Experience" value={profile?.experience} />
             <FieldRow label="Industry Type" value={profile?.industry_type} />
-            <FieldRow label="Languages Known" value={profile?.languages_known} />
+            <FieldRow label="Languages Known" value={formatJsonList(profile?.languages_known)} />
           </CompactCard>
         </Box>
 

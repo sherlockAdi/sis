@@ -88,6 +88,8 @@ import PartnerBenefitsPage from "../modules/public/pages/partner/PartnerBenefits
 import PartnerHowItWorksPage from "../modules/public/pages/partner/PartnerHowItWorksPage";
 import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/PartnerSubmitCandidatesPage";
 import PartnerFormPage from "../modules/partners/PartnerFormPage";
+import AssociatePartnersPage from "../modules/associate-partners/AssociatePartnersPage";
+import AssociatePartnerFormPage from "../modules/associate-partners/AssociatePartnerFormPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
 import { useAuth } from "../common/auth/AuthContext";
 
@@ -397,6 +399,12 @@ export default function AppRoutes() {
             <Route path="partners/new" element={<PartnerFormPage mode="create" />} />
             <Route path="partners/:partnerId" element={<PartnerFormPage mode="edit" />} />
             <Route path="partners/*" element={<PartnersPage />} />
+
+            <Route path="associate-partners" element={<AssociatePartnersPage />} />
+            <Route path="associate-partners/list" element={<AssociatePartnersPage />} />
+            <Route path="associate-partners/new" element={<AssociatePartnerFormPage mode="create" />} />
+            <Route path="associate-partners/:associatePartnerId" element={<AssociatePartnerFormPage mode="edit" />} />
+            <Route path="associate-partners/*" element={<AssociatePartnersPage />} />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
             <Route path="reports/*" element={<PlaceholderPage title="Reports & Analytics" />} />

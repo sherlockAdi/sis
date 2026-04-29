@@ -20,6 +20,7 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { AdAlertBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { employeesApi, type EmployeeDetailRow } from "../../common/services/employeesApi";
+import { formatJsonList } from "../../common/utils/jsonList";
 
 function initials(name?: string | null): string {
   return String(name ?? "")
@@ -475,11 +476,11 @@ export default function EmployeeProfilePage() {
               <FieldRow label="Last Name" value={employee.last_name} />
               <FieldRow label="DOB" value={formatDate(employee.dob)} />
               <FieldRow label="Gender" value={employee.gender} />
-              <FieldRow label="Skills" value={employee.skills} />
+              <FieldRow label="Skills" value={formatJsonList(employee.skills)} />
               <FieldRow label="Education" value={employee.education} />
               <FieldRow label="Experience" value={employee.experience} />
               <FieldRow label="Industry Type" value={employee.industry_type} />
-              <FieldRow label="Languages Known" value={employee.languages_known} />
+              <FieldRow label="Languages Known" value={formatJsonList(employee.languages_known)} />
             </CompactCard>
 
             {/* <CompactCard title="Address & Documents" sx={{ gridColumn: { md: "span 4" } }}>

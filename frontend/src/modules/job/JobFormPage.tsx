@@ -65,6 +65,32 @@ type Form = {
   job_specific_documents: Array<{ id?: number; document_name: string; is_required: boolean }>;
 };
 
+type FormErrors = Partial<
+  Record<
+    | "job_code"
+    | "job_title"
+    | "category_id"
+    | "contract_duration_id"
+    | "employment_type_id"
+    | "work_mode_id"
+    | "country_id"
+    | "state_id"
+    | "city_id"
+    | "vacancy"
+    | "salary_min"
+    | "salary_max"
+    | "compensation_text"
+    | "min_education"
+    | "skills"
+    | "min_experience"
+    | "min_age"
+    | "max_age"
+    | "job_description"
+    | "language_ids",
+    string
+  >
+>;
+
 function parseMultiValue(value: string | null | undefined): string[] {
   const raw = String(value ?? "").trim();
   if (!raw) return [];
@@ -89,6 +115,107 @@ function lines(s: string): string[] {
     .filter(Boolean);
 }
 
+function positiveIntegerError(label: string, rawValue: string): string {
+  const value = Number(rawValue);
+  if (!rawValue.trim()) return `${label} is required`;
+  if (!Number.isFinite(value)) return `${label} must be a number`;
+  if (value <= 0) return `${label} must be greater than 0`;
+  return "";
+}
+
+function extractValidationMessage(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      const msg = extractValidationMessage(item);
+      if (msg) return msg;
+    }
+    return "";
+  }
+  if (!detail || typeof detail !== "object") return "";
+
+  const obj = detail as Record<string, unknown>;
+  for (const candidate of [obj.message, obj.msg, obj.error, obj.detail]) {
+    const msg = extractValidationMessage(candidate);
+    if (msg) return msg;
+  }
+  return "";
+}
+
+function mapApiValidationErrors(details: unknown): FormErrors {
+  if (!details || typeof details !== "object") return {};
+
+  const source = details as Record<string, unknown>;
+  const fields: Array<keyof FormErrors> = [
+    "job_code",
+    "job_title",
+    "category_id",
+    "contract_duration_id",
+    "employment_type_id",
+    "work_mode_id",
+    "country_id",
+    "state_id",
+    "city_id",
+    "vacancy",
+    "salary_min",
+    "salary_max",
+    "compensation_text",
+    "min_education",
+    "skills",
+    "min_experience",
+    "min_age",
+    "max_age",
+    "job_description",
+    "language_ids",
+  ];
+
+  const errors: FormErrors = {};
+  for (const field of fields) {
+    const direct = source[field as string];
+    const nestedKey = Object.keys(source).find((key) => key === field || key.endsWith(`.${String(field)}`) || key.endsWith(`[${String(field)}]`));
+    const msg = extractValidationMessage(direct ?? (nestedKey ? source[nestedKey] : undefined));
+    if (msg) errors[field] = msg;
+  }
+  return errors;
+}
+
+function validateJobForm(form: Form): FormErrors {
+  const errors: FormErrors = {};
+
+  if (!form.job_code.trim()) errors.job_code = "Job code is required";
+  if (!form.job_title.trim()) errors.job_title = "Job title is required";
+  if (!form.category_id) errors.category_id = "Category is required";
+  if (!form.contract_duration_id) errors.contract_duration_id = "Contract duration is required";
+  if (!form.employment_type_id) errors.employment_type_id = "Employment type is required";
+  if (!form.work_mode_id) errors.work_mode_id = "Work mode is required";
+  if (!form.country_id) errors.country_id = "Country is required";
+  if (!form.state_id) errors.state_id = "State is required";
+  if (!form.city_id) errors.city_id = "City is required";
+  if (!richTextHasContent(form.compensation_text)) errors.compensation_text = "Compensation details are required";
+  if (!richTextHasContent(form.job_description)) errors.job_description = "Job Description is required";
+  if (form.min_education.length === 0) errors.min_education = "Minimum education is required";
+  if (form.skills.length === 0) errors.skills = "Skills are required";
+  if (!form.min_experience.trim()) errors.min_experience = "Minimum experience is required";
+  if (form.language_ids.length === 0) errors.language_ids = "At least one language is required";
+
+  const vacancyError = positiveIntegerError("Number of Openings", form.vacancy);
+  if (vacancyError) errors.vacancy = vacancyError;
+
+  const salaryMinError = positiveIntegerError("Minimum Salary", form.salary_min);
+  if (salaryMinError) errors.salary_min = salaryMinError;
+
+  const salaryMaxError = positiveIntegerError("Maximum Salary", form.salary_max);
+  if (salaryMaxError) errors.salary_max = salaryMaxError;
+
+  const minAgeError = positiveIntegerError("Minimum Age", form.min_age);
+  if (minAgeError) errors.min_age = minAgeError;
+
+  const maxAgeError = positiveIntegerError("Maximum Age", form.max_age);
+  if (maxAgeError) errors.max_age = maxAgeError;
+
+  return errors;
+}
+
 export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const params = useParams();
@@ -100,6 +227,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(mode === "edit");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -386,22 +514,9 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
 
   const save = async () => {
     try {
-      if (!form.job_title.trim()) throw new Error("Job title is required");
-      if (!form.job_code.trim()) throw new Error("Job code is required");
-      if (!form.category_id) throw new Error("Category is required");
-      if (!form.contract_duration_id) throw new Error("Contract duration is required");
-      if (!form.employment_type_id) throw new Error("Employment type is required");
-      if (!form.work_mode_id) throw new Error("Work mode is required");
-      if (!form.country_id) throw new Error("Country is required");
-      if (!form.vacancy || Number(form.vacancy) <= 0) throw new Error("Number of openings is required");
-      if (!form.currency_id) throw new Error("Currency is required");
-      if (!form.salary_min || !form.salary_max) throw new Error("Salary range is required");
-      if (!richTextHasContent(form.compensation_text)) throw new Error("Compensation details are required");
-      if (form.min_education.length === 0) throw new Error("Minimum education is required");
-      if (form.skills.length === 0) throw new Error("Skills are required");
-      if (!form.min_experience.trim()) throw new Error("Minimum experience is required");
-      if (!form.min_age || !form.max_age) throw new Error("Age range is required");
-      if (form.language_ids.length === 0) throw new Error("At least one language is required");
+      const nextErrors = validateJobForm(form);
+      setFieldErrors(nextErrors);
+      if (Object.keys(nextErrors).length > 0) return;
       setSaving(true);
 
       const compensationText = sanitizeRichTextHtml(form.compensation_text).trim();
@@ -447,11 +562,19 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       if (mode === "edit" && jobId) await jobsApi.update(jobId, payload);
       else await jobsApi.create(payload);
 
+      setFieldErrors({});
       setToast({ open: true, message: "Saved", severity: "success" });
       const target = isPartner ? "/portal/partner/job-mandates" : "/portal/jobs";
       setTimeout(() => navigate(target), 400);
     } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
+      const apiError = e as ApiError;
+      const validationErrors = apiError?.status === 422 ? mapApiValidationErrors(apiError.details) : {};
+      if (Object.keys(validationErrors).length > 0) {
+        setFieldErrors(validationErrors);
+        return;
+      }
+
+      setToast({ open: true, message: apiError?.message ?? e?.message ?? "Save failed", severity: "error" });
     } finally {
       setSaving(false);
     }
@@ -493,8 +616,24 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
               }}
             >
-              <AdTextBox variant="standard" label="Job Code" required size="small" value={form.job_code} onChange={(v) => setForm((f) => ({ ...f, job_code: v }))} />
-              <AdTextBox variant="standard" label="Job Title" required size="small" value={form.job_title} onChange={(v) => setForm((f) => ({ ...f, job_title: v }))} />
+              <AdTextBox
+                variant="standard"
+                label="Job Code"
+                required
+                size="small"
+                value={form.job_code}
+                error={fieldErrors.job_code}
+                onChange={(v) => setForm((f) => ({ ...f, job_code: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Job Title"
+                required
+                size="small"
+                value={form.job_title}
+                error={fieldErrors.job_title}
+                onChange={(v) => setForm((f) => ({ ...f, job_title: v }))}
+              />
               <AdDropDown
                 variant="standard"
                 label="Status"
@@ -503,12 +642,22 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 onChange={(v) => setForm((f) => ({ ...f, status: v }))}
                 disabled={isPartner}
               />
-              <AdSearchableDropDown variant="standard" label="Category" options={categoryOptions} value={form.category_id} onChange={(v) => setForm((f) => ({ ...f, category_id: v }))} />
+              <AdSearchableDropDown
+                variant="standard"
+                label="Category"
+                options={categoryOptions}
+                value={form.category_id}
+                error={Boolean(fieldErrors.category_id)}
+                helperText={fieldErrors.category_id}
+                onChange={(v) => setForm((f) => ({ ...f, category_id: v }))}
+              />
               <AdSearchableDropDown
                 variant="standard"
                 label="Employment Type"
                 options={employmentTypeOptions}
                 value={form.employment_type_id}
+                error={Boolean(fieldErrors.employment_type_id)}
+                helperText={fieldErrors.employment_type_id}
                 onChange={(v) => setForm((f) => ({ ...f, employment_type_id: v }))}
               />
               <AdSearchableDropDown
@@ -516,6 +665,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 label="Contract Duration"
                 options={durationOptions}
                 value={form.contract_duration_id}
+                error={Boolean(fieldErrors.contract_duration_id)}
+                helperText={fieldErrors.contract_duration_id}
                 onChange={(v) => setForm((f) => ({ ...f, contract_duration_id: v }))}
               />
               <AdSearchableDropDown
@@ -523,6 +674,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 label="Work Mode"
                 options={workModeOptions}
                 value={form.work_mode_id}
+                error={Boolean(fieldErrors.work_mode_id)}
+                helperText={fieldErrors.work_mode_id}
                 onChange={(v) => setForm((f) => ({ ...f, work_mode_id: v }))}
               />
               {!isPartner ? (
@@ -531,6 +684,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                   label="Employer (optional)"
                   options={partnerOptions}
                   value={form.partner_id}
+                  error={false}
                   onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}
                 />
               ) : null}
@@ -539,6 +693,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 label="Country"
                 options={countryOptions}
                 value={form.country_id}
+                error={Boolean(fieldErrors.country_id)}
+                helperText={fieldErrors.country_id}
                 onChange={(v) => setForm((f) => ({ ...f, country_id: v, state_id: "", city_id: "" }))}
               />
               <AdSearchableDropDown
@@ -546,9 +702,19 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 label="State"
                 options={stateOptions}
                 value={form.state_id}
+                error={Boolean(fieldErrors.state_id)}
+                helperText={fieldErrors.state_id}
                 onChange={(v) => setForm((f) => ({ ...f, state_id: v, city_id: "" }))}
               />
-              <AdSearchableDropDown variant="standard" label="City" options={cityOptions} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: v }))} />
+              <AdSearchableDropDown
+                variant="standard"
+                label="City"
+                options={cityOptions}
+                value={form.city_id}
+                error={Boolean(fieldErrors.city_id)}
+                helperText={fieldErrors.city_id}
+                onChange={(v) => setForm((f) => ({ ...f, city_id: v }))}
+              />
             </Box>
 
             <Box
@@ -565,13 +731,63 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 type="number"
                 size="small"
                 value={form.vacancy}
+                error={fieldErrors.vacancy}
+                inputProps={{ min: 1, step: 1 }}
                 onChange={(v) => setForm((f) => ({ ...f, vacancy: v }))}
               />
-              <AdSearchableDropDown variant="standard" label="Currency" options={currencyOptions} value={form.currency_id} onChange={(v) => setForm((f) => ({ ...f, currency_id: v }))} />
-              <AdTextBox variant="standard" label="Salary Min" required type="number" size="small" value={form.salary_min} onChange={(v) => setForm((f) => ({ ...f, salary_min: v }))} />
-              <AdTextBox variant="standard" label="Salary Max" required type="number" size="small" value={form.salary_max} onChange={(v) => setForm((f) => ({ ...f, salary_max: v }))} />
-              <AdTextBox variant="standard" label="Min Age" required type="number" size="small" value={form.min_age} onChange={(v) => setForm((f) => ({ ...f, min_age: v }))} />
-              <AdTextBox variant="standard" label="Max Age" required type="number" size="small" value={form.max_age} onChange={(v) => setForm((f) => ({ ...f, max_age: v }))} />
+              <AdSearchableDropDown
+                variant="standard"
+                label="Currency"
+                options={currencyOptions}
+                value={form.currency_id}
+                error={Boolean(fieldErrors.currency_id)}
+                helperText={fieldErrors.currency_id}
+                onChange={(v) => setForm((f) => ({ ...f, currency_id: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Salary Min"
+                required
+                type="number"
+                size="small"
+                value={form.salary_min}
+                error={fieldErrors.salary_min}
+                inputProps={{ min: 1, step: 1 }}
+                onChange={(v) => setForm((f) => ({ ...f, salary_min: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Salary Max"
+                required
+                type="number"
+                size="small"
+                value={form.salary_max}
+                error={fieldErrors.salary_max}
+                inputProps={{ min: 1, step: 1 }}
+                onChange={(v) => setForm((f) => ({ ...f, salary_max: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Min Age"
+                required
+                type="number"
+                size="small"
+                value={form.min_age}
+                error={fieldErrors.min_age}
+                inputProps={{ min: 1, step: 1 }}
+                onChange={(v) => setForm((f) => ({ ...f, min_age: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Max Age"
+                required
+                type="number"
+                size="small"
+                value={form.max_age}
+                error={fieldErrors.max_age}
+                inputProps={{ min: 1, step: 1 }}
+                onChange={(v) => setForm((f) => ({ ...f, max_age: v }))}
+              />
             </Box>
 
             <Box
@@ -588,6 +804,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 required
                 options={educations.map((e) => ({ label: e.education_name, value: e.education_name }))}
                 value={form.min_education}
+                error={Boolean(fieldErrors.min_education)}
+                helperText={fieldErrors.min_education}
                 onChange={(v) => setForm((f) => ({ ...f, min_education: v }))}
               />
               <AdTextBox
@@ -596,6 +814,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 required
                 size="small"
                 value={form.min_experience}
+                error={fieldErrors.min_experience}
                 onChange={(v) => setForm((f) => ({ ...f, min_experience: v }))}
               />
               <AdDropDown
@@ -615,6 +834,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 label="Language Requirement"
                 options={languages.map((l) => ({ label: l.language_name, value: String(l.language_id) }))}
                 value={form.language_ids}
+                error={Boolean(fieldErrors.language_ids)}
+                helperText={fieldErrors.language_ids}
                 onChange={(v) => setForm((f) => ({ ...f, language_ids: v }))}
               />
               <AdSearchableDropDownMulti
@@ -623,6 +844,8 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 required
                 options={skills.map((s) => ({ label: s.skill_name, value: s.skill_name }))}
                 value={form.skills}
+                error={Boolean(fieldErrors.skills)}
+                helperText={fieldErrors.skills}
                 onChange={(v) => setForm((f) => ({ ...f, skills: v }))}
               />
               <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
@@ -636,20 +859,23 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
               </Box>
             </Box>
 
-            <AdRichTextEditor
+              <AdRichTextEditor
               label="Compensation Details"
               required
               minHeight={160}
               value={form.compensation_text}
               placeholder="Describe the compensation package..."
+              error={fieldErrors.compensation_text}
               onChange={(v) => setForm((f) => ({ ...f, compensation_text: v }))}
             />
 
             <AdRichTextEditor
               label="Job Description"
+              required
               minHeight={180}
               value={form.job_description}
               placeholder="Write the job description..."
+              error={fieldErrors.job_description}
               onChange={(v) => setForm((f) => ({ ...f, job_description: v }))}
             />
 

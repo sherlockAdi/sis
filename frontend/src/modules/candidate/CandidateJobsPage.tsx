@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, Divider, Stack, Typography } from "@mui/material";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import PlaceIcon from "@mui/icons-material/Place";
 import { useNavigate } from "react-router-dom";
@@ -167,28 +167,44 @@ export default function CandidateJobsPage() {
   const profileComplete = Boolean(profile?.profile_complete) && (profile?.missing_fields?.length ?? 0) === 0;
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack spacing={0.25}>
-        <Typography variant="h5" fontWeight={900}>
-          Jobs
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Browse open jobs and apply. Upload documents based on the job requirements.
-        </Typography>
-      </Stack>
+      <Card
+        variant="outlined"
+        sx={{
+          borderRadius: 0,
+          borderColor: "rgba(148, 163, 184, 0.42)",
+          overflow: "hidden",
+          boxShadow: "0 10px 30px rgba(15,23,42,0.05)",
+          background:
+            "linear-gradient(135deg, rgba(238,242,255,0.98) 0%, rgba(255,255,255,0.98) 55%, rgba(236,248,255,0.98) 100%)",
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, md: 2.25 } }}>
+          <Stack spacing={1.25}>
+            <Stack spacing={0.4}>
+              <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
+                My Jobs
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 720, lineHeight: 1.7 }}>
+                Browse the current openings, compare cards quickly, and open the one that matches your profile.
+              </Typography>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
+      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: { xs: 1.5, md: 2 } }}>
         <Box
           sx={{
             display: "grid",
-            gap: 2,
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(12, minmax(0, 1fr))" },
+            gap: 1.5,
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(5, minmax(0, 1fr))" },
             alignItems: "end",
           }}
         >
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 2" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdDropDown
               label="Country"
               options={countryOptions}
@@ -196,7 +212,7 @@ export default function CandidateJobsPage() {
               onChange={(v) => setFilters((f) => ({ ...f, country_id: v ? Number(v) : undefined }))}
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 2" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdDropDown
               label="State"
               options={stateOptions}
@@ -205,7 +221,7 @@ export default function CandidateJobsPage() {
               onChange={(v) => setFilters((f) => ({ ...f, state_id: v ? Number(v) : undefined }))}
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 2" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdDropDown
               label="City"
               options={cityOptions}
@@ -214,7 +230,7 @@ export default function CandidateJobsPage() {
               onChange={(v) => setFilters((f) => ({ ...f, city_id: v ? Number(v) : undefined }))}
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 3" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdDropDown
               label="Category"
               options={categoryOptions}
@@ -222,7 +238,7 @@ export default function CandidateJobsPage() {
               onChange={(v) => setFilters((f) => ({ ...f, category_id: v ? Number(v) : undefined }))}
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 2" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdDropDown
               label="Status"
               options={statusOptions}
@@ -230,7 +246,7 @@ export default function CandidateJobsPage() {
               onChange={(v) => setFilters((f) => ({ ...f, status: v || undefined }))}
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: "1 / -1", sm: "auto", md: "span 1" } }}>
+          <Box sx={{ gridColumn: { xs: "1 / -1", lg: "span 1" } }}>
             <AdButton fullWidth variant="contained" onClick={() => search()} disabled={loading}>
               Search
             </AdButton>
@@ -248,23 +264,34 @@ export default function CandidateJobsPage() {
 
       {error ? <AdAlertBox severity="error" title="Error" message={error} /> : null}
 
-      <Grid container spacing={2}>
+      <Typography variant="subtitle1" fontWeight={900} sx={{ mt: 0.5 }}>
+        Browse Openings
+      </Typography>
+
+      <Box
+        sx={{
+          display: "grid",
+          gap: 0.5,
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, minmax(0, 1fr))",
+            md: "repeat(3, minmax(0, 1fr))",
+          },
+          alignItems: "stretch",
+        }}
+      >
         {loading ? (
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: "1 / -1" }}>
             <Typography>Loading...</Typography>
-          </Grid>
+          </Box>
         ) : null}
         {!loading && !rows.length ? (
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: "1 / -1" }}>
             <AdAlertBox severity="info" title="No jobs" message="No jobs found for the selected filters." />
-          </Grid>
+          </Box>
         ) : null}
         {rows.map((r) => (
-          <Grid key={r.job_id} item xs={12} sm={6} lg={4}>
-            {/*
-              This list doesn't include application status, so we cross-check the candidate's applications list
-              and mark jobs that already have an "Applied" application.
-            */}
+          <Box key={r.job_id} sx={{ display: "flex", minWidth: 0, width: "100%" }}>
             {(() => {
               const app = appByJobId[r.job_id];
               const status = String(app?.status ?? "").trim();
@@ -278,75 +305,130 @@ export default function CandidateJobsPage() {
                 return navigate(`/portal/candidate/jobs/${r.job_id}/apply`);
               };
 
-              const chip =
-                !profileComplete ? <Chip size="small" label="Profile incomplete" color="warning" /> :
-                isApplied ? <Chip size="small" label="Applied" color="success" /> :
-                hasApp ? <Chip size="small" label={status ? `In progress: ${status}` : "In progress"} /> :
-                null;
-
-              const btnLabel =
-                !profileComplete ? "Complete Profile" :
-                isApplied ? "View Application" :
-                hasApp ? "Continue" :
-                "View & Apply";
+              const btnLabel = !profileComplete ? "Complete Profile" : isApplied ? "View Application" : hasApp ? "Continue" : "View & Apply";
+              const statusLabel = !profileComplete
+                ? "Profile incomplete"
+                : isApplied
+                  ? "Applied"
+                  : hasApp
+                    ? status
+                      ? `In progress: ${status}`
+                      : "In progress"
+                    : "";
 
               return (
-            <Card
-              onClick={go}
-              sx={{
-                cursor: "pointer",
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid rgba(148, 163, 184, 0.35)",
-                boxShadow: "0 10px 35px rgba(2,6,23,0.08)",
-              }}
-            >
-              <CardContent>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <WorkOutlineIcon fontSize="small" />
-                  <Typography fontWeight={900}>{r.job_title}</Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {r.category_name ?? "—"} • {r.status ? `Job: ${r.status}` : "Job: —"}
-                </Typography>
+                <Card
+                  onClick={go}
+                  sx={{
+                    cursor: "pointer",
+                    borderRadius: 0,
+                    height: "100%",
+                    width: "100%",
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    borderLeft: "1px solid rgba(15, 23, 42, 0.45)",
+                    borderBottom: "1px solid rgba(15, 23, 42, 0.45)",
+                    borderTop: 0,
+                    borderRight: 0,
+                    boxShadow: "none",
+                  }}
+                >
+                  <CardContent sx={{ p: 1.5, display: "flex", flexDirection: "column", flex: 1 }}>
+                    <Stack spacing={0.9} sx={{ flex: 1 }}>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 1, minHeight: 64 }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Stack direction="row" spacing={1} alignItems="flex-start">
+                            <WorkOutlineIcon fontSize="small" sx={{ mt: 0.2, flexShrink: 0 }} />
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography
+                                fontWeight={900}
+                                sx={{
+                                  lineHeight: 1.15,
+                                  display: "-webkit-box",
+                                  WebkitBoxOrient: "vertical",
+                                  WebkitLineClamp: 2,
+                                  overflow: "hidden",
+                                  minWidth: 0,
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {r.job_title}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  mt: 0.5,
+                                  display: "-webkit-box",
+                                  WebkitBoxOrient: "vertical",
+                                  WebkitLineClamp: 1,
+                                  overflow: "hidden",
+                                  minWidth: 0,
+                                }}
+                              >
+                                {r.category_name ?? "—"} • {r.status ? `Job: ${r.status}` : "Job: —"}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </Box>
+                      </Box>
 
-                <Divider sx={{ my: 1.5 }} />
+                      <Divider sx={{ my: 0.25 }} />
 
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <PlaceIcon fontSize="small" />
-                  <Typography variant="body2">
-                    {r.country_name ?? "Multiple locations"}
-                  </Typography>
-                </Stack>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <PlaceIcon fontSize="small" />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            lineHeight: 1.3,
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: 1,
+                            overflow: "hidden",
+                            minWidth: 0,
+                          }}
+                        >
+                          {r.country_name ?? "Multiple locations"}
+                        </Typography>
+                      </Stack>
 
-                <Stack direction="row" spacing={1} sx={{ mt: 1.25, flexWrap: "wrap" }}>
-                  <Chip size="small" label={`Vacancy: ${r.vacancy ?? 0}`} />
-                  {r.salary_min || r.salary_max ? (
-                    <Chip size="small" label={`Salary: ${[r.salary_min, r.salary_max].filter(Boolean).join(" - ")}`} />
-                  ) : null}
-                  {chip}
-                </Stack>
+                      <Stack spacing={0.15} sx={{ pt: 0.25 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                          Vacancy: {r.vacancy ?? 0}
+                        </Typography>
+                        {r.salary_min || r.salary_max ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                            Salary: {[r.salary_min, r.salary_max].filter(Boolean).join(" - ")}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    </Stack>
 
-                <Box sx={{ mt: 1.75, display: "flex", justifyContent: "flex-end" }}>
-                  <AdButton
-                    variant={isApplied ? "secondary" : "primary"}
-                    size="small"
-                    onClick={(e: any) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      go();
-                    }}
-                  >
-                    {btnLabel}
-                  </AdButton>
-                </Box>
-              </CardContent>
-            </Card>
+                    <Box sx={{ pt: 1.25, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, minWidth: 0 }}>
+                        {statusLabel}
+                      </Typography>
+                      <AdButton
+                        variant={isApplied ? "secondary" : "primary"}
+                        size="small"
+                        onClick={(e: any) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go();
+                        }}
+                      >
+                        {btnLabel}
+                      </AdButton>
+                    </Box>
+                  </CardContent>
+                </Card>
               );
             })()}
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Stack>
   );
 }

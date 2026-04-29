@@ -9,6 +9,7 @@ import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { partnerPortalApi, type PartnerApplicationRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
+import { formatJsonList } from "../../common/utils/jsonList";
 
 function normalizeStatus(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
@@ -295,11 +296,11 @@ export default function PartnerMySubmissionsPage() {
                   <ProfileField label="Father's Name" value={candidateProfile.father_name} />
                   <ProfileField label="DOB" value={candidateProfile.dob} />
                   <ProfileField label="Gender" value={candidateProfile.gender} />
-                  <ProfileField label="Skills" value={candidateProfile.skills} />
+                  <ProfileField label="Skills" value={formatJsonList(candidateProfile.skills)} />
                   <ProfileField label="Education" value={candidateProfile.education} />
                   <ProfileField label="Experience" value={candidateProfile.experience} />
                   <ProfileField label="Industry Type" value={candidateProfile.industry_type} />
-                  <ProfileField label="Languages Known" value={candidateProfile.languages_known} />
+                  <ProfileField label="Languages Known" value={formatJsonList(candidateProfile.languages_known)} />
                 </Box>
 
                 <Box>

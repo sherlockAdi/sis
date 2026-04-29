@@ -90,5 +90,16 @@ export const adminApi = {
     ) => apiFetch<{ updated: true }>(`/permissions/${permissionId}`, { method: "PUT", body: JSON.stringify(input) }),
     remove: (permissionId: number) => apiFetch<{ deleted: true }>(`/permissions/${permissionId}`, { method: "DELETE" }),
   },
+  users: {
+    create: (input: {
+      role_id: number;
+      first_name?: string | null;
+      last_name?: string | null;
+      username: string;
+      email?: string | null;
+      phone?: string | null;
+      password?: string | null;
+      status?: boolean;
+    }) => apiFetch<{ user_id: number }>(`/users`, { method: "POST", body: JSON.stringify(input) }),
+  },
 };
-

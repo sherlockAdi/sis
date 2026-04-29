@@ -36,6 +36,17 @@ type MenuForm = {
   status: boolean;
 };
 
+type UserForm = {
+  role_id: number | "";
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  phone: string;
+  password: string;
+  status: boolean;
+};
+
 type PermState = {
   permission_id?: number;
   menu_id: number;
@@ -215,6 +226,30 @@ export default function MenuManagementPage() {
     status: true,
   });
 
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [userForm, setUserForm] = useState<UserForm>({
+    role_id: "",
+    first_name: "",
+    last_name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    status: true,
+  });
+
+  const userRoleOptions = useMemo(
+    () =>
+      roles
+        .slice()
+        .sort((a, b) => a.role_name.localeCompare(b.role_name))
+        .map((r) => ({
+          label: `${r.role_name}${r.role_code ? ` (${r.role_code})` : ""}`,
+          value: String(r.role_id),
+        })),
+    [roles],
+  );
+
   const parentOptions = useMemo(() => {
     const opts = menus
       .slice()
@@ -326,6 +361,38 @@ export default function MenuManagementPage() {
       refreshMenus();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
+    }
+  };
+
+  const saveUser = async () => {
+    try {
+      if (!userForm.role_id) throw new Error("Role is required");
+      if (!userForm.username.trim()) throw new Error("Username is required");
+      const payload = {
+        role_id: Number(userForm.role_id),
+        first_name: userForm.first_name.trim() || null,
+        last_name: userForm.last_name.trim() || null,
+        username: userForm.username.trim(),
+        email: userForm.email.trim() || null,
+        phone: userForm.phone.trim() || null,
+        password: userForm.password.trim() || null,
+        status: userForm.status,
+      };
+      await adminApi.users.create(payload);
+      setToast({ open: true, message: "User created", severity: "success" });
+      setUserModalOpen(false);
+      setUserForm({
+        role_id: "",
+        first_name: "",
+        last_name: "",
+        username: "",
+        email: "",
+        phone: "",
+        password: "",
+        status: true,
+      });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "User create failed", severity: "error" });
     }
   };
 
@@ -591,6 +658,27 @@ export default function MenuManagementPage() {
         </Typography>
       </Stack>
 
+      <Stack direction="row" justifyContent="flex-end">
+        <AdButton
+          startIcon={<AddIcon fontSize="small" />}
+          onClick={() => {
+            setUserForm({
+              role_id: "",
+              first_name: "",
+              last_name: "",
+              username: "",
+              email: "",
+              phone: "",
+              password: "",
+              status: true,
+            });
+            setUserModalOpen(true);
+          }}
+        >
+          Create User
+        </AdButton>
+      </Stack>
+
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 0 }}>
@@ -750,6 +838,36 @@ export default function MenuManagementPage() {
             value={String(menuForm.menu_order ?? 0)}
             onChange={(v) => setMenuForm((f) => ({ ...f, menu_order: safeNumber(v, 0) }))}
           />
+        </Stack>
+      </AdModal>
+
+      <AdModal
+        open={userModalOpen}
+        onClose={() => setUserModalOpen(false)}
+        title="Create User"
+        actions={
+          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
+            <AdButton variant="text" onClick={() => setUserModalOpen(false)}>
+              Cancel
+            </AdButton>
+            <AdButton onClick={saveUser}>Create</AdButton>
+          </Stack>
+        }
+      >
+        <Stack spacing={2}>
+          <AdDropDown
+            label="Role"
+            required
+            value={userForm.role_id ? String(userForm.role_id) : ""}
+            options={userRoleOptions}
+            onChange={(v) => setUserForm((f) => ({ ...f, role_id: v ? Number(v) : "" }))}
+          />
+          <AdTextBox label="First Name" value={userForm.first_name} onChange={(v) => setUserForm((f) => ({ ...f, first_name: v }))} />
+          <AdTextBox label="Last Name" value={userForm.last_name} onChange={(v) => setUserForm((f) => ({ ...f, last_name: v }))} />
+          <AdTextBox label="Username" required value={userForm.username} onChange={(v) => setUserForm((f) => ({ ...f, username: v }))} />
+          <AdTextBox label="Email" value={userForm.email} onChange={(v) => setUserForm((f) => ({ ...f, email: v }))} />
+          <AdTextBox label="Phone" value={userForm.phone} onChange={(v) => setUserForm((f) => ({ ...f, phone: v }))} />
+          <AdTextBox label="Password" type="password" value={userForm.password} onChange={(v) => setUserForm((f) => ({ ...f, password: v }))} />
         </Stack>
       </AdModal>
     </Stack>
