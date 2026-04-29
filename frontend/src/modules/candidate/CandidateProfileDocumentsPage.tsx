@@ -33,8 +33,8 @@ export default function CandidateProfileDocumentsPage() {
       setLoading(true);
       setError(null);
       try {
-        const [profileDocs, applicationDocs, deployments] = await Promise.all([
-          candidateApi.documents.list(),
+        const [profile, applicationDocs] = await Promise.all([
+          candidateApi.profile.me(),
           candidateApi.applications.list().then(async (apps) => {
             const docs: Array<CandidateApplicationDocRow & { application_id: number; job_title: string; status?: string | null }> = [];
             for (const app of apps) {
@@ -57,16 +57,23 @@ export default function CandidateProfileDocumentsPage() {
         ]);
 
         const unified: UnifiedDocumentRow[] = [
-          ...profileDocs.map((r) => ({
-            id: `profile-${r.id}`,
+          ...[
+            { label: "Resume Upload", file_path: profile.resume_file_path, uploaded_at: profile.updated_at },
+            { label: "Passport Upload", file_path: profile.passport_file_path, uploaded_at: profile.updated_at },
+            { label: "Aadhaar Upload", file_path: profile.aadhar_file_path, uploaded_at: profile.updated_at },
+            { label: "PAN Upload", file_path: profile.pan_file_path, uploaded_at: profile.updated_at },
+            { label: "Voter ID Upload", file_path: profile.voter_id_file_path, uploaded_at: profile.updated_at },
+            { label: "Profile Photo", file_path: profile.profile_photo_file_path, uploaded_at: profile.updated_at },
+          ].map((r) => ({
+            id: `profile-${r.label}`,
             source: "Profile",
             scope: "Profile",
             job_title: "Profile Upload",
-            application_id: r.application_id,
-            document_name: r.document_name ?? "Document",
+            application_id: null,
+            document_name: r.label,
             uploaded_at: r.uploaded_at,
             file_path: r.file_path,
-            status: r.file_path ? "Uploaded" : "Missing",
+            status: "Uploaded",
           })),
           ...applicationDocs.map((r) => ({
             id: `app-${r.application_id}-${r.document_type_id ?? r.job_specific_document_id ?? r.document_name}`,
@@ -77,9 +84,9 @@ export default function CandidateProfileDocumentsPage() {
             document_name: r.document_name,
             uploaded_at: r.uploaded_at,
             file_path: r.file_path,
-            status: r.file_path ? "Uploaded" : Number(r.job_is_required) ? "Pending" : "Optional",
+            status: "Uploaded",
           })),
-        ];
+        ].filter((row) => Boolean(String(row.file_path ?? "").trim()));
 
         setRows(unified);
       } catch (e: any) {
@@ -108,7 +115,7 @@ export default function CandidateProfileDocumentsPage() {
             My Documents
           </Typography>
           <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            View your latest uploaded documents.
+            View your uploaded profile and application documents.
           </Typography>
         </Box>
 
