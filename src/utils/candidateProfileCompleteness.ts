@@ -39,7 +39,6 @@ const REQUIRED_FIELDS: Array<{ key: keyof CandidateProfileLike; label: string; k
   { key: "state_id", label: "State", kind: "number" },
   { key: "city_id", label: "City", kind: "number" },
   { key: "father_name", label: "Father's Name" },
-  { key: "address1", label: "Address 1" },
   { key: "pincode", label: "Pincode" },
   { key: "dob", label: "Date of Birth" },
   { key: "gender", label: "Gender" },

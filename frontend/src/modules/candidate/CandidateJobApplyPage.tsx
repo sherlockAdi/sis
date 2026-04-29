@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { Alert, Box, Button, Chip, Divider, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, Container, Divider, Stack, Typography } from "@mui/material";
 import { AdButton, AdCard, AdCheckBox, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
@@ -246,184 +246,172 @@ export default function CandidateJobApplyPage() {
   }, [id]);
 
   return (
+    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
       <Stack spacing={2.5}>
         <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
-        <AdButton variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate("/portal/candidate/jobs")}>
-          Back to Jobs
-        </AdButton>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
+          <Box>
+            <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.6, lineHeight: 1.1 }}>
+              Apply for Job
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Review the job, upload required documents, and submit your application.
+            </Typography>
+          </Box>
 
-        <Stack direction="row" spacing={1} alignItems="center">
-          {application?.status ? <Chip size="small" label={`Status: ${application.status}`} /> : null}
-          {applicationId ? <Chip size="small" label={`App ID: ${applicationId}`} /> : null}
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            {application?.status ? <Chip size="small" label={`Status: ${application.status}`} /> : null}
+            {applicationId ? <Chip size="small" label={`App ID: ${applicationId}`} /> : null}
+            <AdButton variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate("/portal/candidate/jobs")}>
+              Back to Jobs
+            </AdButton>
+          </Stack>
         </Stack>
-      </Stack>
+        {!Number.isFinite(id) || id <= 0 ? <Alert severity="warning">Invalid job id.</Alert> : null}
+        {jobLoading ? <Alert severity="info">Loading job...</Alert> : null}
+        {jobError ? <Alert severity="warning">{jobError}</Alert> : null}
+        {profileLoading ? <Alert severity="info">Loading profile...</Alert> : null}
+        {!profileComplete ? (
+          <Alert
+            severity="warning"
+            action={
+              <Button color="inherit" size="small" onClick={() => navigate("/portal/candidate/profile/settings")}>
+                Complete Profile
+              </Button>
+            }
+          >
+            Complete your profile before applying. Missing: {profile?.missing_fields?.join(", ") || "profile details and uploads"}.
+          </Alert>
+        ) : null}
 
-      {!Number.isFinite(id) || id <= 0 ? <Alert severity="warning">Invalid job id.</Alert> : null}
-      {jobLoading ? <Alert severity="info">Loading job...</Alert> : null}
-      {jobError ? <Alert severity="warning">{jobError}</Alert> : null}
-      {profileLoading ? <Alert severity="info">Loading profile...</Alert> : null}
-      {!profileComplete ? (
-        <Alert
-          severity="warning"
-          action={
-            <Button color="inherit" size="small" onClick={() => navigate("/portal/candidate/profile/settings")}>
-              Complete Profile
-            </Button>
-          }
-        >
-          Complete your profile before applying. Missing: {profile?.missing_fields?.join(", ") || "profile details and uploads"}.
-        </Alert>
-      ) : null}
+        {!applicationId && job ? (
+          <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.86)" }} contentSx={{ p: 2 }}>
+            <Stack spacing={1.5}>
+              <Box>
+                <Typography variant="h5" fontWeight={950} sx={{ lineHeight: 1.1 }}>
+                  {job.job.job_title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {job.job.job_code ? `Job Code: ${job.job.job_code}` : "Job details"}
+                </Typography>
+              </Box>
 
-      {job ? (
-        <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {job.job.status ? <Chip size="small" label={`Job Status: ${job.job.status}`} /> : null}
+                {job.job.vacancy != null ? <Chip size="small" label={`${job.job.vacancy} vacancies`} /> : null}
+                {moneyRange(job.job.salary_min, job.job.salary_max) ? (
+                  <Chip size="small" label={`Salary: ${moneyRange(job.job.salary_min, job.job.salary_max)}`} />
+                ) : null}
+                {job.locations?.length ? <Chip size="small" label={`${job.locations.length} location(s)`} /> : null}
+                {jobDocuments.length ? <Chip size="small" label={`${jobDocuments.length} document(s)`} /> : null}
+              </Stack>
+
+              {job.job.job_description ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography fontWeight={950}>Job Description</Typography>
+                    <Box sx={{ mt: 0.75 }}>
+                      <AdRichTextContent html={job.job.job_description} />
+                    </Box>
+                  </Box>
+                </>
+              ) : null}
+
+              {job.requirements?.length ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography fontWeight={950}>Requirements</Typography>
+                    <Stack spacing={0.5} sx={{ mt: 0.75 }}>
+                      {job.requirements.map((r) => (
+                        <Typography key={r.requirement_id} variant="body2" sx={{ color: "text.secondary" }}>
+                          • {r.requirement}
+                        </Typography>
+                      ))}
+                    </Stack>
+                  </Box>
+                </>
+              ) : null}
+
+              {job.benefits?.length ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography fontWeight={950}>Benefits</Typography>
+                    <Stack spacing={0.5} sx={{ mt: 0.75 }}>
+                      {job.benefits.map((b) => (
+                        <Typography key={b.benefit_id} variant="body2" sx={{ color: "text.secondary" }}>
+                          • {b.benefit}
+                        </Typography>
+                      ))}
+                    </Stack>
+                  </Box>
+                </>
+              ) : null}
+
+              {job.locations?.length ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography fontWeight={950}>Locations</Typography>
+                    <Stack spacing={1} sx={{ mt: 0.75 }}>
+                      {job.locations.map((l) => (
+                        <AdCard
+                          key={l.id}
+                          animate={false}
+                          contentSx={{ p: 1.5 }}
+                          sx={{ backgroundColor: "rgba(255,255,255,0.82)", borderRadius: 0 }}
+                        >
+                          <Stack spacing={0.5}>
+                            <Typography fontWeight={900}>
+                              {[l.city_name, l.state_name, l.country_name].filter(Boolean).join(", ") || "Location"}
+                            </Typography>
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                              {l.vacancy != null ? <Chip size="small" label={`${l.vacancy} vacancies`} /> : null}
+                              {moneyRange(l.salary_min, l.salary_max) ? (
+                                <Chip size="small" label={`Salary: ${moneyRange(l.salary_min, l.salary_max)}`} />
+                              ) : null}
+                            </Stack>
+                          </Stack>
+                        </AdCard>
+                      ))}
+                    </Stack>
+                  </Box>
+                </>
+              ) : null}
+
+              {job.status_history?.length ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography fontWeight={950}>Status History</Typography>
+                    <Stack spacing={0.5} sx={{ mt: 0.75 }}>
+                      {job.status_history.map((h) => (
+                        <Typography key={h.id} variant="body2" sx={{ color: "text.secondary" }}>
+                          • {h.changed_at}: {h.status ?? "—"}
+                          {h.remarks ? ` — ${h.remarks}` : ""}
+                        </Typography>
+                      ))}
+                    </Stack>
+                  </Box>
+                </>
+              ) : null}
+            </Stack>
+          </AdCard>
+        ) : null}
+
+        <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.86)" }} contentSx={{ p: 2 }}>
           <Stack spacing={1.25}>
             <Box>
-              <Typography variant="h5" fontWeight={950}>
-                {job.job.job_title}
-              </Typography>
+              <Typography fontWeight={950}>Application</Typography>
               <Typography variant="body2" color="text.secondary">
-                {job.job.job_code ? `Job Code: ${job.job.job_code}` : null}
+                Start the application, upload documents, and submit once everything is complete.
               </Typography>
             </Box>
 
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              {job.job.status ? <Chip size="small" label={`Job Status: ${job.job.status}`} /> : null}
-              {job.job.vacancy != null ? <Chip size="small" label={`${job.job.vacancy} vacancies`} /> : null}
-              {moneyRange(job.job.salary_min, job.job.salary_max) ? (
-                <Chip size="small" label={`Salary: ${moneyRange(job.job.salary_min, job.job.salary_max)}`} />
-              ) : null}
-              {job.locations?.length ? <Chip size="small" label={`${job.locations.length} location(s)`} /> : null}
-              {jobDocuments.length ? <Chip size="small" label={`${jobDocuments.length} document(s)`} /> : null}
-            </Stack>
-
-            {job.job.job_description ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Job Description</Typography>
-                  <Box sx={{ mt: 0.75 }}>
-                    <AdRichTextContent html={job.job.job_description} />
-                  </Box>
-                </Box>
-              </>
-            ) : null}
-
-            {job.requirements?.length ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Requirements</Typography>
-                  <Stack spacing={0.5} sx={{ mt: 0.75 }}>
-                    {job.requirements.map((r) => (
-                      <Typography key={r.requirement_id} variant="body2" sx={{ color: "text.secondary" }}>
-                        • {r.requirement}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-
-            {job.benefits?.length ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Benefits</Typography>
-                  <Stack spacing={0.5} sx={{ mt: 0.75 }}>
-                    {job.benefits.map((b) => (
-                      <Typography key={b.benefit_id} variant="body2" sx={{ color: "text.secondary" }}>
-                        • {b.benefit}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-
-            {jobDocuments.length ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Required Documents (Job)</Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 0.75 }}>
-                    {jobDocuments.map((d: any) => (
-                      <Chip
-                        key={d.id}
-                        size="small"
-                        label={`${d.document_name}${Number(d.is_required) ? " • Required" : " • Optional"}`}
-                        color={Number(d.is_required) ? "primary" : "default"}
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-
-            {job.locations?.length ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Locations</Typography>
-                  <Stack spacing={1} sx={{ mt: 0.75 }}>
-                    {job.locations.map((l) => (
-                      <AdCard
-                        key={l.id}
-                        animate={false}
-                        contentSx={{ p: 1.5 }}
-                        sx={{ backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 3 }}
-                      >
-                        <Stack spacing={0.5}>
-                          <Typography fontWeight={900}>
-                            {[l.city_name, l.state_name, l.country_name].filter(Boolean).join(", ") || "Location"}
-                          </Typography>
-                          <Stack direction="row" spacing={1} flexWrap="wrap">
-                            {l.vacancy != null ? <Chip size="small" label={`${l.vacancy} vacancies`} /> : null}
-                            {moneyRange(l.salary_min, l.salary_max) ? (
-                              <Chip size="small" label={`Salary: ${moneyRange(l.salary_min, l.salary_max)}`} />
-                            ) : null}
-                          </Stack>
-                        </Stack>
-                      </AdCard>
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-
-            {job.status_history?.length ? (
-              <>
-                <Divider />
-                <Box>
-                  <Typography fontWeight={950}>Status History</Typography>
-                  <Stack spacing={0.5} sx={{ mt: 0.75 }}>
-                    {job.status_history.map((h) => (
-                      <Typography key={h.id} variant="body2" sx={{ color: "text.secondary" }}>
-                        • {h.changed_at}: {h.status ?? "—"}
-                        {h.remarks ? ` — ${h.remarks}` : ""}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-          </Stack>
-        </AdCard>
-      ) : null}
-
-      <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1} justifyContent="space-between" alignItems={{ md: "center" }}>
-            <Box>
-              <Typography fontWeight={950}>Documents</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Upload all required documents first.
-              </Typography>
-            </Box>
-
-            <Stack direction="row" spacing={1}>
               <AdButton variant="outlined" disabled={appLoading || !Number.isFinite(id) || id <= 0 || !profileComplete} onClick={start}>
                 {applicationId ? "Refresh" : appLoading ? "Starting..." : "Start Application"}
               </AdButton>
@@ -431,74 +419,89 @@ export default function CandidateJobApplyPage() {
                 {submitting ? "Applying..." : "Apply (with consent)"}
               </AdButton>
             </Stack>
+
+            {applyDisabledReason && applicationId ? <Alert severity="info">{applyDisabledReason}</Alert> : null}
           </Stack>
+        </AdCard>
 
-          {applyDisabledReason ? <Alert severity="info">{applyDisabledReason}</Alert> : null}
+        {applicationId ? (
+          <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.86)" }} contentSx={{ p: 2 }}>
+            <Stack spacing={1.25}>
+              <Box>
+                <Typography fontWeight={950}>Documents</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Upload all required documents first.
+                </Typography>
+              </Box>
 
-          {!applicationId ? <Alert severity="warning">Click “Start Application” to unlock document uploads.</Alert> : null}
-          {docsLoading ? <Typography>Loading documents...</Typography> : null}
+              {docsLoading ? <Typography>Loading documents...</Typography> : null}
 
-          {!docsLoading && applicationId && !resolvedDocs.length ? (
-            <Alert severity="warning">No job documents found for this application.</Alert>
-          ) : null}
+              {!docsLoading && !resolvedDocs.length ? (
+                <Alert severity="warning">No job documents found for this application.</Alert>
+              ) : null}
 
-          {resolvedDocs.map((d) => (
-            <AdCard
-              key={d.document_type_id}
-              animate={false}
-              contentSx={{ p: 1.75 }}
-              sx={{ backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 3 }}
-            >
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
-                {(() => {
-                  return (
-                <Stack spacing={0.25}>
-                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                    <Typography fontWeight={900}>{d.document_name}</Typography>
-                    {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
-                    {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
-                  </Stack>
-                  <Typography variant="caption" color="text.secondary">
-                    {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
-                  </Typography>
-                </Stack>
-                  );
-                })()}
+              <Stack spacing={1}>
+                {resolvedDocs.map((d) => (
+                  <Box
+                    key={d.document_type_id}
+                    sx={{
+                      p: 1.5,
+                      border: "1px solid rgba(148,163,184,0.28)",
+                      backgroundColor: "rgba(248,250,252,0.9)",
+                      display: "flex",
+                      alignItems: { xs: "stretch", md: "center" },
+                      justifyContent: "space-between",
+                      gap: 1,
+                      flexDirection: { xs: "column", md: "row" },
+                    }}
+                  >
+                    <Box sx={{ minWidth: 0 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Typography fontWeight={900}>{d.document_name}</Typography>
+                        {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
+                        {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
+                      </Typography>
+                    </Box>
 
-                <Stack direction="row" spacing={1}>
-                  {d.file_path ? (
-                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => openDoc(d)}>
-                      View
-                    </AdButton>
-                  ) : null}
+                    <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                      {d.file_path ? (
+                        <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => openDoc(d)}>
+                          View
+                        </AdButton>
+                      ) : null}
 
-                  <AdButton component="label" startIcon={<UploadFileIcon fontSize="small" />} disabled={!applicationId}>
-                    {d.file_path ? "Update" : "Upload"}
-                    <input
-                      type="file"
-                      hidden
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) uploadForDoc(d, f);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                  </AdButton>
-                </Stack>
+                      <AdButton component="label" startIcon={<UploadFileIcon fontSize="small" />} disabled={!applicationId}>
+                        {d.file_path ? "Update" : "Upload"}
+                        <input
+                          type="file"
+                          hidden
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadForDoc(d, f);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                      </AdButton>
+                    </Stack>
+                  </Box>
+                ))}
               </Stack>
-            </AdCard>
-          ))}
 
-          <Divider />
+              <Divider />
 
-          <AdCheckBox
-            label="I confirm the above information and documents are correct, and I consent to submit this application."
-            checked={consent}
-            onChange={setConsent}
-            disabled={!applicationId || docsLoading}
-          />
-        </Stack>
-      </AdCard>
-    </Stack>
+              <AdCheckBox
+                label="I confirm the above information and documents are correct, and I consent to submit this application."
+                checked={consent}
+                onChange={setConsent}
+                disabled={!applicationId || docsLoading}
+              />
+            </Stack>
+          </AdCard>
+        ) : null}
+      </Stack>
+    </Container>
   );
 }

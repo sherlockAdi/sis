@@ -39,6 +39,14 @@ function toNull(value: string | null | undefined): string | null {
   return v ? v : null;
 }
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? '').trim());
+}
+
+function isValidPhone(value: string): boolean {
+  return /^\d{10}$/.test(String(value ?? '').trim());
+}
+
 async function upsertCandidateProfile(candidate_id: number, body: CandidateProfileBody): Promise<void> {
   await callProc<RowDataPacket & { affected_rows: number }>(
     `CALL sp_rec_candidate_profiles('UPSERT', :candidate_id, :father_name, :address1, :address2, :pincode, :dob, :gender, :skills, :education, :experience, :industry_type, NULL, :passport_expiry_date, NULL, :aadhar_number, NULL, :pan_number, NULL, :voter_id_number, NULL, NULL, :languages_known)`,
@@ -116,6 +124,9 @@ export class PublicCandidateSignupController extends Controller {
   ): Promise<{ candidate_id: number; username: string; emailed: boolean; user_id: number | null; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
     const email = String(body.email ?? '').trim();
     if (!email) throw httpError(400, 'email is required');
+    if (!isValidEmail(email)) throw httpError(400, 'email must be a valid email address');
+    const phone = String(body.phone ?? '').trim();
+    if (phone && !isValidPhone(phone)) throw httpError(400, 'phone must be a valid 10-digit mobile number');
     if (await findExistingUserByUsernameOrEmail('', email)) throw httpError(409, 'Email already registered');
 
     const created = await callProc<RowDataPacket & { candidate_id: number }>(
@@ -123,7 +134,7 @@ export class PublicCandidateSignupController extends Controller {
       {
         first_name: body.first_name ?? null,
         last_name: body.last_name ?? null,
-        phone: body.phone ?? null,
+        phone: phone || null,
         email,
         passport_number: body.passport_number ?? null,
         country_id: typeof body.country_id === 'number' ? body.country_id : null,
