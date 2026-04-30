@@ -24,7 +24,7 @@ export default function PublicMenuPage() {
         <Stack spacing={1.75} sx={{ flex: "0 0 auto" }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <SisLogo height={28} />
+              <SisLogo height={76} />
             </Box>
             <Button
               color="inherit"

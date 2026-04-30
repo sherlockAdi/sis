@@ -279,9 +279,9 @@ export default function LandingPage() {
               }}
             >
               <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-                <SisLogo height={28} />
+                <SisLogo height={72} />
                 <Typography variant="subtitle1" fontWeight={950} noWrap>
-                  SIS Global
+                  SIS Global Workforce Solutions
                 </Typography>
               </Stack>
 
@@ -1090,13 +1090,13 @@ export default function LandingPage() {
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.6fr 1fr 1fr 1fr 1fr" }, gap: 3 }}>
             <Box>
               <Stack direction="row" spacing={1} alignItems="center">
-                <SisLogo height={28} />
+                <SisLogo height={72} />
                 <Typography variant="h6" fontWeight={950}>
-                  SIS Global
+                  SIS Global Workforce Solutions
                 </Typography>
               </Stack>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25, maxWidth: 360 }}>
-                SIS Global Workforce Workflow — dummy landing site. Replace sections with your real content anytime.
+                SIS Global Workforce Solutions — dummy landing site. Replace sections with your real content anytime.
               </Typography>
             </Box>
 
@@ -1124,7 +1124,7 @@ export default function LandingPage() {
           <Divider sx={{ my: 3 }} />
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-              Copyright © {new Date().getFullYear()} SIS Global. All rights reserved.
+              Copyright © {new Date().getFullYear()} SIS Global Workforce Solutions. All rights reserved.
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
               Follow Us On: Facebook • Twitter • LinkedIn • Web

@@ -1,14 +1,17 @@
+import { Box } from "@mui/material";
+import { SisLogo } from "../ad";
+
 export default function Header() {
   return (
-    <div
+    <Box
       style={{
-        background: "#1976d2",
+        background: "#ffffff",
         color: "white",
-        padding: "15px",
-        fontSize: "20px",
+        padding: "12px 16px",
+        borderBottom: "1px solid rgba(15,23,42,0.08)",
       }}
     >
-      Chikitsak Hospital System
-    </div>
+      <SisLogo height={104} />
+    </Box>
   );
 }

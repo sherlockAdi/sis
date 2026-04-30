@@ -51,6 +51,7 @@ export class CandidateDeploymentController extends Controller {
       deployment_id: number;
       offer_date?: string | null;
       offer_letter_file_path?: string | null;
+      isaccepted?: boolean | null;
       offer_payment_received?: number | null;
       offer_remarks?: string | null;
       visa_type_id?: number | null;
@@ -96,11 +97,12 @@ export class CandidateDeploymentController extends Controller {
     if (!allowed) throw httpError(403, 'Access denied');
 
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
-      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
         deployment_id,
         offer_date: body.offer_date ?? null,
         offer_letter_file_path: body.offer_letter_file_path ?? null,
+        isaccepted: body.isaccepted == null ? null : body.isaccepted ? 1 : 0,
         offer_payment_received: body.offer_payment_received ?? null,
         offer_remarks: body.offer_remarks ?? null,
         visa_type_id: body.visa_type_id ?? null,

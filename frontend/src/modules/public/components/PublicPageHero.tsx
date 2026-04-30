@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Box, Container, Stack, Typography } from "@mui/material";
+import { SisLogo } from "../../../common/ad";
 
 export default function PublicPageHero({
   eyebrow,
@@ -23,6 +24,9 @@ export default function PublicPageHero({
     >
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
         <Stack spacing={1.5}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <SisLogo height={116} />
+          </Box>
           {eyebrow ? (
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: 1.2 }}>
               {eyebrow}

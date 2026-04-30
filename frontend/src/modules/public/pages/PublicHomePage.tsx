@@ -217,7 +217,7 @@ export default function PublicHomePage() {
 
           <Box>
             <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.6 }}>
-              Why Choose SIS Global
+              Why Choose SIS Global Workforce Solutions
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860 }}>
             Connecting skilled talent with global job opportunities across trusted employers.

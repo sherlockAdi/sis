@@ -87,8 +87,8 @@ ON DUPLICATE KEY UPDATE
 -- Associate Partners
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
 VALUES
-  ('Associate Partners List', 'ADM_ASSOC_LIST', @m_assoc, '/partners/list', 'people', 31, TRUE),
-  ('Create Associate Partners', 'ADM_ASSOC_CREATE', @m_assoc, '/partners/new', 'add', 32, TRUE),
+  ('Associate Partners List', 'ADM_ASSOC_LIST', @m_assoc, '/associate-partners/list', 'people', 31, TRUE),
+  ('Create Associate Partners', 'ADM_ASSOC_CREATE', @m_assoc, '/associate-partners/new', 'add', 32, TRUE),
   ('Applied Candidate', 'ADM_ASSOC_APPS', @m_assoc, '/recruitment/applications', 'receipt_long', 33, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { Alert, Box, Button, Chip, Container, Divider, Stack, Typography } from "@mui/material";
+import { Alert, Box, Chip, Container, Divider, Stack, Typography } from "@mui/material";
 import { AdButton, AdCard, AdCheckBox, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
@@ -115,11 +115,11 @@ export default function CandidateJobApplyPage() {
 
   const applyDisabledReason = useMemo(() => {
     if (profileLoading) return "Loading profile...";
-    if (!candidateVerified) return "Your profile is awaiting admin verification.";
     if (!profileComplete) {
       const missing = profile?.missing_fields?.length ? profile.missing_fields.join(", ") : "profile details and uploads";
       return `Complete your profile before applying. Missing: ${missing}.`;
     }
+    if (!candidateVerified) return "Your profile is awaiting admin verification.";
     if (!applicationId) return "Start application to continue.";
     if (docsLoading) return "Loading documents...";
     if (missingDocNames.length) return `Upload all required documents: ${missingDocNames.join(", ")}.`;
@@ -189,7 +189,7 @@ export default function CandidateJobApplyPage() {
       return;
     }
     if (!candidateVerified) {
-      setToast({ open: true, message: "Admin doesn't verify your profile yet.", severity: "warning" });
+      setToast({ open: true, message: "Your profile is awaiting admin verification.", severity: "warning" });
       return;
     }
     setAppLoading(true);
@@ -295,19 +295,12 @@ export default function CandidateJobApplyPage() {
         {jobError ? <Alert severity="warning">{jobError}</Alert> : null}
         {profileLoading ? <Alert severity="info">Loading profile...</Alert> : null}
         {!profileComplete ? (
-          <Alert
-            severity="warning"
-            action={
-              <Button color="inherit" size="small" onClick={() => navigate("/portal/candidate/profile/settings")}>
-                Complete Profile
-              </Button>
-            }
-          >
+          <Alert severity="warning">
             Complete your profile before applying. Missing: {profile?.missing_fields?.join(", ") || "profile details and uploads"}.
           </Alert>
+        ) : !candidateVerified ? (
+          <Alert severity="info">Your profile is awaiting admin verification. You can review the job, but applying is disabled until approval.</Alert>
         ) : null}
-
-        {!candidateVerified ? <Alert severity="info">Your profile is awaiting admin verification. You can review the job, but applying is disabled until approval.</Alert> : null}
 
         {!applicationId && job ? (
           <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.86)" }} contentSx={{ p: 2 }}>

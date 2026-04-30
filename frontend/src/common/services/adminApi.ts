@@ -101,5 +101,18 @@ export const adminApi = {
       password?: string | null;
       status?: boolean;
     }) => apiFetch<{ user_id: number }>(`/users`, { method: "POST", body: JSON.stringify(input) }),
+    update: (
+      userId: number,
+      input: Partial<{
+        role_id: number;
+        first_name: string | null;
+        last_name: string | null;
+        username: string;
+        email: string | null;
+        phone: string | null;
+        password: string | null;
+        status: boolean;
+      }>,
+    ) => apiFetch<{ updated: true }>(`/users/${userId}`, { method: "PUT", body: JSON.stringify(input) }),
   },
 };

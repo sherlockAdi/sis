@@ -266,11 +266,15 @@ export default function DeploymentManagementPage() {
                     size="small"
                     disabled={uploading.passport || uploading.visa}
                     onClick={async () => {
-                      setActiveRow(r);
-                      setVisaOpen(true);
-                      setVisaLoading(true);
                       try {
+                        setVisaLoading(true);
                         const details = await deploymentApi.visaDetails.get(r.deployment_id);
+                        if (!details || details.isaccepted !== 1) {
+                          setToast({ open: true, message: "Candidate has not accepted the offer yet.", severity: "warning" });
+                          return;
+                        }
+                        setActiveRow(r);
+                        setVisaOpen(true);
                         setVisaForm(details ?? { deployment_id: r.deployment_id });
                       } catch (e: any) {
                         setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
@@ -417,6 +421,10 @@ export default function DeploymentManagementPage() {
         });
         setToast({ open: true, message: "Deployment details saved", severity: "success" });
       } else {
+        const existingDetails = await deploymentApi.visaDetails.get(activeRow.deployment_id);
+        if (!existingDetails || existingDetails.isaccepted !== 1) {
+          throw new Error("Candidate has not accepted the offer yet.");
+        }
         await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
           visa_type_id: visaForm.visa_type_id ?? null,
           visa_number: visaForm.visa_number ?? null,

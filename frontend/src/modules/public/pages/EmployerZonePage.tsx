@@ -74,7 +74,7 @@ export default function EmployerZonePage() {
                 Built for hiring at scale — with traceability
               </Typography>
               <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
-                SIS Global supports employers with structured sourcing, screening, documentation, and deployment tracking — so you
+                SIS Global Workforce Solutions supports employers with structured sourcing, screening, documentation, and deployment tracking — so you
                 can hire faster without losing control of compliance.
               </Typography>
               <Box sx={{ mt: 1.75, display: "flex", flexWrap: "wrap", gap: 1 }}>

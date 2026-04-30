@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   Divider,
   IconButton,
   Stack,
@@ -115,6 +114,7 @@ export default function CandidateOnboardingVisaDetailsPage() {
     if (!details?.visa_type_id) return "-";
     return visaTypes.find((v) => v.visa_type_id === details.visa_type_id)?.visa_type_name ?? String(details.visa_type_id);
   }, [details?.visa_type_id, visaTypes]);
+  const isOfferAccepted = details?.isaccepted === 1;
 
   const openFile = async (path?: string | null) => {
     if (!path) return;
@@ -130,85 +130,109 @@ export default function CandidateOnboardingVisaDetailsPage() {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack spacing={2.5}>
+      <Stack spacing={1.5}>
         <Box>
           <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
             Visa Details
           </Typography>
-          <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Select your job and view the visa record for that specific deployment.
-          </Typography>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Stack spacing={2}>
+        <Card variant="outlined" sx={{ borderRadius: 0, borderColor: "rgba(15, 23, 42, 0.10)", bgcolor: "#fff", boxShadow: "0 12px 40px rgba(15, 23, 42, 0.04)" }}>
+          <CardContent sx={{ p: { xs: 1.1, md: 1.35 } }}>
+            <Stack spacing={1.1}>
               <Box>
-                <Typography fontWeight={900} sx={{ mb: 1 }}>
+                <Typography fontWeight={900} sx={{ mb: 0.25, fontSize: 15 }}>
                   Select Job
                 </Typography>
-                <AdDropDown
-                  label="Respective Job"
-                  options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
-                  value={selectedDeploymentId ?? ""}
-                  disabled={deploymentOptions.length === 0}
-                  onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
-                />
+                <Box sx={{ minWidth: { xs: "100%", lg: 320 } }}>
+                  <AdDropDown
+                    label="Respective Job"
+                    options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
+                    value={selectedDeploymentId ?? ""}
+                    disabled={deploymentOptions.length === 0}
+                    onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
+                  />
+                </Box>
               </Box>
 
               {selectedDeployment ? (
                 <>
                   <Divider />
-                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
+                  <Box sx={{ display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
                     <InfoCard label="Candidate" value={selectedDeployment.candidate_name} />
                     <InfoCard label="Job" value={selectedDeployment.job_title} />
                     <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
-                    <InfoCard label="Visa Type" value={visaTypeName} />
-                    <InfoCard label="Visa Number" value={fieldValue(details?.visa_number)} />
-                    <InfoCard label="Visa Payment" value={fieldValue(details?.visa_payment_received)} />
-                    <InfoCard label="Issue Date" value={formatDate(details?.issue_date)} />
-                    <InfoCard label="Expiry Date" value={formatDate(details?.expiry_date)} />
-                    <InfoCard label="Sponsor ID" value={fieldValue(details?.sponsor_id)} />
-                    <InfoCard label="Sponsor Contact" value={fieldValue(details?.sponsor_contact)} />
-                    <InfoCard
-                      label="Passport File"
-                      value={details?.passport_file_path ? "Available" : "Not uploaded"}
-                      action={
-                        <IconButton disabled={!details?.passport_file_path} onClick={() => openFile(details?.passport_file_path)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      }
-                    />
-                    <InfoCard
-                      label="Visa File"
-                      value={details?.visa_file_path ? "Available" : "Not uploaded"}
-                      action={
-                        <IconButton disabled={!details?.visa_file_path} onClick={() => openFile(details?.visa_file_path)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      }
-                    />
-                    <InfoCard label="Remarks" value={fieldValue(details?.visa_remarks)} fullWidth />
+                    <InfoCard label="Offer Acceptance" value={details ? (isOfferAccepted ? "Accepted" : "Not accepted") : "-"} />
                   </Box>
+
+                  {!isOfferAccepted ? (
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        p: 1.25,
+                        borderRadius: 0,
+                        border: "1px solid",
+                        borderColor: "warning.main",
+                        bgcolor: "rgba(237, 108, 2, 0.06)",
+                      }}
+                    >
+                      <Typography fontWeight={900}>Visa details are locked</Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            Accept the offer first to unlock the visa record for this job.
+                          </Typography>
+                        </Box>
+                  ) : (
+                    <Box sx={{ display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, mt: 0.5 }}>
+                      <InfoCard label="Visa Type" value={visaTypeName} />
+                      <InfoCard label="Visa Number" value={fieldValue(details?.visa_number)} />
+                      <InfoCard label="Visa Payment" value={fieldValue(details?.visa_payment_received)} />
+                      <InfoCard label="Issue Date" value={formatDate(details?.issue_date)} />
+                      <InfoCard label="Expiry Date" value={formatDate(details?.expiry_date)} />
+                      <InfoCard label="Sponsor ID" value={fieldValue(details?.sponsor_id)} />
+                      <InfoCard label="Sponsor Contact" value={fieldValue(details?.sponsor_contact)} />
+                      <InfoCard
+                        label="Passport File"
+                        value={details?.passport_file_path ? "Available" : "Not uploaded"}
+                        action={
+                          <IconButton disabled={!details?.passport_file_path} onClick={() => openFile(details?.passport_file_path)}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        }
+                      />
+                      <InfoCard
+                        label="Visa File"
+                        value={details?.visa_file_path ? "Available" : "Not uploaded"}
+                        action={
+                          <IconButton disabled={!details?.visa_file_path} onClick={() => openFile(details?.visa_file_path)}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        }
+                      />
+                      <InfoCard label="Remarks" value={fieldValue(details?.visa_remarks)} fullWidth />
+                    </Box>
+                  )}
 
                   <Card
                     variant="outlined"
                     sx={{
-                      borderRadius: 3,
-                      mt: 1,
-                      borderColor: normalizeStatus(selectedDeployment.current_status).includes("visa") ? "info.main" : "divider",
+                      borderRadius: 0,
+                      mt: 0.75,
+                      borderColor: isOfferAccepted && normalizeStatus(selectedDeployment.current_status).includes("visa") ? "info.main" : "divider",
                       background: "rgba(25, 118, 210, 0.04)",
                     }}
                   >
-                    <CardContent>
+                    <CardContent sx={{ p: { xs: 1, md: 1.35 } }}>
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }} justifyContent="space-between">
                         <Box>
-                          <Typography fontWeight={900}>Visa Status</Typography>
+                          <Typography variant="subtitle2" fontWeight={900}>Visa Status</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {detailLoading ? "Loading visa details..." : "This is the visa record for the selected job."}
+                            {detailLoading
+                              ? "Loading visa details..."
+                              : isOfferAccepted
+                                ? "This is the visa record for the selected job."
+                                : "Visa details will appear after the offer is accepted."}
                           </Typography>
                         </Box>
-                        <Chip label={selectedDeployment.current_status ?? "Unknown"} color="info" />
                       </Stack>
                     </CardContent>
                   </Card>
@@ -241,13 +265,13 @@ function InfoCard({
   fullWidth?: boolean;
 }) {
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3, gridColumn: fullWidth ? "1 / -1" : undefined }}>
-      <CardContent sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+    <Card variant="outlined" sx={{ borderRadius: 0, gridColumn: fullWidth ? "1 / -1" : undefined, borderColor: "rgba(15, 23, 42, 0.10)" }}>
+      <CardContent sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, p: 1.15, "&:last-child": { pb: 1.15 } }}>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="caption" color="text.secondary">
             {label}
           </Typography>
-          <Typography fontWeight={800} sx={{ mt: 0.25, wordBreak: "break-word" }}>
+          <Typography fontWeight={800} sx={{ mt: 0.15, wordBreak: "break-word", fontSize: 14, lineHeight: 1.2 }}>
             {value}
           </Typography>
         </Box>

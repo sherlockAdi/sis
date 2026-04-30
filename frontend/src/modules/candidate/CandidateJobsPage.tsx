@@ -300,21 +300,12 @@ export default function CandidateJobsPage() {
               const isApplied = hasApp && statusKey === "applied";
 
               const go = () => {
-                if (!profileComplete) return navigate("/portal/candidate/profile/settings");
                 if (isApplied) return navigate(`/portal/candidate/applications/${app!.application_id}`);
                 return navigate(`/portal/candidate/jobs/${r.job_id}/apply`);
               };
 
-              const btnLabel = !profileComplete ? "Complete Profile" : isApplied ? "View Application" : hasApp ? "Continue" : "View & Apply";
-              const statusLabel = !profileComplete
-                ? "Profile incomplete"
-                : isApplied
-                  ? "Applied"
-                  : hasApp
-                    ? status
-                      ? `In progress: ${status}`
-                      : "In progress"
-                    : "";
+              const btnLabel = isApplied ? "View Application" : hasApp ? "Continue" : "View & Apply";
+              const statusLabel = isApplied ? "Applied" : hasApp ? (status ? `In progress: ${status}` : "In progress") : "";
 
               return (
                 <Card

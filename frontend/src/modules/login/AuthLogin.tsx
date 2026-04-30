@@ -248,11 +248,11 @@ export default function AuthLogin() {
                         alignItems: "center",
                       }}
                     >
-                      <SisLogo height={28} />
+                      <SisLogo height={76} />
                     </Box>
                     <Box>
                       <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                        SIS Global
+                        SIS Global Workforce Solutions
                       </Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         Connect
@@ -478,7 +478,7 @@ export default function AuthLogin() {
 
                   <Divider sx={{ opacity: 0.8 }} />
                   <Box sx={{ display: "flex", justifyContent: "center", pt: 1 }}>
-                    <SisLogo height={70} />
+                    <SisLogo height={140} />
                   </Box>
                 </Stack>
               </Box>

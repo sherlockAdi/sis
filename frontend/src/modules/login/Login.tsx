@@ -147,11 +147,11 @@ export default function Login() {
                         alignItems: "center",
                       }}
                     >
-                      <SisLogo height={28} />
+                      <SisLogo height={76} />
                     </Box>
                     <Box>
                       <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                        SIS Global
+                        SIS Global Workforce Solutions
                       </Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         Connect

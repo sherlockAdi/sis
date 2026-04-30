@@ -19,7 +19,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { AdButton, AdCard, AdDropDown, AdGrid, AdNotification, AdTextArea, AdTextBox } from "../../common/ad";
 import { me as getMe, type MeResponse } from "../../common/services/authApi";
 import { ticketsApi, type TicketDetail, type TicketMeta, type TicketRow } from "../../common/services/ticketsApi";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 type TicketForm = {
   ticket_type_id: number | "";
@@ -81,6 +81,8 @@ function prettyDate(value: string | null | undefined) {
 
 export default function TicketCenterPage() {
   const params = useParams<{ ticketId?: string }>();
+  const location = useLocation();
+  const isEscalationsPage = location.pathname.includes("/helpdesk/escalations");
   const [me, setMe] = useState<MeResponse | null>(null);
   const [meta, setMeta] = useState<TicketMeta | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
@@ -112,9 +114,10 @@ export default function TicketCenterPage() {
   }, [meta?.types]);
 
   const filteredTickets = useMemo(() => {
+    if (isEscalationsPage) return tickets.filter((t) => normalize(t.ticket_status_code) === "ESCALATED");
     if (selectedStatus === "ALL") return tickets;
     return tickets.filter((t) => normalize(t.ticket_status_code) === normalize(selectedStatus));
-  }, [selectedStatus, tickets]);
+  }, [isEscalationsPage, selectedStatus, tickets]);
 
   const stats = useMemo(() => {
     const open = tickets.filter((t) => normalize(t.ticket_status_code) === "OPEN").length;
@@ -134,7 +137,7 @@ export default function TicketCenterPage() {
       setMe(profile);
       setMeta(metaRes);
       setTickets(ticketRes);
-      if (!selectedTicketId && ticketRes[0]) {
+      if (!isEscalationsPage && !selectedTicketId && ticketRes[0]) {
         setSelectedTicketId(ticketRes[0].ticket_id);
       }
     } catch (e) {
@@ -149,6 +152,7 @@ export default function TicketCenterPage() {
   };
 
   const loadDetail = async (ticketId: number) => {
+    if (isEscalationsPage) return;
     try {
       const data = await ticketsApi.get(ticketId);
       setDetail(data);
@@ -175,7 +179,7 @@ export default function TicketCenterPage() {
   useEffect(() => {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStatus]);
+  }, [selectedStatus, isEscalationsPage]);
 
   useEffect(() => {
     const ticketId = params.ticketId ? Number(params.ticketId) : null;
@@ -185,10 +189,11 @@ export default function TicketCenterPage() {
   }, [params.ticketId]);
 
   useEffect(() => {
+    if (isEscalationsPage) return;
     if (selectedTicketId) void loadDetail(selectedTicketId);
     else setDetail(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTicketId]);
+  }, [isEscalationsPage, selectedTicketId]);
 
   const saveTicket = async () => {
     if (!form.ticket_type_id || !String(form.subject).trim()) {
@@ -363,8 +368,45 @@ export default function TicketCenterPage() {
       ),
     },
   ];
+  const escalationColumns = columns.filter((column: any) => column.field !== "open");
 
   return (
+    isEscalationsPage ? (
+      <Box sx={{ p: { xs: 1, md: 2 } }}>
+        <Stack spacing={1.5}>
+          <Box>
+            <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
+              Escalations
+            </Typography>
+            <Typography sx={{ mt: 0.25, color: "text.secondary" }}>
+              Only escalated helpdesk tickets are shown here.
+            </Typography>
+          </Box>
+
+          {loading ? (
+            <Alert severity="info">Loading escalations...</Alert>
+          ) : (
+            <AdGrid
+              rows={filteredTickets.map((r) => ({ id: r.ticket_id, ...r }))}
+              columns={escalationColumns as any}
+              loading={loading}
+              showExport={false}
+              disableColumnMenu
+              autoHeight
+              pageSizeOptions={[10, 20, 50]}
+              initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+            />
+          )}
+        </Stack>
+
+        <AdNotification
+          open={toast.open}
+          message={toast.message}
+          severity={toast.severity}
+          onClose={() => setToast((t) => ({ ...t, open: false }))}
+        />
+      </Box>
+    ) : (
     <Container maxWidth="xl" sx={{ py: { xs: 1, md: 2 } }}>
       <Stack spacing={2.25}>
         <Box>
@@ -709,5 +751,6 @@ export default function TicketCenterPage() {
         onClose={() => setToast((t) => ({ ...t, open: false }))}
       />
     </Container>
+    )
   );
 }

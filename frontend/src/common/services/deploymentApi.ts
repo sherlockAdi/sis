@@ -34,6 +34,7 @@ export type VisaDetailRow = {
   deployment_id: number;
   offer_date?: string | null;
   offer_letter_file_path: string | null;
+  isaccepted?: number | null;
   offer_payment_received?: number | null;
   offer_remarks?: string | null;
   visa_type_id: number | null;
@@ -59,6 +60,11 @@ export type VisaDetailRow = {
   updated_at: string;
 };
 
+export type CandidateVisaDetailsUpsertInput = {
+  deployment_id: number;
+  isaccepted?: boolean | null;
+} & Omit<Partial<VisaDetailRow>, "isaccepted">;
+
 export const deploymentApi = {
   list: (status?: string) =>
     apiFetch<DeploymentRow[]>(`/deployment${status ? `?status=${encodeURIComponent(status)}` : ""}`, { method: "GET" }),
@@ -78,7 +84,7 @@ export const deploymentApi = {
   },
   candidate: {
     list: () => apiFetch<DeploymentRow[]>(`/candidate/deployment`, { method: "GET" }),
-    upsertVisaDetails: (input: { deployment_id: number } & Partial<VisaDetailRow>) =>
+    upsertVisaDetails: (input: CandidateVisaDetailsUpsertInput) =>
       apiFetch<{ visa_detail_id: number }>(`/candidate/deployment/visa-details`, { method: "PUT", body: JSON.stringify(input) }),
   },
 };

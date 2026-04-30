@@ -37,7 +37,7 @@ export default function AboutSisPage() {
           <Box sx={{ p: 3, bgcolor: "white", border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4 }}>
             <Stack spacing={2}>
               {[
-                "SIS Global commenced operations with a mission to standardize workforce sourcing and deployment across multiple geographies.",
+                "SIS Global Workforce Solutions commenced operations with a mission to standardize workforce sourcing and deployment across multiple geographies.",
                 "We combine compliance-first recruitment, structured screening, and transparent documentation to help employers hire with confidence.",
                 "Our portal ecosystem routes each stakeholder to the right experience: Candidate, Employer, Customer, and Admin.",
               ].map((p) => (

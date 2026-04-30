@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
@@ -25,14 +26,24 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import BusinessIcon from "@mui/icons-material/Business";
 import HomeIcon from "@mui/icons-material/Home";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
-import { BottomNavigation, BottomNavigationAction, Box, IconButton, InputAdornment, Stack, TextField, useMediaQuery, useTheme } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { BottomNavigation, BottomNavigationAction, Box, IconButton, InputAdornment, Stack, useMediaQuery, useTheme } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import { AdAppShell, AdButton } from "../common/ad";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import { AdAppShell, AdButton, AdNotification } from "../common/ad";
 import { useAuth } from "../common/auth/AuthContext";
+import { login as loginAuth } from "../common/services/authApi";
 import { clearAuthToken } from "../common/services/tokenStorage";
 import { withPortalBase } from "../common/paths";
+import { adminApi } from "../common/services/adminApi";
 
 function safePath(path?: string | null): string | null {
   if (!path) return null;
@@ -103,8 +114,58 @@ export default function AppShellLayout() {
   const role = String(me?.role_code ?? "").toUpperCase();
   const isCandidate = role === "CANDIDATE";
   const isPartner = role === "SOURCING" || role === "PARTNER";
+  const isAssociate = role === "ASSOCIATE";
   const isEmployer = role === "EMPLOYER" || role === "CUSTOMER";
-  const isAdminLike = !(isCandidate || isPartner || isEmployer);
+  const isAdminLike = !(isCandidate || isPartner || isEmployer || isAssociate);
+  const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordToast, setPasswordToast] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" | "warning" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const closeProfileMenu = () => setProfileMenuAnchor(null);
+  const openResetPassword = () => {
+    closeProfileMenu();
+    setResetPasswordOpen(true);
+  };
+  const closeResetPassword = () => {
+    setResetPasswordOpen(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  };
+
+  const submitPasswordReset = async () => {
+    if (!me?.user_id) {
+      setPasswordToast({ open: true, message: "User profile is not available.", severity: "error" });
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordToast({ open: true, message: "Please fill in all password fields.", severity: "warning" });
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordToast({ open: true, message: "New password and confirmation do not match.", severity: "warning" });
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await loginAuth(me.username, passwordForm.currentPassword);
+      await adminApi.users.update(me.user_id, { password: passwordForm.newPassword });
+      setPasswordToast({ open: true, message: "Password updated successfully.", severity: "success" });
+      closeResetPassword();
+    } catch (e: any) {
+      setPasswordToast({ open: true, message: e?.message ?? "Failed to update password.", severity: "error" });
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const navItems = useMemo(() => {
     const menus = (me?.menus ?? []).filter((m) => Number(m.can_view) === 1).slice();
@@ -259,6 +320,93 @@ export default function AppShellLayout() {
       },
     ];
   }, [isCandidate]);
+
+  const associateNavSections = useMemo(() => {
+    if (!isAssociate) return null;
+
+    return [
+      {
+        heading: "MAIN MENU",
+        items: [
+          {
+            label: "Dashboard",
+            to: withPortalBase("/associate/dashboard"),
+            icon: <HomeIcon fontSize="small" />,
+          },
+        ],
+      },
+      {
+        heading: "UPLOAD CANDIDATE",
+        items: [
+          {
+            label: "Upload Candidate",
+            to: withPortalBase("/associate/upload-candidate"),
+            icon: <PeopleAltIcon fontSize="small" />,
+            children: [
+              { label: "Candidate List", to: withPortalBase("/associate/upload-candidate/candidate-list"), icon: <PeopleAltIcon fontSize="small" /> },
+              { label: "Create Candidates", to: withPortalBase("/associate/upload-candidate/create-candidates"), icon: <AddIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "JOB",
+        items: [
+          {
+            label: "Job",
+            to: withPortalBase("/associate/job"),
+            icon: <WorkOutlineIcon fontSize="small" />,
+            children: [
+              { label: "Job List (Job View)", to: withPortalBase("/associate/job/job-list"), icon: <WorkOutlineIcon fontSize="small" /> },
+              { label: "Apply Job Candidates", to: withPortalBase("/associate/job/apply-candidates"), icon: <DescriptionIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "APPLIED CANDIDATE",
+        items: [
+          {
+            label: "Applied Candidate",
+            to: withPortalBase("/associate/applied-candidate"),
+            icon: <DescriptionIcon fontSize="small" />,
+            children: [
+              { label: "Applied Candidate List", to: withPortalBase("/associate/applied-candidate/applied-candidate-list"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Interview Process (View)", to: withPortalBase("/associate/applied-candidate/interview-process"), icon: <ScheduleIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "ONBOARDING PROCESS",
+        items: [
+          {
+            label: "Onboarding Process",
+            to: withPortalBase("/associate/onboarding"),
+            icon: <MenuBookOutlinedIcon fontSize="small" />,
+            children: [
+              { label: "Download Offer", to: withPortalBase("/associate/onboarding/download-offer"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Visa Details", to: withPortalBase("/associate/onboarding/visa-details"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Download Tickets", to: withPortalBase("/associate/onboarding/download-tickets"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "REPORTS",
+        items: [
+          {
+            label: "Reports",
+            to: withPortalBase("/associate/reports"),
+            icon: <ReceiptLongIcon fontSize="small" />,
+            children: [
+              { label: "Total Job list", to: withPortalBase("/associate/reports/total-job-list"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+    ];
+  }, [isAssociate]);
 
   const navSections = useMemo(() => {
     if (!isAdminLike) return null;
@@ -440,9 +588,10 @@ export default function AppShellLayout() {
   const effectiveTitle = useMemo(() => {
     if (isCandidate) return "Candidate Portal";
     if (isPartner) return "Employer Portal";
+    if (isAssociate) return "Associate Partner Portal";
     if (isEmployer) return "Employer Portal";
     return "Administrator Dashboard";
-  }, [isCandidate, isEmployer, isPartner]);
+  }, [isAssociate, isCandidate, isEmployer, isPartner]);
 
   const effectiveRightSlot = useMemo(() => {
     if (!isCandidate) return rightSlot;
@@ -457,7 +606,7 @@ export default function AppShellLayout() {
         </IconButton>
         <IconButton
           aria-label="profile"
-          onClick={() => navigate(withPortalBase("/candidate/profile"))}
+          onClick={(event) => setProfileMenuAnchor(event.currentTarget)}
           size="small"
         >
           <PersonIcon />
@@ -486,7 +635,7 @@ export default function AppShellLayout() {
         <IconButton aria-label="notifications" size="small">
           <NotificationsNoneIcon />
         </IconButton>
-        <IconButton aria-label="profile" onClick={() => navigate(withPortalBase("/partner/profile"))} size="small">
+        <IconButton aria-label="profile" onClick={(event) => setProfileMenuAnchor(event.currentTarget)} size="small">
           <PersonIcon />
         </IconButton>
         <AdButton
@@ -537,7 +686,7 @@ export default function AppShellLayout() {
         <IconButton aria-label="notifications" size="small">
           <NotificationsNoneIcon />
         </IconButton>
-        <IconButton aria-label="profile" size="small">
+        <IconButton aria-label="profile" onClick={(event) => setProfileMenuAnchor(event.currentTarget)} size="small">
           <PersonIcon />
         </IconButton>
         {rightSlot}
@@ -546,21 +695,120 @@ export default function AppShellLayout() {
   }, [effectiveRightSlot, isAdminLike, navigate, rightSlot]);
 
   return (
-    <AdAppShell
-      title={effectiveTitle}
-      // subtitle="Recruitment, Deployment & Governance Overview"
-      brand="SIS Global"
-      navItems={navItems}
-      navSections={candidateNavSections ?? navSections}
-      topBarCenter={adminTopSearch}
-      rightSlot={isAdminLike ? adminRightSlot : isPartner ? partnerRightSlot : effectiveRightSlot}
-      bottomNav={candidateBottomNav ?? partnerBottomNav}
-      disableMobileDrawer={isCandidate || isPartner}
-      currentPath={location.pathname}
-      userName={me?.username ?? "User"}
-      userEmail={me?.email ?? ""}
-    >
-      <Outlet />
-    </AdAppShell>
+    <>
+      <AdAppShell
+        title={effectiveTitle}
+        // subtitle="Recruitment, Deployment & Governance Overview"
+        brand="SIS Global Workforce Solutions"
+        navItems={navItems}
+        navSections={candidateNavSections ?? associateNavSections ?? navSections}
+        topBarCenter={adminTopSearch}
+        rightSlot={isAdminLike ? adminRightSlot : isPartner ? partnerRightSlot : effectiveRightSlot}
+        bottomNav={candidateBottomNav ?? partnerBottomNav}
+        disableMobileDrawer={isCandidate || isPartner || isAssociate}
+        currentPath={location.pathname}
+        userName={me?.username ?? "User"}
+        userEmail={me?.email ?? ""}
+      >
+        <Outlet />
+      </AdAppShell>
+
+      <Menu
+        anchorEl={profileMenuAnchor}
+        open={Boolean(profileMenuAnchor)}
+        onClose={closeProfileMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 180,
+            borderRadius: 0,
+            border: "1px solid rgba(15,23,42,0.10)",
+            boxShadow: "0 16px 36px rgba(15,23,42,0.12)",
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            closeProfileMenu();
+            navigate(
+              isCandidate
+                ? withPortalBase("/candidate/profile")
+                : isPartner
+                  ? withPortalBase("/partner/profile")
+                  : isAssociate
+                    ? withPortalBase("/associate/dashboard")
+                  : withPortalBase("/dashboard"),
+            );
+          }}
+        >
+          Profile
+        </MenuItem>
+        <MenuItem onClick={openResetPassword}>Reset Password</MenuItem>
+        <MenuItem
+          onClick={() => {
+            closeProfileMenu();
+            clearAuthToken();
+            navigate(withPortalBase("/login"), { replace: true });
+          }}
+        >
+          Logout
+        </MenuItem>
+      </Menu>
+
+      <Dialog
+        open={resetPasswordOpen}
+        onClose={closeResetPassword}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 0 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900 }}>Reset Password</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack spacing={1.25} sx={{ mt: 0.5 }}>
+            <TextField
+              label="Current Password"
+              type="password"
+              size="small"
+              fullWidth
+              value={passwordForm.currentPassword}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+            />
+            <TextField
+              label="New Password"
+              type="password"
+              size="small"
+              fullWidth
+              value={passwordForm.newPassword}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+            />
+            <TextField
+              label="Confirm Password"
+              type="password"
+              size="small"
+              fullWidth
+              value={passwordForm.confirmPassword}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <AdButton variant="text" onClick={closeResetPassword}>
+            Cancel
+          </AdButton>
+          <AdButton onClick={submitPasswordReset} loading={passwordSaving}>
+            Save Password
+          </AdButton>
+        </DialogActions>
+      </Dialog>
+
+      <AdNotification
+        open={passwordToast.open}
+        message={passwordToast.message}
+        severity={passwordToast.severity}
+        onClose={() => setPasswordToast((t) => ({ ...t, open: false }))}
+      />
+    </>
   );
 }
