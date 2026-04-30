@@ -18,7 +18,7 @@ export default function PublicAboutPage() {
     <Box>
       <PublicPageHero
         eyebrow="About Us"
-        title="SIS Global"
+        title="SIS Global Workforce Solutions"
         highlight="Overview"
         subtitle="Company overview, global presence, trust signals, and why SIS — in one clean page."
       />
@@ -33,7 +33,7 @@ export default function PublicAboutPage() {
               Company overview
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
-              SIS Global connects skilled workforce with trusted employers using a structured recruitment and deployment process.
+              SIS Global Workforce Solutions connects skilled workforce with trusted employers using a structured recruitment and deployment process.
               We focus on clarity, compliance, and speed — so stakeholders can act with confidence.
             </Typography>
           </Box>

@@ -20,7 +20,7 @@ export default function AboutIndexPage() {
     <Box>
       <PublicPageHero
         eyebrow="About Us"
-        title="SIS Global"
+        title="SIS Global Workforce Solutions"
         highlight="Company"
         subtitle="A recruitment + deployment platform designed for trust, transparency, and scale."
         actions={
@@ -68,7 +68,7 @@ export default function AboutIndexPage() {
             <Box
               component="img"
               src="/assests/about.jpeg"
-              alt="SIS Global"
+              alt="SIS Global Workforce Solutions"
               sx={{
                 width: "100%",
                 maxHeight: 220,
@@ -85,7 +85,7 @@ export default function AboutIndexPage() {
               Company overview
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9, maxWidth: 980 }}>
-              SIS Global connects skilled workforce with trusted employers using a structured recruitment and deployment process:
+              SIS Global Workforce Solutions connects skilled workforce with trusted employers using a structured recruitment and deployment process:
               mandates → sourcing → screening → documentation → approvals → deployment tracking.
             </Typography>
             <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>

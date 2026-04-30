@@ -549,7 +549,7 @@ export default function AppShellLayout() {
     <AdAppShell
       title={effectiveTitle}
       // subtitle="Recruitment, Deployment & Governance Overview"
-      brand="SIS Global"
+      brand="SIS Global Workforce Solutions"
       navItems={navItems}
       navSections={candidateNavSections ?? navSections}
       topBarCenter={adminTopSearch}

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-label="SIS Global Workforce Solutions">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+  </defs>
+  <rect width="1200" height="420" fill="none" />
+
+  <g transform="translate(110,36)" filter="url(#softShadow)">
+    <path
+      d="M 430 24
+         C 276 48, 186 166, 188 274
+         C 190 337, 240 376, 318 382
+         C 399 388, 496 348, 558 274
+         C 525 336, 456 387, 368 401
+         C 253 419, 160 354, 142 255
+         C 114 107, 235 16, 405 0
+         C 468 -5, 528 10, 574 37
+         C 530 27, 477 22, 430 24 Z"
+      fill="#2b2b2b"
+    />
+
+    <text
+      x="252"
+      y="284"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="208"
+      font-weight="700"
+      fill="#4b4b4b"
+      letter-spacing="-12"
+    >
+      U
+    </text>
+
+    <text
+      x="596"
+      y="284"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="208"
+      font-weight="700"
+      fill="#3e3e3e"
+      letter-spacing="-12"
+    >
+      V
+    </text>
+
+    <circle cx="460" cy="134" r="30" fill="#ab1823" />
+    <path
+      d="M 456 170
+         C 488 190, 515 217, 529 266
+         C 506 255, 485 248, 461 248
+         C 435 248, 410 257, 384 270
+         C 404 213, 423 189, 456 170 Z"
+      fill="#b71d28"
+    />
+    <path
+      d="M 483 172
+         C 526 145, 552 111, 564 75
+         C 548 104, 529 133, 501 160
+         C 515 165, 521 171, 526 182
+         C 512 178, 497 174, 483 172 Z"
+      fill="#9d111c"
+    />
+  </g>
+
+  <text
+    x="600"
+    y="364"
+    text-anchor="middle"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="44"
+    font-weight="900"
+    fill="#2a2a2a"
+    letter-spacing="1.2"
+  >
+    SIS GLOBAL WORKFORCE SOLUTIONS
+  </text>
+</svg>

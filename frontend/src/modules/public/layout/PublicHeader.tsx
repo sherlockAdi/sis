@@ -54,7 +54,7 @@ export default function PublicHeader() {
             onClick={() => navigate("/")}
             sx={{ textTransform: "none", px: 0, gap: 1.25 }}
           >
-            <SisLogo height={28} />
+            <SisLogo height={76} />
           </Button>
 
           <Box sx={{ flex: 1 }} />

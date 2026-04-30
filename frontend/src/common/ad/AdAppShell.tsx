@@ -148,7 +148,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" 
 }));
 
 export default function AdAppShell({
-  title = "SIS EHRM",
+  title = "SIS Global Workforce Solutions",
   // subtitle = "Enterprise Human Resource Management",
   navItems,
   navSections,
@@ -215,7 +215,7 @@ export default function AdAppShell({
       <DrawerHeader sx={{ justifyContent: effectiveOpen ? "space-between" : "center", px: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <SisLogo height={32} />
+            <SisLogo height={80} />
           </Box>
         </Stack>
 
@@ -509,7 +509,7 @@ export default function AdAppShell({
             </IconButton>
           ) : null}
           <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
-            <SisLogo height={28} />
+            <SisLogo height={72} />
           </Box>
           {topBarCenter ? (
             <Box sx={{ display: { xs: "none", md: "block" }, flex: 1, minWidth: 0 }}>

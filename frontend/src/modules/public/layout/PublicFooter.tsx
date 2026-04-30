@@ -29,9 +29,9 @@ export default function PublicFooter() {
         >
           <Stack spacing={1}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <SisLogo height={26} />
+              <SisLogo height={68} />
               <Typography fontWeight={950} sx={{ letterSpacing: -0.2 }}>
-                SIS Global
+                SIS Global Workforce Solutions
               </Typography>
             </Stack>
             <Typography variant="body2" sx={{ opacity: 0.82, maxWidth: 520 }}>
@@ -71,7 +71,7 @@ export default function PublicFooter() {
 
           <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.10)" }} />
           <Typography variant="caption" sx={{ opacity: 0.7 }}>
-            © {new Date().getFullYear()} SIS Global. All rights reserved.
+            © {new Date().getFullYear()} SIS Global Workforce Solutions. All rights reserved.
           </Typography>
       </Container>
     </Box>

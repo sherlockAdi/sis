@@ -18,7 +18,7 @@ export default function CompanyOverviewPage() {
               What we do
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.9 }}>
-              SIS Global helps employers hire skilled workforce through a defined end-to-end journey: job publishing, sourcing,
+              SIS Global Workforce Solutions helps employers hire skilled workforce through a defined end-to-end journey: job publishing, sourcing,
               screening, interviews, documentation, approvals, and deployment tracking.
             </Typography>
             <Typography sx={{ mt: 1.25, color: "text.secondary", lineHeight: 1.9 }}>

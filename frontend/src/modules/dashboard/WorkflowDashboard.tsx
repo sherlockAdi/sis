@@ -526,7 +526,7 @@ export default function WorkflowDashboard({ currentUser }: { currentUser?: strin
           showToolbar
           showExport
           exportFileName="Workflow-Queue"
-          pdfBrandingText="SIS Global"
+          pdfBrandingText="SIS Global Workforce Solutions"
           pdfTitle="Workflow Queue"
           disableColumnMenu
           sx={{

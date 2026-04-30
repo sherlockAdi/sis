@@ -441,7 +441,7 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
 VALUES
   ('Total Job list', 'SRC_RPT_JOB_LIST', @m_emp_reports, '/partner/reports/total-jobs', 'description', 331, TRUE),
-  ('Final Selected candiates', 'SRC_RPT_FINAL_SELECTED', @m_emp_reports, '/partner/reports/final-selected', 'description', 332, TRUE)
+  ('Final Selected Candidates', 'SRC_RPT_FINAL_SELECTED', @m_emp_reports, '/partner/reports/final-selected', 'description', 332, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),
