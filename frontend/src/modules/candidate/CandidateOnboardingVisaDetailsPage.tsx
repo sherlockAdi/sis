@@ -115,6 +115,7 @@ export default function CandidateOnboardingVisaDetailsPage() {
     if (!details?.visa_type_id) return "-";
     return visaTypes.find((v) => v.visa_type_id === details.visa_type_id)?.visa_type_name ?? String(details.visa_type_id);
   }, [details?.visa_type_id, visaTypes]);
+  const isOfferAccepted = details?.isaccepted === 1;
 
   const openFile = async (path?: string | null) => {
     if (!path) return;
@@ -163,40 +164,62 @@ export default function CandidateOnboardingVisaDetailsPage() {
                     <InfoCard label="Candidate" value={selectedDeployment.candidate_name} />
                     <InfoCard label="Job" value={selectedDeployment.job_title} />
                     <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
-                    <InfoCard label="Visa Type" value={visaTypeName} />
-                    <InfoCard label="Visa Number" value={fieldValue(details?.visa_number)} />
-                    <InfoCard label="Visa Payment" value={fieldValue(details?.visa_payment_received)} />
-                    <InfoCard label="Issue Date" value={formatDate(details?.issue_date)} />
-                    <InfoCard label="Expiry Date" value={formatDate(details?.expiry_date)} />
-                    <InfoCard label="Sponsor ID" value={fieldValue(details?.sponsor_id)} />
-                    <InfoCard label="Sponsor Contact" value={fieldValue(details?.sponsor_contact)} />
-                    <InfoCard
-                      label="Passport File"
-                      value={details?.passport_file_path ? "Available" : "Not uploaded"}
-                      action={
-                        <IconButton disabled={!details?.passport_file_path} onClick={() => openFile(details?.passport_file_path)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      }
-                    />
-                    <InfoCard
-                      label="Visa File"
-                      value={details?.visa_file_path ? "Available" : "Not uploaded"}
-                      action={
-                        <IconButton disabled={!details?.visa_file_path} onClick={() => openFile(details?.visa_file_path)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      }
-                    />
-                    <InfoCard label="Remarks" value={fieldValue(details?.visa_remarks)} fullWidth />
+                    <InfoCard label="Offer Acceptance" value={details ? (isOfferAccepted ? "Accepted" : "Not accepted") : "-"} />
                   </Box>
+
+                  {!isOfferAccepted ? (
+                    <Box
+                      sx={{
+                        mt: 1,
+                        p: 2,
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "warning.main",
+                        bgcolor: "rgba(237, 108, 2, 0.06)",
+                      }}
+                    >
+                      <Typography fontWeight={900}>Visa details are locked</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Accept the offer first to unlock the visa record for this job.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, mt: 1 }}>
+                      <InfoCard label="Visa Type" value={visaTypeName} />
+                      <InfoCard label="Visa Number" value={fieldValue(details?.visa_number)} />
+                      <InfoCard label="Visa Payment" value={fieldValue(details?.visa_payment_received)} />
+                      <InfoCard label="Issue Date" value={formatDate(details?.issue_date)} />
+                      <InfoCard label="Expiry Date" value={formatDate(details?.expiry_date)} />
+                      <InfoCard label="Sponsor ID" value={fieldValue(details?.sponsor_id)} />
+                      <InfoCard label="Sponsor Contact" value={fieldValue(details?.sponsor_contact)} />
+                      <InfoCard
+                        label="Passport File"
+                        value={details?.passport_file_path ? "Available" : "Not uploaded"}
+                        action={
+                          <IconButton disabled={!details?.passport_file_path} onClick={() => openFile(details?.passport_file_path)}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        }
+                      />
+                      <InfoCard
+                        label="Visa File"
+                        value={details?.visa_file_path ? "Available" : "Not uploaded"}
+                        action={
+                          <IconButton disabled={!details?.visa_file_path} onClick={() => openFile(details?.visa_file_path)}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        }
+                      />
+                      <InfoCard label="Remarks" value={fieldValue(details?.visa_remarks)} fullWidth />
+                    </Box>
+                  )}
 
                   <Card
                     variant="outlined"
                     sx={{
                       borderRadius: 3,
                       mt: 1,
-                      borderColor: normalizeStatus(selectedDeployment.current_status).includes("visa") ? "info.main" : "divider",
+                      borderColor: isOfferAccepted && normalizeStatus(selectedDeployment.current_status).includes("visa") ? "info.main" : "divider",
                       background: "rgba(25, 118, 210, 0.04)",
                     }}
                   >
@@ -205,10 +228,14 @@ export default function CandidateOnboardingVisaDetailsPage() {
                         <Box>
                           <Typography fontWeight={900}>Visa Status</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {detailLoading ? "Loading visa details..." : "This is the visa record for the selected job."}
+                            {detailLoading
+                              ? "Loading visa details..."
+                              : isOfferAccepted
+                                ? "This is the visa record for the selected job."
+                                : "Visa details will appear after the offer is accepted."}
                           </Typography>
                         </Box>
-                        <Chip label={selectedDeployment.current_status ?? "Unknown"} color="info" />
+                        <Chip label={isOfferAccepted ? selectedDeployment.current_status ?? "Unknown" : "Offer pending"} color={isOfferAccepted ? "info" : "default"} />
                       </Stack>
                     </CardContent>
                   </Card>

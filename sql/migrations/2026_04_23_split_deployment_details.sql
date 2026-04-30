@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS DEP_T03_offer_details (
     deployment_id INT NOT NULL UNIQUE,
     offer_date DATE DEFAULT NULL,
     offer_letter_file_path TEXT DEFAULT NULL,
+    isaccepted TINYINT(1) DEFAULT 0,
     payment_received TINYINT(1) DEFAULT 0,
     remarks VARCHAR(255) DEFAULT NULL,
     created_by INT DEFAULT NULL,

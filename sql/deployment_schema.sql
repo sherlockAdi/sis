@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS DEP_T03_offer_details (
 
     offer_date DATE DEFAULT NULL,
     offer_letter_file_path TEXT DEFAULT NULL,
+    isaccepted TINYINT(1) DEFAULT 0,
     payment_received TINYINT(1) DEFAULT 0,
     remarks VARCHAR(255) DEFAULT NULL,
 
@@ -329,6 +330,7 @@ CREATE PROCEDURE sp_dep_visa_details(
   IN p_deployment_id INT,
   IN p_offer_date DATE,
   IN p_offer_letter_file_path TEXT,
+  IN p_isaccepted TINYINT(1),
   IN p_offer_payment_received TINYINT(1),
   IN p_offer_remarks VARCHAR(255),
   IN p_visa_type_id INT,
@@ -361,6 +363,7 @@ BEGIN
       p_deployment_id AS deployment_id,
       o.offer_date,
       o.offer_letter_file_path,
+      o.isaccepted,
       o.payment_received AS offer_payment_received,
       o.remarks AS offer_remarks,
       v.visa_type_id,
@@ -402,12 +405,16 @@ BEGIN
       WHERE deployment_id = p_deployment_id
       LIMIT 1;
 
-      IF p_offer_date IS NOT NULL OR p_offer_letter_file_path IS NOT NULL OR p_offer_payment_received IS NOT NULL OR p_offer_remarks IS NOT NULL OR v_offer_id IS NOT NULL THEN
+      IF p_isaccepted IS NOT NULL AND v_offer_id IS NULL AND p_offer_date IS NULL AND p_offer_letter_file_path IS NULL AND p_offer_payment_received IS NULL AND p_offer_remarks IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Offer details not found';
+      END IF;
+
+      IF p_offer_date IS NOT NULL OR p_offer_letter_file_path IS NOT NULL OR p_isaccepted IS NOT NULL OR p_offer_payment_received IS NOT NULL OR p_offer_remarks IS NOT NULL OR v_offer_id IS NOT NULL THEN
         IF v_offer_id IS NULL THEN
           INSERT INTO DEP_T03_offer_details (
-            deployment_id, offer_date, offer_letter_file_path, payment_received, remarks, created_by, updated_by
+            deployment_id, offer_date, offer_letter_file_path, isaccepted, payment_received, remarks, created_by, updated_by
           ) VALUES (
-            p_deployment_id, p_offer_date, p_offer_letter_file_path, COALESCE(p_offer_payment_received, 0), p_offer_remarks, p_user_id, p_user_id
+            p_deployment_id, p_offer_date, p_offer_letter_file_path, COALESCE(p_isaccepted, 0), COALESCE(p_offer_payment_received, 0), p_offer_remarks, p_user_id, p_user_id
           );
           SET v_offer_id = LAST_INSERT_ID();
         ELSE
@@ -415,6 +422,7 @@ BEGIN
           SET
             offer_date = COALESCE(p_offer_date, offer_date),
             offer_letter_file_path = COALESCE(NULLIF(p_offer_letter_file_path, ''), offer_letter_file_path),
+            isaccepted = COALESCE(p_isaccepted, isaccepted),
             payment_received = COALESCE(p_offer_payment_received, payment_received),
             remarks = COALESCE(p_offer_remarks, remarks),
             updated_by = p_user_id

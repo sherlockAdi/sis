@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { AdDropDown, AdNotification } from "../../common/ad";
+import { AdButton, AdDropDown, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
@@ -37,6 +37,8 @@ export default function CandidateOnboardingOfferPage() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [selectedDeploymentId, setSelectedDeploymentId] = useState<number | null>(null);
+  const [offerAcceptance, setOfferAcceptance] = useState<string>("0");
+  const [savingAcceptance, setSavingAcceptance] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -103,6 +105,10 @@ export default function CandidateOnboardingOfferPage() {
     })();
   }, [selectedDeploymentId]);
 
+  useEffect(() => {
+    setOfferAcceptance(details?.isaccepted === 1 ? "1" : "0");
+  }, [details?.isaccepted]);
+
   const openFile = async (path?: string | null) => {
     if (!path) return;
     try {
@@ -114,6 +120,26 @@ export default function CandidateOnboardingOfferPage() {
   };
 
   const isOfferVisible = selectedDeployment ? ["ready", "offered", "visa approved", "visa processing"].includes(normalizeStatus(selectedDeployment.current_status)) : false;
+  const isAccepted = details?.isaccepted === 1;
+
+  const saveAcceptance = async () => {
+    if (!selectedDeployment) return;
+    try {
+      setSavingAcceptance(true);
+      await deploymentApi.candidate.upsertVisaDetails({
+        deployment_id: selectedDeployment.deployment_id,
+        isaccepted: offerAcceptance === "1",
+      });
+      setToast({ open: true, message: offerAcceptance === "1" ? "Offer accepted" : "Offer acceptance updated", severity: "success" });
+      await deploymentApi.candidate.list().then(setRows);
+      const updatedDetails = await deploymentApi.visaDetails.get(selectedDeployment.deployment_id);
+      setDetails(updatedDetails);
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to save acceptance", severity: "error" });
+    } finally {
+      setSavingAcceptance(false);
+    }
+  };
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -154,6 +180,7 @@ export default function CandidateOnboardingOfferPage() {
                     <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
                     <InfoCard label="Offer Date" value={formatDate(details?.offer_date)} />
                     <InfoCard label="Payment Received" value={fieldValue(details?.offer_payment_received)} />
+                    <InfoCard label="Acceptance" value={details ? (isAccepted ? "Accepted" : "Not accepted") : "-"} />
                     <InfoCard
                       label="Offer Letter"
                       value={details?.offer_letter_file_path ? "Available" : "Not uploaded"}
@@ -164,6 +191,41 @@ export default function CandidateOnboardingOfferPage() {
                       }
                     />
                     <InfoCard label="Remarks" value={fieldValue(details?.offer_remarks)} fullWidth />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      borderRadius: 3,
+                      border: "1px solid",
+                      borderColor: isAccepted ? "success.main" : "divider",
+                      bgcolor: isAccepted ? "rgba(46, 125, 50, 0.04)" : "transparent",
+                    }}
+                  >
+                    <Stack spacing={1.5}>
+                      <Box>
+                        <Typography fontWeight={900}>Offer Acceptance</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Mark whether you accept this job offer. Visa details stay locked until this is accepted.
+                        </Typography>
+                      </Box>
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
+                        <AdDropDown
+                          label="Is Accepted"
+                          options={[
+                            { label: "False", value: "0" },
+                            { label: "True", value: "1" },
+                          ]}
+                          value={offerAcceptance}
+                          onChange={(value) => setOfferAcceptance(String(value))}
+                        />
+                        <AdButton variant="contained" onClick={saveAcceptance} disabled={!details || savingAcceptance}>
+                          {savingAcceptance ? "Saving..." : "Save Acceptance"}
+                        </AdButton>
+                        <Chip label={isAccepted ? "Accepted" : "Pending"} color={isAccepted ? "success" : "default"} />
+                      </Stack>
+                    </Stack>
                   </Box>
 
                   <Card
@@ -191,9 +253,9 @@ export default function CandidateOnboardingOfferPage() {
                     </CardContent>
                   </Card>
                 </>
-              ) : (
-                <Box sx={{ py: 2 }}>
-                  <Typography fontWeight={800}>No offer available</Typography>
+            ) : (
+              <Box sx={{ py: 2 }}>
+                <Typography fontWeight={800}>No offer available</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     {loading ? "Loading your job list..." : "When an offer is created for one of your jobs, it will appear here."}
                   </Typography>
