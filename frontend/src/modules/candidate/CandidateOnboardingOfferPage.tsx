@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
+  Button,
   Card,
   CardContent,
-  Chip,
   Divider,
-  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { AdButton, AdDropDown, AdNotification } from "../../common/ad";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
+import { AdDropDown, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
@@ -24,6 +25,12 @@ function formatDate(value?: string | null) {
   return value.slice(0, 10);
 }
 
+function formatCurrency(value: unknown) {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount)) return "-";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(amount);
+}
+
 function fieldValue(value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "number") return String(value);
@@ -35,9 +42,7 @@ export default function CandidateOnboardingOfferPage() {
   const [rows, setRows] = useState<DeploymentRow[]>([]);
   const [details, setDetails] = useState<VisaDetailRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [selectedDeploymentId, setSelectedDeploymentId] = useState<number | null>(null);
-  const [offerAcceptance, setOfferAcceptance] = useState<string>("0");
   const [savingAcceptance, setSavingAcceptance] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
@@ -93,21 +98,14 @@ export default function CandidateOnboardingOfferPage() {
     }
 
     (async () => {
-      setDetailLoading(true);
       try {
         setDetails(await deploymentApi.visaDetails.get(selectedDeploymentId));
       } catch (e: any) {
         setDetails(null);
         setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load selected offer", severity: "error" });
-      } finally {
-        setDetailLoading(false);
       }
     })();
   }, [selectedDeploymentId]);
-
-  useEffect(() => {
-    setOfferAcceptance(details?.isaccepted === 1 ? "1" : "0");
-  }, [details?.isaccepted]);
 
   const openFile = async (path?: string | null) => {
     if (!path) return;
@@ -119,18 +117,22 @@ export default function CandidateOnboardingOfferPage() {
     }
   };
 
-  const isOfferVisible = selectedDeployment ? ["ready", "offered", "visa approved", "visa processing"].includes(normalizeStatus(selectedDeployment.current_status)) : false;
+  const isOfferVisible = selectedDeployment
+    ? ["ready", "offered", "visa approved", "visa processing"].includes(normalizeStatus(selectedDeployment.current_status))
+    : false;
   const isAccepted = details?.isaccepted === 1;
+  const paymentReceived = Number(details?.offer_payment_received ?? 0);
 
   const saveAcceptance = async () => {
     if (!selectedDeployment) return;
+    if (isAccepted) return;
     try {
       setSavingAcceptance(true);
       await deploymentApi.candidate.upsertVisaDetails({
         deployment_id: selectedDeployment.deployment_id,
-        isaccepted: offerAcceptance === "1",
+        isaccepted: true,
       });
-      setToast({ open: true, message: offerAcceptance === "1" ? "Offer accepted" : "Offer acceptance updated", severity: "success" });
+      setToast({ open: true, message: "Offer accepted", severity: "success" });
       await deploymentApi.candidate.list().then(setRows);
       const updatedDetails = await deploymentApi.visaDetails.get(selectedDeployment.deployment_id);
       setDetails(updatedDetails);
@@ -141,126 +143,249 @@ export default function CandidateOnboardingOfferPage() {
     }
   };
 
+  if (!loading && !selectedDeployment) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(15, 23, 42, 0.10)",
+            bgcolor: "#fff",
+            boxShadow: "0 12px 40px rgba(15, 23, 42, 0.04)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 2.25 } }}>
+            <Typography variant="h5" fontWeight={950}>
+              Download Offer
+            </Typography>
+            <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+              When an offer is created for one of your jobs, it will appear here.
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack spacing={2.5}>
+      <Stack spacing={1.5}>
         <Box>
-          <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-            Download Offer
-          </Typography>
-          <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Select your job and view the offer details for that specific deployment.
+          <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: -0.5 }}>
+            Offer Acceptance Portal
           </Typography>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Stack spacing={2}>
-              <Box>
-                <Typography fontWeight={900} sx={{ mb: 1 }}>
-                  Select Job
-                </Typography>
-                <AdDropDown
-                  label="Respective Job"
-                  options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
-                  value={selectedDeploymentId ?? ""}
-                  disabled={deploymentOptions.length === 0}
-                  onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
-                />
-              </Box>
-
-              {selectedDeployment ? (
-                <>
-                  <Divider />
-                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
-                    <InfoCard label="Candidate" value={selectedDeployment.candidate_name} />
-                    <InfoCard label="Job" value={selectedDeployment.job_title} />
-                    <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
-                    <InfoCard label="Offer Date" value={formatDate(details?.offer_date)} />
-                    <InfoCard label="Payment Received" value={fieldValue(details?.offer_payment_received)} />
-                    <InfoCard label="Acceptance" value={details ? (isAccepted ? "Accepted" : "Not accepted") : "-"} />
-                    <InfoCard
-                      label="Offer Letter"
-                      value={details?.offer_letter_file_path ? "Available" : "Not uploaded"}
-                      action={
-                        <IconButton disabled={!details?.offer_letter_file_path} onClick={() => openFile(details?.offer_letter_file_path)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      }
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(15, 23, 42, 0.10)",
+            bgcolor: "#fff",
+            boxShadow: "0 12px 40px rgba(15, 23, 42, 0.04)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.1, md: 1.35 } }}>
+            <Stack spacing={1.1}>
+              <Stack
+                direction={{ xs: "column", lg: "row" }}
+                spacing={1}
+                alignItems={{ xs: "stretch", lg: "center" }}
+                justifyContent="space-between"
+              >
+                <Box>
+                  <Typography fontWeight={900} sx={{ mb: 0.25, fontSize: 15 }}>
+                    Select Job
+                  </Typography>
+                  <Box sx={{ minWidth: { xs: "100%", lg: 320 } }}>
+                    <AdDropDown
+                      label="Respective Job"
+                      options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
+                      value={selectedDeploymentId ?? ""}
+                      disabled={deploymentOptions.length === 0}
+                      onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
                     />
-                    <InfoCard label="Remarks" value={fieldValue(details?.offer_remarks)} fullWidth />
                   </Box>
+                </Box>
 
-                  <Box
+                <Stack direction="row" spacing={1} alignItems="center" justifyContent={{ xs: "flex-start", lg: "flex-end" }}>
+                  <Button
+                    variant="contained"
+                    onClick={saveAcceptance}
+                    disabled={!details || isAccepted || savingAcceptance}
                     sx={{
-                      mt: 1,
-                      p: 2,
-                      borderRadius: 3,
-                      border: "1px solid",
-                      borderColor: isAccepted ? "success.main" : "divider",
-                      bgcolor: isAccepted ? "rgba(46, 125, 50, 0.04)" : "transparent",
+                      borderRadius: 2.25,
+                      textTransform: "none",
+                      fontWeight: 850,
+                      px: 1.75,
+                      py: 0.75,
+                      bgcolor: "#2f7a3f",
+                      "&:hover": { bgcolor: "#256434" },
+                      "&.Mui-disabled": { bgcolor: "rgba(148, 163, 184, 0.28)", color: "rgba(15, 23, 42, 0.45)" },
                     }}
                   >
-                    <Stack spacing={1.5}>
+                    {isAccepted ? "Accepted" : savingAcceptance ? "Accepting..." : "Accept Offer"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<HelpOutlineIcon />}
+                    sx={{ borderRadius: 2.25, textTransform: "none", fontWeight: 800, px: 1.5, py: 0.75 }}
+                  >
+                    Help
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<SupportAgentIcon />}
+                    sx={{
+                      borderRadius: 2.25,
+                      textTransform: "none",
+                      fontWeight: 850,
+                      px: 1.75,
+                      py: 0.75,
+                      bgcolor: "#425868",
+                      "&:hover": { bgcolor: "#31424f" },
+                    }}
+                  >
+                    Get Support
+                  </Button>
+                </Stack>
+              </Stack>
+
+              <Divider />
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 1,
+                  gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.55fr) minmax(300px, 1fr)" },
+                }}
+              >
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 0,
+                    borderColor: "rgba(15, 23, 42, 0.10)",
+                    bgcolor: "#fff",
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 1, md: 1.35 } }}>
+                    <Stack spacing={0.85}>
                       <Box>
-                        <Typography fontWeight={900}>Offer Acceptance</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Mark whether you accept this job offer. Visa details stay locked until this is accepted.
+                        <Typography variant="subtitle2" fontWeight={900}>
+                          Job Overview
                         </Typography>
                       </Box>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
-                        <AdDropDown
-                          label="Is Accepted"
-                          options={[
-                            { label: "False", value: "0" },
-                            { label: "True", value: "1" },
-                          ]}
-                          value={offerAcceptance}
-                          onChange={(value) => setOfferAcceptance(String(value))}
-                        />
-                        <AdButton variant="contained" onClick={saveAcceptance} disabled={!details || savingAcceptance}>
-                          {savingAcceptance ? "Saving..." : "Save Acceptance"}
-                        </AdButton>
-                        <Chip label={isAccepted ? "Accepted" : "Pending"} color={isAccepted ? "success" : "default"} />
-                      </Stack>
-                    </Stack>
-                  </Box>
 
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      borderRadius: 3,
-                      mt: 1,
-                      borderColor: isOfferVisible ? "success.main" : "divider",
-                      background: isOfferVisible ? "rgba(46, 125, 50, 0.04)" : "transparent",
-                    }}
-                  >
-                    <CardContent>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }} justifyContent="space-between">
-                        <Box>
-                          <Typography fontWeight={900}>Offer Status</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {detailLoading ? "Loading offer details..." : isOfferVisible ? "Offer is available for this job." : "Offer is not ready yet for this job."}
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={selectedDeployment.current_status ?? "Unknown"}
-                          color={normalizeStatus(selectedDeployment.current_status) === "offered" ? "success" : "default"}
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gap: 0.75,
+                          gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                        }}
+                      >
+                        <SummaryField label="Candidate" value={selectedDeployment?.candidate_name ?? "-"} />
+                        <SummaryField label="Job" value={selectedDeployment?.job_title ?? "-"} />
+                        <SummaryField
+                          label="Role"
+                          value={selectedDeployment?.job_code ? `${selectedDeployment.job_title} - ${selectedDeployment.job_code}` : selectedDeployment?.job_title ?? "-"}
                         />
+                        <SummaryField label="Status" value={selectedDeployment?.current_status ?? "Unknown"} />
+                        <SummaryField label="Offer Date" value={formatDate(details?.offer_date)} />
+                      </Box>
+
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          borderRadius: 0,
+                          border: "none",
+                          background:
+                            "linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(243, 244, 246, 0.95) 100%)",
+                        }}
+                      >
+                        <CardContent sx={{ p: { xs: 0.85, md: 1 } }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Offer Notes
+                        </Typography>
+                          <Typography
+                            sx={{
+                              mt: 0.15,
+                              lineHeight: 1.35,
+                              fontSize: 14,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 1,
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            {fieldValue(details?.offer_remarks)}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 0,
+                    borderColor: "rgba(15, 23, 42, 0.10)",
+                    bgcolor: "#fff",
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 1, md: 1.35 } }}>
+                    <Stack spacing={0.85}>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={900}>
+                          Financial & Letter
+                        </Typography>
+                      </Box>
+
+                      <Stack spacing={0.2}>
+                        <Typography variant="caption" color="text.secondary">
+                          Payment Status
+                        </Typography>
+                        <Typography fontWeight={900} sx={{ fontSize: 16 }}>
+                          {formatCurrency(paymentReceived)}{" "}
+                          <Typography component="span" sx={{ color: paymentReceived > 0 ? "success.main" : "text.secondary", fontWeight: 800 }}>
+                            {paymentReceived > 0 ? "(Received)" : "(Pending)"}
+                          </Typography>
+                        </Typography>
                       </Stack>
-                    </CardContent>
-                  </Card>
-                </>
-            ) : (
-              <Box sx={{ py: 2 }}>
-                <Typography fontWeight={800}>No offer available</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {loading ? "Loading your job list..." : "When an offer is created for one of your jobs, it will appear here."}
-                  </Typography>
-                </Box>
-              )}
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                          Offer Letter
+                        </Typography>
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          startIcon={<DownloadRoundedIcon />}
+                          onClick={() => openFile(details?.offer_letter_file_path)}
+                          disabled={!details?.offer_letter_file_path}
+                          sx={{
+                            borderRadius: 2,
+                            py: 0.95,
+                            textTransform: "none",
+                            fontWeight: 800,
+                            borderColor: "rgba(71, 85, 105, 0.35)",
+                            color: "text.primary",
+                            "&:hover": { borderColor: "rgba(71, 85, 105, 0.55)", bgcolor: "rgba(15, 23, 42, 0.02)" },
+                          }}
+                        >
+                          Download Offer Letter
+                        </Button>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Box>
+
             </Stack>
           </CardContent>
         </Card>
@@ -269,30 +394,36 @@ export default function CandidateOnboardingOfferPage() {
   );
 }
 
-function InfoCard({
+function SummaryField({
   label,
   value,
-  action,
-  fullWidth = false,
 }: {
   label: string;
   value: string;
-  action?: React.ReactNode;
-  fullWidth?: boolean;
 }) {
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3, gridColumn: fullWidth ? "1 / -1" : undefined }}>
-      <CardContent sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" color="text.secondary">
-            {label}
-          </Typography>
-          <Typography fontWeight={800} sx={{ mt: 0.25, wordBreak: "break-word" }}>
-            {value}
-          </Typography>
-        </Box>
-        {action}
-      </CardContent>
-    </Card>
+    <Box
+      sx={{
+        minHeight: 64,
+        borderRadius: 0,
+        border: "1px solid",
+        borderColor: "rgba(15, 23, 42, 0.10)",
+        px: 1.25,
+        py: 0.9,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        bgcolor: "#fff",
+      }}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.1, minWidth: 0 }}>
+        <Typography fontWeight={850} sx={{ wordBreak: "break-word", lineHeight: 1.2, fontSize: 14 }}>
+          {value}
+        </Typography>
+      </Stack>
+    </Box>
   );
 }

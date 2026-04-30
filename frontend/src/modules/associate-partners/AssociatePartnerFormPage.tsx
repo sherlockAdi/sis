@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AdAlertBox,
@@ -245,9 +245,16 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
             Loading...
           </Typography>
         ) : (
-          <Stack spacing={2}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+          <Stack spacing={1.5}>
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+              }}
+            >
               <AdSearchableDropDown
+                variant="standard"
                 label="Country"
                 options={countryOptions}
                 value={form.country_id}
@@ -261,6 +268,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
                 }
               />
               <AdSearchableDropDown
+                variant="standard"
                 label="State"
                 options={stateOptions}
                 value={form.state_id}
@@ -274,46 +282,128 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
                 }
               />
               <AdSearchableDropDown
+                variant="standard"
                 label="City"
                 options={cityOptions}
                 value={form.city_id}
                 disabled={!form.state_id}
                 onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
               />
-            </Stack>
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Associate Partner Code"
+                value={form.associate_partner_code}
+                onChange={(v) => setForm((f) => ({ ...f, associate_partner_code: v }))}
+                helperText="Unique identifier"
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Associate Partner Name"
+                required
+                value={form.associate_partner_name}
+                onChange={(v) => setForm((f) => ({ ...f, associate_partner_name: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Alternative Associate Partner Name"
+                value={form.alt_associate_partner_name}
+                onChange={(v) => setForm((f) => ({ ...f, alt_associate_partner_name: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Primary Contact"
+                value={form.primary_contact}
+                onChange={(v) => setForm((f) => ({ ...f, primary_contact: v }))}
+                helperText="Phone number"
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Alternate Contact"
+                value={form.alternate_contact}
+                onChange={(v) => setForm((f) => ({ ...f, alternate_contact: v }))}
+                helperText="Phone number"
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+                helperText="Valid email format"
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Organisation Name"
+                value={form.organisation_name}
+                onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
+                helperText="Optional"
+              />
+              <AdSearchableDropDown
+                variant="standard"
+                label="Status"
+                options={statusOptions}
+                value={form.status ? "1" : "0"}
+                onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
+              />
+              <Box sx={{ maxWidth: { xs: "100%", md: 220 } }}>
+                <AdTextBox
+                  variant="standard"
+                  size="small"
+                  label="Pin"
+                  value={form.pin}
+                  onChange={(v) => setForm((f) => ({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) }))}
+                  maxLength={6}
+                  pattern={/^\d{6}$/}
+                />
+              </Box>
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Landline with Country Code"
+                value={form.landline}
+                onChange={(v) => setForm((f) => ({ ...f, landline: v }))}
+              />
+              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 3" } }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 1,
+                    gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+                  }}
+                >
+                  <AdTextArea
+                    minRows={2}
+                    maxRows={3}
+                    label="Address 1"
+                    value={form.address1}
+                    onChange={(v) => setForm((f) => ({ ...f, address1: v }))}
+                  />
+                  <AdTextArea
+                    minRows={2}
+                    maxRows={3}
+                    label="Address 2"
+                    value={form.address2}
+                    onChange={(v) => setForm((f) => ({ ...f, address2: v }))}
+                    helperText="Optional"
+                  />
+                </Box>
+              </Box>
+            </Box>
 
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextBox label="Associate Partner Code" value={form.associate_partner_code} onChange={(v) => setForm((f) => ({ ...f, associate_partner_code: v }))} helperText="Unique identifier" />
-              <AdTextBox label="Associate Partner Name" required value={form.associate_partner_name} onChange={(v) => setForm((f) => ({ ...f, associate_partner_name: v }))} />
-              <AdTextBox label="Alternative Associate Partner Name" value={form.alt_associate_partner_name} onChange={(v) => setForm((f) => ({ ...f, alt_associate_partner_name: v }))} />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextBox label="Primary Contact" value={form.primary_contact} onChange={(v) => setForm((f) => ({ ...f, primary_contact: v }))} helperText="Phone number" />
-              <AdTextBox label="Alternate Contact" value={form.alternate_contact} onChange={(v) => setForm((f) => ({ ...f, alternate_contact: v }))} helperText="Phone number" />
-              <AdTextBox label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} helperText="Valid email format" />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextBox label="Organisation Name" value={form.organisation_name} onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))} helperText="Optional" />
-              <AdSearchableDropDown label="Status" options={statusOptions} value={form.status ? "1" : "0"} onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))} />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextArea label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} minRows={3} />
-              <AdTextArea label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} minRows={3} helperText="Optional" />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextArea label="Pin" value={form.pin} onChange={(v) => setForm((f) => ({ ...f, pin: v }))} minRows={2} helperText="Postal / ZIP code" />
-              <AdTextArea label="Landline with Country Code" value={form.landline} onChange={(v) => setForm((f) => ({ ...f, landline: v }))} minRows={2} helperText="Include country code prefix" />
-            </Stack>
-
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-              <AdTextBox label="Created At" value={form.created_at} readOnly helperText="Auto-generated on creation" />
-              <AdTextBox label="Updated At" value={form.updated_at} readOnly helperText="Auto-generated on update" />
-              <AdTextBox label="Deleted At" value={form.deleted_at} readOnly helperText="Null if not deleted" />
-            </Stack>
+            {form.associate_partner_id ? (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ color: "text.secondary" }}>
+                <Typography variant="body2">Created At: {form.created_at || "—"}</Typography>
+                <Typography variant="body2">Updated At: {form.updated_at || "—"}</Typography>
+                <Typography variant="body2">Deleted At: {form.deleted_at || "—"}</Typography>
+              </Stack>
+            ) : null}
           </Stack>
         )}
       </AdCard>

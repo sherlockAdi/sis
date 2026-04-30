@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   Divider,
   IconButton,
   Stack,
@@ -120,36 +119,43 @@ export default function CandidateOnboardingTicketsPage() {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack spacing={2.5}>
+      <Stack spacing={1.5}>
         <Box>
           <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
             Download Tickets
           </Typography>
-          <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Select your job and view the ticket record for that specific deployment.
-          </Typography>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Stack spacing={2}>
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(15, 23, 42, 0.10)",
+            bgcolor: "#fff",
+            boxShadow: "0 12px 40px rgba(15, 23, 42, 0.04)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.1, md: 1.35 } }}>
+            <Stack spacing={1.1}>
               <Box>
-                <Typography fontWeight={900} sx={{ mb: 1 }}>
+                <Typography fontWeight={900} sx={{ mb: 0.25, fontSize: 15 }}>
                   Select Job
                 </Typography>
-                <AdDropDown
-                  label="Respective Job"
-                  options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
-                  value={selectedDeploymentId ?? ""}
-                  disabled={deploymentOptions.length === 0}
-                  onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
-                />
+                <Box sx={{ minWidth: { xs: "100%", lg: 320 } }}>
+                  <AdDropDown
+                    label="Respective Job"
+                    options={deploymentOptions.length ? deploymentOptions : [{ label: "No jobs available", value: "" }]}
+                    value={selectedDeploymentId ?? ""}
+                    disabled={deploymentOptions.length === 0}
+                    onChange={(value) => setSelectedDeploymentId(Number(value) || null)}
+                  />
+                </Box>
               </Box>
 
               {selectedDeployment ? (
                 <>
                   <Divider />
-                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" } }}>
+                  <Box sx={{ display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
                     <InfoCard label="Candidate" value={selectedDeployment.candidate_name} />
                     <InfoCard label="Job" value={selectedDeployment.job_title} />
                     <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
@@ -171,30 +177,26 @@ export default function CandidateOnboardingTicketsPage() {
                   <Card
                     variant="outlined"
                     sx={{
-                      borderRadius: 3,
-                      mt: 1,
+                      borderRadius: 0,
+                      mt: 0.75,
                       borderColor: ticketVisible ? "success.main" : "divider",
                       background: ticketVisible ? "rgba(34,197,94,0.04)" : "transparent",
                     }}
                   >
-                    <CardContent>
+                    <CardContent sx={{ p: { xs: 1, md: 1.35 } }}>
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }} justifyContent="space-between">
                         <Box>
-                          <Typography fontWeight={900}>Ticket Status</Typography>
+                          <Typography variant="subtitle2" fontWeight={900}>Ticket Status</Typography>
                           <Typography variant="body2" color="text.secondary">
                             {detailLoading ? "Loading ticket details..." : ticketVisible ? "Your ticket is available for download." : "Ticket details are not ready yet for this job."}
                           </Typography>
                         </Box>
-                        <Chip
-                          label={selectedDeployment.current_status ?? "Unknown"}
-                          color={ticketStatus === "ticket confirmed" ? "success" : "default"}
-                        />
                       </Stack>
                     </CardContent>
                   </Card>
                 </>
               ) : (
-                <Box sx={{ py: 2 }}>
+                <Box sx={{ py: 1.25 }}>
                   <Typography fontWeight={800}>No ticket record available</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     {loading ? "Loading your job list..." : "When ticket details are available for one of your jobs, they will appear here."}
@@ -221,13 +223,16 @@ function InfoCard({
   fullWidth?: boolean;
 }) {
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3, gridColumn: fullWidth ? "1 / -1" : undefined }}>
-      <CardContent sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+    <Card
+      variant="outlined"
+      sx={{ borderRadius: 0, gridColumn: fullWidth ? "1 / -1" : undefined, borderColor: "rgba(15, 23, 42, 0.10)" }}
+    >
+      <CardContent sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, p: 1.15, "&:last-child": { pb: 1.15 } }}>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="caption" color="text.secondary">
             {label}
           </Typography>
-          <Typography fontWeight={800} sx={{ mt: 0.25, wordBreak: "break-word" }}>
+          <Typography fontWeight={800} sx={{ mt: 0.15, wordBreak: "break-word", fontSize: 14, lineHeight: 1.2 }}>
             {value}
           </Typography>
         </Box>

@@ -90,6 +90,7 @@ import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/Partner
 import PartnerFormPage from "../modules/partners/PartnerFormPage";
 import AssociatePartnersPage from "../modules/associate-partners/AssociatePartnersPage";
 import AssociatePartnerFormPage from "../modules/associate-partners/AssociatePartnerFormPage";
+import AssociateJobListPage from "../modules/associate-partners/AssociateJobListPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
 import { useAuth } from "../common/auth/AuthContext";
 
@@ -405,6 +406,119 @@ export default function AppRoutes() {
             <Route path="associate-partners/new" element={<AssociatePartnerFormPage mode="create" />} />
             <Route path="associate-partners/:associatePartnerId" element={<AssociatePartnerFormPage mode="edit" />} />
             <Route path="associate-partners/*" element={<AssociatePartnersPage />} />
+
+            <Route
+              path="associate/dashboard"
+              element={
+                <PlaceholderPage
+                  title="Associate Partner Dashboard"
+                  description="Overview for associate partners, including quick access to candidate and job workflows."
+                />
+              }
+            />
+            <Route
+              path="associate/upload-candidate"
+              element={
+                <PlaceholderPage
+                  title="Upload Candidate"
+                  description="Manage candidates uploaded by the associate partner."
+                  nextLinks={[
+                    { label: "Candidate List", to: "/portal/associate/upload-candidate/candidate-list" },
+                    { label: "Create Candidates", to: "/portal/associate/upload-candidate/create-candidates" },
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="associate/upload-candidate/candidate-list"
+              element={<PlaceholderPage title="Candidate List" description="List of candidates uploaded by the associate partner." />}
+            />
+            <Route
+              path="associate/upload-candidate/create-candidates"
+              element={<PlaceholderPage title="Create Candidates" description="Create and upload a new candidate profile." />}
+            />
+            <Route
+              path="associate/job"
+              element={
+                <PlaceholderPage
+                  title="Job"
+                  description="Job workflows available to the associate partner."
+                  nextLinks={[
+                    { label: "Job List (Job View)", to: "/portal/associate/job/job-list" },
+                    { label: "Apply Job Candidates", to: "/portal/associate/job/apply-candidates" },
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="associate/job/job-list"
+              element={<AssociateJobListPage />}
+            />
+            <Route
+              path="associate/job/apply-candidates"
+              element={<PlaceholderPage title="Apply Job Candidates" description="Apply candidates to available jobs on behalf of clients." />}
+            />
+            <Route
+              path="associate/applied-candidate"
+              element={
+                <PlaceholderPage
+                  title="Applied Candidate"
+                  description="Track the applied candidates and interview progress."
+                  nextLinks={[
+                    { label: "Applied Candidate List", to: "/portal/associate/applied-candidate/applied-candidate-list" },
+                    { label: "Interview Process (View)", to: "/portal/associate/applied-candidate/interview-process" },
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="associate/applied-candidate/applied-candidate-list"
+              element={<PlaceholderPage title="Applied Candidate List" description="Candidates who applied through the associate partner." />}
+            />
+            <Route
+              path="associate/applied-candidate/interview-process"
+              element={<PlaceholderPage title="Interview Process (View)" description="Interview progress and final status view." />}
+            />
+            <Route
+              path="associate/onboarding"
+              element={
+                <PlaceholderPage
+                  title="Onboarding Process"
+                  description="Candidate onboarding actions for the associate partner."
+                  nextLinks={[
+                    { label: "Download Offer", to: "/portal/associate/onboarding/download-offer" },
+                    { label: "Visa Details", to: "/portal/associate/onboarding/visa-details" },
+                    { label: "Download Tickets", to: "/portal/associate/onboarding/download-tickets" },
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="associate/onboarding/download-offer"
+              element={<PlaceholderPage title="Download Offer" description="Offer letter downloads for the associate partner's candidates." />}
+            />
+            <Route
+              path="associate/onboarding/visa-details"
+              element={<PlaceholderPage title="Visa Details" description="Visa record and processing details for the associate partner's candidates." />}
+            />
+            <Route
+              path="associate/onboarding/download-tickets"
+              element={<PlaceholderPage title="Download Tickets" description="Travel ticket downloads for the associate partner's candidates." />}
+            />
+            <Route
+              path="associate/reports"
+              element={
+                <PlaceholderPage
+                  title="Reports"
+                  description="Summary reports for the associate partner."
+                  nextLinks={[{ label: "Total Job list", to: "/portal/associate/reports/total-job-list" }]}
+                />
+              }
+            />
+            <Route
+              path="associate/reports/total-job-list"
+              element={<PlaceholderPage title="Total Job list" description="Report listing all jobs visible to the associate partner." />}
+            />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
             <Route path="reports/*" element={<PlaceholderPage title="Reports & Analytics" />} />
