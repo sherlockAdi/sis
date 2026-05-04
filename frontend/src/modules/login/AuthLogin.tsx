@@ -12,6 +12,7 @@ import {
   SisLogo,
 } from "../../common/ad";
 import { login, me, requestLoginOtp, verifyLoginOtp } from "../../common/services/authApi";
+import type { MeResponse } from "../../common/services/authApi";
 import type { ApiError } from "../../common/services/apiFetch";
 import { getRememberMe, setAuthToken } from "../../common/services/tokenStorage";
 import { withPortalBase } from "../../common/paths";
@@ -56,6 +57,22 @@ function portalSubtitle(portal: PortalKey | null) {
     default:
       return "Sign in to continue to your workspace";
   }
+}
+
+function resolvePostLoginTarget(profile: MeResponse, requestedFrom?: unknown): string {
+  const role = String(profile.role_code ?? "").toUpperCase();
+  const from = String(requestedFrom ?? "").trim();
+  if (from.startsWith("/portal")) {
+    if (role === "CANDIDATE" && from.startsWith("/portal/candidate")) return from;
+    if ((role === "SOURCING" || role === "PARTNER") && from.startsWith("/portal/partner")) return from;
+    if (role === "EMPLOYEE" && from.startsWith("/portal/employees")) return from;
+    if (!["CANDIDATE", "SOURCING", "PARTNER", "EMPLOYEE"].includes(role)) return from;
+  }
+
+  if (role === "CANDIDATE") return withPortalBase("/candidate/home");
+  if (role === "EMPLOYEE") return withPortalBase("/employees/dashboard");
+  if (role === "SOURCING" || role === "PARTNER") return withPortalBase("/partner/dashboard");
+  return withPortalBase("/dashboard");
 }
 
 export default function AuthLogin() {
@@ -128,10 +145,8 @@ export default function AuthLogin() {
     try {
       const res = await login(username.trim(), password);
       setAuthToken(res.token, remember);
-      await me();
-      const rawTo = (location.state as any)?.from ?? getDefaultTarget();
-      const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
-      navigate(to, { replace: true });
+      const profile = await me();
+      navigate(resolvePostLoginTarget(profile, (location.state as any)?.from), { replace: true });
     } catch (e: any) {
       const apiErr = e as ApiError;
       setError(apiErr?.message ?? "Login failed");
@@ -175,10 +190,8 @@ export default function AuthLogin() {
     try {
       const res = await verifyLoginOtp(username.trim(), otp.trim());
       setAuthToken(res.token, remember);
-      await me();
-      const rawTo = (location.state as any)?.from ?? getDefaultTarget();
-      const to = String(rawTo).startsWith("/portal") ? String(rawTo) : withPortalBase(String(rawTo));
-      navigate(to, { replace: true });
+      const profile = await me();
+      navigate(resolvePostLoginTarget(profile, (location.state as any)?.from), { replace: true });
     } catch (e: any) {
       const apiErr = e as ApiError;
       setError(apiErr?.message ?? "Login failed");
@@ -188,7 +201,6 @@ export default function AuthLogin() {
   };
 
   const showCandidateSignup = portal === "candidate";
-  const getDefaultTarget = () => (portal === "candidate" ? withPortalBase("/candidate/home") : withPortalBase("/dashboard"));
 
   return (
     <Box

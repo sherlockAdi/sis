@@ -110,12 +110,13 @@ BEGIN
       DECLARE v_industry VARCHAR(150) DEFAULT NULL;
       DECLARE v_work_location VARCHAR(255) DEFAULT NULL;
       DECLARE v_partner_id INT DEFAULT NULL;
+      DECLARE v_candidate_code VARCHAR(50) DEFAULT NULL;
 
-      SELECT d.deployment_id, a.candidate_id, c.passport_number, CONCAT_WS(' ', c.first_name, c.last_name),
+      SELECT d.deployment_id, a.candidate_id, c.candidate_code, c.passport_number, CONCAT_WS(' ', c.first_name, c.last_name),
              c.phone, c.address1, c.address2, c.pincode, c.industry_type,
              COALESCE(ci.city_name, st.state_name, co.country_name, j.job_title),
              j.partner_id
-      INTO p_deployment_id, v_candidate_id, v_employee_code, v_employee_name,
+      INTO p_deployment_id, v_candidate_id, v_candidate_code, v_employee_code, v_employee_name,
            v_contact, v_address1, v_address2, v_pin_code, v_industry, v_work_location, v_partner_id
       FROM DEP_T01_deployments d
       JOIN REC_T02_applications a ON a.application_id = d.application_id
@@ -125,6 +126,7 @@ BEGIN
       LEFT JOIN LOC_M03_cities ci ON ci.city_id = loc_row.city_id
       LEFT JOIN LOC_M02_states st ON st.state_id = loc_row.state_id
       LEFT JOIN LOC_M01_countries co ON co.country_id = loc_row.country_id
+      WHERE d.deployment_id = p_deployment_id
       LIMIT 1;
 
       IF v_candidate_id IS NULL THEN
@@ -140,7 +142,8 @@ BEGIN
         SELECT u.user_id INTO v_user_id
         FROM AUTH_U04_users u
         JOIN REC_T01_candidates c ON c.candidate_id = v_candidate_id
-        WHERE (c.email IS NOT NULL AND c.email <> '' AND u.email = c.email)
+        WHERE (c.candidate_code IS NOT NULL AND c.candidate_code <> '' AND u.username = c.candidate_code)
+           OR (c.email IS NOT NULL AND c.email <> '' AND u.email = c.email)
            OR (c.email IS NOT NULL AND c.email <> '' AND u.username = c.email)
         ORDER BY u.user_id ASC
         LIMIT 1;
@@ -166,7 +169,7 @@ BEGIN
 
       IF v_employee_id IS NOT NULL THEN
         UPDATE EMP_T01_employees
-        SET employee_code = COALESCE(NULLIF(TRIM(v_employee_code), ''), employee_code),
+        SET employee_code = COALESCE(NULLIF(TRIM(v_employee_code), ''), COALESCE(NULLIF(TRIM(v_candidate_code), ''), employee_code)),
             employee_name = COALESCE(NULLIF(TRIM(v_employee_name), ''), employee_name),
             employee_contact_number = COALESCE(v_contact, employee_contact_number),
             address1 = COALESCE(v_address1, address1),
@@ -205,7 +208,7 @@ BEGIN
         SELECT v_employee_id AS employee_id;
       ELSE
         IF v_employee_code IS NULL OR TRIM(v_employee_code) = '' THEN
-          SET v_employee_code = CONCAT('EMP', LPAD(v_candidate_id, 6, '0'));
+          SET v_employee_code = COALESCE(NULLIF(TRIM(v_candidate_code), ''), CONCAT('EMP', LPAD(v_candidate_id, 6, '0')));
         ELSE
           SET v_employee_code = UPPER(REPLACE(TRIM(v_employee_code), ' ', ''));
         END IF;

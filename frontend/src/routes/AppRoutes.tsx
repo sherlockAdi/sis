@@ -112,6 +112,7 @@ function PortalIndexRedirect() {
   const { me } = useAuth();
   const role = String(me?.role_code ?? "").toUpperCase();
   if (role === "CANDIDATE") return <Navigate to="candidate/home" replace />;
+  if (role === "EMPLOYEE") return <Navigate to="employees/dashboard" replace />;
   if (role === "SOURCING" || role === "PARTNER") return <Navigate to="partner/dashboard" replace />;
   return <Navigate to="dashboard" replace />;
 }

@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
-import { Box, Card, CardContent, Chip, Divider, IconButton, Stack, Step, StepLabel, Stepper, Typography } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
-import { AdDropDown, AdModal, AdNotification } from "../../common/ad";
+import { AdDropDown, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationRow } from "../../common/services/candidateApi";
 import { recruitmentApi, type ApplicationInterviewRow } from "../../common/services/recruitmentApi";
@@ -30,12 +27,6 @@ function formatDateTime(value: string | null | undefined): string {
   return parsed.isValid() ? parsed.format("DD MMM YYYY, HH:mm") : String(value);
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  const parsed = dayjs(value);
-  return parsed.isValid() ? parsed.format("DD MMM YYYY") : String(value);
-}
-
 function formatStatusLabel(value: string | null | undefined): string {
   const status = normalizeStatus(value);
   if (!status) return "Applied";
@@ -59,7 +50,8 @@ function buildJourney(activeApplication: CandidateApplicationRow | null, intervi
   const hasReschedule = status.includes("resched") || interviewText.includes("resched");
   const hasInterview = hasPostponed || hasReschedule || status.includes("interview") || interviews.length > 0;
   const hasShortlist = hasInterview || status.includes("shortlist") || status.includes("screen") || status.includes("ready");
-  const currentKey = status.includes("ready") ? "ready" : hasInterview ? "interview" : hasShortlist ? "shortlisted" : "applied";
+  const hasReady = status.includes("ready");
+  const currentKey = hasReady ? "ready" : hasInterview ? "interview" : hasShortlist ? "shortlisted" : "applied";
 
   const steps: Array<{ key: JourneyStepModel["key"]; label: string; note: string; time?: string; evidence: boolean }> = [
     {
@@ -90,9 +82,9 @@ function buildJourney(activeApplication: CandidateApplicationRow | null, intervi
     {
       key: "ready",
       label: "Ready",
-      note: hasShortlist ? "All previous steps are complete for this job" : "Not ready yet",
-      time: hasShortlist ? formatDateTime(latestInterview?.interview_date ?? activeApplication.application_date) : undefined,
-      evidence: hasShortlist || status.includes("ready"),
+      note: hasReady ? "All previous steps are complete for this job" : "Waiting for final readiness",
+      time: hasReady ? formatDateTime(latestInterview?.interview_date ?? activeApplication.application_date) : undefined,
+      evidence: hasReady,
     },
   ];
 
@@ -103,14 +95,6 @@ function buildJourney(activeApplication: CandidateApplicationRow | null, intervi
     time: step.time,
     state: step.key === currentKey ? "current" : step.evidence ? "done" : "pending",
   }));
-}
-
-function journeyHint(status?: string | null) {
-  const label = formatStatusLabel(status);
-  if (label === "Ready") return "All screening, interview, and selection steps are complete.";
-  if (label === "Interview") return "You are already shortlisted and under interview review.";
-  if (label === "Shortlisted") return "Your application has been shortlisted after applying.";
-  return "You have applied for this job.";
 }
 
 function currentChipColor(status?: string | null) {
@@ -125,9 +109,7 @@ export default function CandidateProfileDeploymentPage() {
   const [rows, setRows] = useState<CandidateApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<ApplicationInterviewRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [interviewsLoading, setInterviewsLoading] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
-  const [visualOpen, setVisualOpen] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -182,14 +164,11 @@ export default function CandidateProfileDeploymentPage() {
     }
 
     (async () => {
-      setInterviewsLoading(true);
       try {
         setInterviews(await recruitmentApi.applications.interviews(selectedApplication.application_id));
       } catch (e: any) {
         setInterviews([]);
         setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load interview history", severity: "error" });
-      } finally {
-        setInterviewsLoading(false);
       }
     })();
   }, [selectedApplication?.application_id]);
@@ -206,296 +185,172 @@ export default function CandidateProfileDeploymentPage() {
             Job Status
           </Typography>
           <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Select your job and visualize the same journey used by the partner view, with time shown for each step.
+            Select your job and follow a compact journey timeline with the important timestamps.
           </Typography>
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
-          <CardContent>
-            <Stack spacing={2}>
-              <Box>
-                <Typography fontWeight={900} sx={{ mb: 1 }}>
-                  Respective Job
-                </Typography>
-                <AdDropDown
-                  label="Select Job"
-                  options={applicationOptions.length ? applicationOptions : [{ label: "No jobs available", value: "" }]}
-                  value={selectedApplicationId ?? ""}
-                  disabled={applicationOptions.length === 0}
-                  onChange={(value) => setSelectedApplicationId(Number(value) || null)}
-                />
-              </Box>
-
-              {selectedApplication ? (
-                <>
-                  <Divider />
-                  <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" } }}>
-                    <InfoCard label="Candidate" value={selectedApplication.candidate_name} />
-                    <InfoCard label="Job" value={selectedApplication.job_title} />
-                    <InfoCard label="Application Date" value={formatDate(selectedApplication.application_date)} />
-                    <InfoCard label="Application Status" value={formatStatusLabel(selectedApplication.status)} />
-                    <InfoCard label="What it means" value={journeyHint(selectedApplication.status)} fullWidth />
-                    <Card variant="outlined" sx={{ borderRadius: 3, gridColumn: { xs: "1 / -1", md: "auto" } }}>
-                      <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Visualize
-                          </Typography>
-                          <Typography fontWeight={900}>Journey</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Open the read-only timeline
-                          </Typography>
-                        </Box>
-                        <IconButton onClick={() => setVisualOpen(true)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      </CardContent>
-                    </Card>
-                  </Box>
-
-                  <Box sx={{ mt: 1 }}>
-                    <Typography fontWeight={900} sx={{ mb: 1 }}>
-                      Journey
-                    </Typography>
-                    <Box
-                      sx={{
-                        mb: 2,
-                        px: { xs: 0.5, md: 1 },
-                        py: 1.25,
-                        borderRadius: 3,
-                        bgcolor: "rgba(37,99,235,0.04)",
-                        border: "1px solid rgba(37,99,235,0.12)",
-                        overflowX: "auto",
-                      }}
-                    >
-                      <Stepper
-                        activeStep={journey.findIndex((step) => step.state === "current")}
-                        alternativeLabel
-                        sx={{
-                          minWidth: 520,
-                          "& .MuiStepIcon-root": { color: "rgba(37,99,235,0.35)" },
-                          "& .MuiStepIcon-root.Mui-active": { color: "#2563eb" },
-                          "& .MuiStepIcon-root.Mui-completed": { color: "#2563eb" },
-                          "& .MuiStepConnector-line": {
-                            borderTopWidth: 3,
-                            borderColor: "rgba(37,99,235,0.2)",
-                          },
-                          "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line, & .MuiStepConnector-root.Mui-completed .MuiStepConnector-line": {
-                            borderColor: "#2563eb",
-                          },
-                          "& .MuiStepLabel-label": {
-                            fontWeight: 800,
-                          },
-                          "& .MuiStepLabel-label.Mui-active, & .MuiStepLabel-label.Mui-completed": {
-                            color: "#1d4ed8",
-                          },
-                        }}
-                      >
-                        {journey.map((step) => (
-                          <Step key={step.key}>
-                            <StepLabel>{step.label}</StepLabel>
-                          </Step>
-                        ))}
-                      </Stepper>
-                    </Box>
-                    <Stack spacing={1.2}>
-                      {journey.map((step) => (
-                        <JourneyCard key={step.key} {...step} />
-                      ))}
-                    </Stack>
-                  </Box>
-                </>
-              ) : (
-                <Box sx={{ py: 2 }}>
-                  <Typography fontWeight={800}>No applications found</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {loading ? "Loading your job status..." : "Apply to a job and its status will appear here."}
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-
-      <AdModal
-        open={visualOpen}
-        onClose={() => setVisualOpen(false)}
-        title="Visualize Journey"
-        subtitle={selectedApplication ? `${selectedApplication.job_title} • ${formatStatusLabel(selectedApplication.status)}` : undefined}
-        maxWidth="sm"
-      >
-        {selectedApplication ? (
-          <Stack spacing={1.5}>
-            <Chip
-              label={formatStatusLabel(selectedApplication.status)}
-              color={currentChipColor(selectedApplication.status)}
-              sx={{ alignSelf: "flex-start" }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              {journeyHint(selectedApplication.status)}
-            </Typography>
-            <Box
-              sx={{
-                px: { xs: 0.5, md: 1 },
-                py: 1.25,
-                borderRadius: 3,
-                bgcolor: "rgba(37,99,235,0.04)",
-                border: "1px solid rgba(37,99,235,0.12)",
-                overflowX: "auto",
-              }}
-            >
-              <Stepper
-                activeStep={journey.findIndex((step) => step.state === "current")}
-                alternativeLabel
-                sx={{
-                  minWidth: 520,
-                  "& .MuiStepIcon-root": { color: "rgba(37,99,235,0.35)" },
-                  "& .MuiStepIcon-root.Mui-active": { color: "#2563eb" },
-                  "& .MuiStepIcon-root.Mui-completed": { color: "#2563eb" },
-                  "& .MuiStepConnector-line": {
-                    borderTopWidth: 3,
-                    borderColor: "rgba(37,99,235,0.2)",
-                  },
-                  "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line, & .MuiStepConnector-root.Mui-completed .MuiStepConnector-line": {
-                    borderColor: "#2563eb",
-                  },
-                  "& .MuiStepLabel-label": {
-                    fontWeight: 800,
-                  },
-                  "& .MuiStepLabel-label.Mui-active, & .MuiStepLabel-label.Mui-completed": {
-                    color: "#1d4ed8",
-                  },
-                }}
-              >
-                {journey.map((step) => (
-                  <Step key={step.key}>
-                    <StepLabel>{step.label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
+        <Box
+          sx={{
+            p: { xs: 1.5, md: 2 },
+            borderRadius: 4,
+            border: "1px solid rgba(226,232,240,0.95)",
+            bgcolor: "rgba(255,255,255,0.88)",
+          }}
+        >
+          <Stack spacing={2}>
+            <Box>
+              <Typography fontWeight={900} sx={{ mb: 1 }}>
+                Respective Job
+              </Typography>
+              <AdDropDown
+                label="Select Job"
+                options={applicationOptions.length ? applicationOptions : [{ label: "No jobs available", value: "" }]}
+                value={selectedApplicationId ?? ""}
+                disabled={applicationOptions.length === 0}
+                onChange={(value) => setSelectedApplicationId(Number(value) || null)}
+              />
             </Box>
-            <Stack spacing={1}>
-              {journey.map((step) => (
-                <JourneyCard key={step.key} {...step} compact />
-              ))}
-            </Stack>
-            <Typography variant="caption" color="text.secondary">
-              This screen stops at `Ready`. Deployment details are not shown here.
-            </Typography>
-          </Stack>
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            No application selected.
-          </Typography>
-        )}
-      </AdModal>
 
-      {interviewsLoading ? null : null}
+            {selectedApplication ? (
+              <Stack spacing={1.5}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  <Chip size="small" label={selectedApplication.candidate_name} variant="outlined" />
+                  <Chip size="small" label={selectedApplication.job_title} variant="outlined" />
+                  <Chip size="small" label={formatStatusLabel(selectedApplication.status)} color={currentChipColor(selectedApplication.status)} />
+                </Box>
+
+                <Box>
+                  <Typography fontWeight={900} sx={{ mb: 1 }}>
+                    Journey Timeline
+                  </Typography>
+                  <Stack spacing={1.1}>
+                    {journey.map((step, index) => (
+                      <TimelineRow key={step.key} {...step} isLast={index === journey.length - 1} />
+                    ))}
+                  </Stack>
+                </Box>
+              </Stack>
+            ) : (
+              <Box sx={{ py: 2 }}>
+                <Typography fontWeight={800}>No applications found</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {loading ? "Loading your job status..." : "Apply to a job and its journey will appear here."}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </Box>
+      </Stack>
     </Box>
   );
 }
 
-function JourneyCard({
+function TimelineRow({
   label,
   note,
   state,
   time,
-  compact = false,
-}: JourneyStepModel & { compact?: boolean }) {
+  isLast = false,
+}: JourneyStepModel & { isLast?: boolean }) {
   const style =
     state === "done"
       ? {
-          bgcolor: "rgba(34,197,94,0.08)",
-          borderColor: "rgba(34,197,94,0.28)",
+          dot: "#16a34a",
+          bg: "rgba(34,197,94,0.08)",
+          border: "rgba(34,197,94,0.22)",
           titleColor: "success.main",
-          chipBg: "rgba(34,197,94,0.14)",
-          chipText: "success.dark",
-          chipLabel: "Done",
         }
       : state === "current"
         ? {
-            bgcolor: "rgba(37,99,235,0.08)",
-            borderColor: "rgba(37,99,235,0.34)",
-            titleColor: "primary.main",
-            chipBg: "rgba(37,99,235,0.14)",
-            chipText: "primary.dark",
-            chipLabel: "Current",
-          }
+          dot: "#2563eb",
+          bg: "rgba(37,99,235,0.08)",
+          border: "rgba(37,99,235,0.24)",
+          titleColor: "primary.main",
+        }
         : {
-            bgcolor: "rgba(148,163,184,0.08)",
-            borderColor: "rgba(148,163,184,0.24)",
-            titleColor: "text.primary",
-            chipBg: "rgba(148,163,184,0.14)",
-            chipText: "text.secondary",
-            chipLabel: "Pending",
-          };
+          dot: "#94a3b8",
+          bg: "rgba(148,163,184,0.08)",
+          border: "rgba(148,163,184,0.22)",
+          titleColor: "text.primary",
+        };
 
   return (
     <Box
       sx={{
+        display: "grid",
+        gridTemplateColumns: "18px minmax(0, 1fr)",
+        gap: 1.25,
+        alignItems: "start",
         minWidth: 0,
-        px: compact ? 1.25 : 1.5,
-        py: compact ? 0.9 : 1.25,
-        borderRadius: 2.5,
-        border: "1px solid",
-        borderColor: style.borderColor,
-        bgcolor: style.bgcolor,
+        position: "relative",
+        pb: isLast ? 0 : 0.9,
+        "&::after": isLast
+          ? undefined
+          : {
+              content: '""',
+              position: "absolute",
+              left: 8,
+              top: 18,
+              bottom: 0,
+              width: 2,
+              bgcolor: "rgba(148,163,184,0.25)",
+              borderRadius: 999,
+            },
       }}
     >
-      <Stack spacing={0.7}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-          <Typography variant="body2" fontWeight={900} sx={{ color: style.titleColor }}>
-            {label}
+      <Box
+        sx={{
+          mt: 0.35,
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          bgcolor: style.dot,
+          boxShadow: `0 0 0 4px ${style.bg}`,
+          position: "relative",
+          zIndex: 1,
+        }}
+      />
+      <Box
+        sx={{
+          px: 1.25,
+          py: 1,
+          borderRadius: 2.5,
+          border: "1px solid",
+          borderColor: style.border,
+          bgcolor: style.bg,
+          minWidth: 0,
+        }}
+      >
+        <Stack spacing={0.45}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+            <Typography variant="body2" fontWeight={900} sx={{ color: style.titleColor }}>
+              {label}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                px: 0.85,
+                py: 0.25,
+                borderRadius: 999,
+                bgcolor: "rgba(255,255,255,0.55)",
+                color: "text.secondary",
+                whiteSpace: "nowrap",
+                fontWeight: 800,
+              }}
+            >
+              {state === "done" ? "Done" : state === "current" ? "Current" : "Pending"}
+            </Typography>
+          </Stack>
+          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.45 }}>
+            {note}
           </Typography>
-          <Box
-            sx={{
-              px: 0.9,
-              py: 0.2,
-              borderRadius: 999,
-              bgcolor: style.chipBg,
-              color: style.chipText,
-              fontSize: 11,
-              fontWeight: 900,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {style.chipLabel}
-          </Box>
+          {time ? (
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+              {time}
+            </Typography>
+          ) : null}
         </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{ minHeight: compact ? 0 : 36, lineHeight: 1.4 }}>
-          {note}
-        </Typography>
-        {time ? (
-          <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-            <OpenInNewIcon sx={{ fontSize: 14 }} />
-            {time}
-          </Typography>
-        ) : null}
-      </Stack>
+      </Box>
     </Box>
-  );
-}
-
-function InfoCard({
-  label,
-  value,
-  fullWidth = false,
-}: {
-  label: string;
-  value: string;
-  fullWidth?: boolean;
-}) {
-  return (
-    <Card variant="outlined" sx={{ borderRadius: 3, gridColumn: fullWidth ? "1 / -1" : undefined }}>
-      <CardContent>
-        <Typography variant="caption" color="text.secondary">
-          {label}
-        </Typography>
-        <Typography fontWeight={800} sx={{ mt: 0.25, lineHeight: 1.6 }}>
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
   );
 }
