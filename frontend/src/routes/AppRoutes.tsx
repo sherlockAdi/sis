@@ -91,6 +91,13 @@ import PartnerFormPage from "../modules/partners/PartnerFormPage";
 import AssociatePartnersPage from "../modules/associate-partners/AssociatePartnersPage";
 import AssociatePartnerFormPage from "../modules/associate-partners/AssociatePartnerFormPage";
 import AssociateJobListPage from "../modules/associate-partners/AssociateJobListPage";
+import AssociateCreateCandidatesPage from "../modules/associate-partners/AssociateCreateCandidatesPage";
+import AssociateCandidateListPage from "../modules/associate-partners/AssociateCandidateListPage";
+import AssociateApplyCandidatesPage from "../modules/associate-partners/AssociateApplyCandidatesPage";
+import AssociateAppliedCandidateListPage from "../modules/associate-partners/AssociateAppliedCandidateListPage";
+import AssociateOnboardingOfferPage from "../modules/associate-partners/AssociateOnboardingOfferPage";
+import AssociateTotalJobListPage from "../modules/associate-partners/AssociateTotalJobListPage";
+import AssociateInterviewProcessPage from "../modules/associate-partners/AssociateInterviewProcessPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
 import { useAuth } from "../common/auth/AuthContext";
 
@@ -419,24 +426,15 @@ export default function AppRoutes() {
             />
             <Route
               path="associate/upload-candidate"
-              element={
-                <PlaceholderPage
-                  title="Upload Candidate"
-                  description="Manage candidates uploaded by the associate partner."
-                  nextLinks={[
-                    { label: "Candidate List", to: "/portal/associate/upload-candidate/candidate-list" },
-                    { label: "Create Candidates", to: "/portal/associate/upload-candidate/create-candidates" },
-                  ]}
-                />
-              }
+              element={<AssociateCandidateListPage />}
             />
             <Route
               path="associate/upload-candidate/candidate-list"
-              element={<PlaceholderPage title="Candidate List" description="List of candidates uploaded by the associate partner." />}
+              element={<AssociateCandidateListPage />}
             />
             <Route
               path="associate/upload-candidate/create-candidates"
-              element={<PlaceholderPage title="Create Candidates" description="Create and upload a new candidate profile." />}
+              element={<AssociateCreateCandidatesPage />}
             />
             <Route
               path="associate/job"
@@ -457,7 +455,7 @@ export default function AppRoutes() {
             />
             <Route
               path="associate/job/apply-candidates"
-              element={<PlaceholderPage title="Apply Job Candidates" description="Apply candidates to available jobs on behalf of clients." />}
+              element={<AssociateApplyCandidatesPage />}
             />
             <Route
               path="associate/applied-candidate"
@@ -474,11 +472,11 @@ export default function AppRoutes() {
             />
             <Route
               path="associate/applied-candidate/applied-candidate-list"
-              element={<PlaceholderPage title="Applied Candidate List" description="Candidates who applied through the associate partner." />}
+              element={<AssociateAppliedCandidateListPage />}
             />
             <Route
               path="associate/applied-candidate/interview-process"
-              element={<PlaceholderPage title="Interview Process (View)" description="Interview progress and final status view." />}
+              element={<AssociateInterviewProcessPage />}
             />
             <Route
               path="associate/onboarding"
@@ -496,7 +494,7 @@ export default function AppRoutes() {
             />
             <Route
               path="associate/onboarding/download-offer"
-              element={<PlaceholderPage title="Download Offer" description="Offer letter downloads for the associate partner's candidates." />}
+              element={<AssociateOnboardingOfferPage />}
             />
             <Route
               path="associate/onboarding/visa-details"
@@ -518,7 +516,7 @@ export default function AppRoutes() {
             />
             <Route
               path="associate/reports/total-job-list"
-              element={<PlaceholderPage title="Total Job list" description="Report listing all jobs visible to the associate partner." />}
+              element={<AssociateTotalJobListPage />}
             />
 
             <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />

@@ -71,3 +71,23 @@ export function credentialsEmailText(args: {
   });
 }
 
+export function accountLinkedEmailText(args: {
+  name?: string | null;
+  username: string;
+  temporaryPassword?: string | null;
+  portalLabel?: string;
+}): string {
+  const greeting = `Hello${args.name ? ` ${String(args.name).trim()}` : ''},`.trim();
+  return buildPlainEmail({
+    greeting,
+    title: args.portalLabel ? `${args.portalLabel} account updated` : 'Account updated',
+    body: [
+      'Your account has been linked and your details have been updated by the associate partner.',
+      '',
+      `Username: ${args.username}`,
+      ...(args.temporaryPassword ? ['', `Temporary password: ${args.temporaryPassword}`] : []),
+      '',
+      'If you did not expect this update, please contact your administrator.',
+    ],
+  });
+}
