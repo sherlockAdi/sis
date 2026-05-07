@@ -6,6 +6,8 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { HealthController } from './controllers/HealthController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { WorkforceController } from './controllers/workforce/WorkforceController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TicketsController } from './controllers/tickets/TicketsController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { RecruitmentCandidatesController } from './controllers/recruitment/RecruitmentCandidatesController';
@@ -91,6 +93,116 @@ const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "LeavePolicyRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"requires_approval":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"min_notice_days":{"dataType":"double","required":true},"max_consecutive_days":{"dataType":"double","required":true},"carry_forward_days":{"dataType":"double","required":true},"allow_half_day":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"is_paid":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"annual_limit_days":{"dataType":"double","required":true},"leave_name":{"dataType":"string","required":true},"leave_code":{"dataType":"string","required":true},"partner_id":{"dataType":"double","required":true},"leave_policy_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__partner_id-number--leave_code-string--leave_name-string--annual_limit_days-number--is_paid-boolean--allow_half_day-boolean--carry_forward_days-number--max_consecutive_days-number--min_notice_days-number--requires_approval-boolean--status-boolean__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"partner_id":{"dataType":"double"},"leave_code":{"dataType":"string"},"leave_name":{"dataType":"string"},"annual_limit_days":{"dataType":"double"},"is_paid":{"dataType":"boolean"},"allow_half_day":{"dataType":"boolean"},"carry_forward_days":{"dataType":"double"},"max_consecutive_days":{"dataType":"double"},"min_notice_days":{"dataType":"double"},"requires_approval":{"dataType":"boolean"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LeavePolicyInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__partner_id-number--leave_code-string--leave_name-string--annual_limit_days-number--is_paid-boolean--allow_half_day-boolean--carry_forward_days-number--max_consecutive_days-number--min_notice_days-number--requires_approval-boolean--status-boolean__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HolidayRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"is_paid":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"holiday_year":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"holiday_day":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"holiday_month":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"holiday_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"holiday_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["FIXED"]},{"dataType":"enum","enums":["YEARLY_VARIABLE"]},{"dataType":"enum","enums":["ONCE"]}],"required":true},"holiday_name":{"dataType":"string","required":true},"partner_id":{"dataType":"double","required":true},"holiday_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__partner_id-number--holiday_name-string--holiday_type-FIXED-or-YEARLY_VARIABLE-or-ONCE--holiday_date-string-or-null--holiday_month-number-or-null--holiday_day-number-or-null--holiday_year-number-or-null--is_paid-boolean--status-boolean__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"partner_id":{"dataType":"double"},"holiday_name":{"dataType":"string"},"holiday_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["FIXED"]},{"dataType":"enum","enums":["YEARLY_VARIABLE"]},{"dataType":"enum","enums":["ONCE"]}]},"holiday_date":{"dataType":"string"},"holiday_month":{"dataType":"double"},"holiday_day":{"dataType":"double"},"holiday_year":{"dataType":"double"},"is_paid":{"dataType":"boolean"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HolidayInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__partner_id-number--holiday_name-string--holiday_type-FIXED-or-YEARLY_VARIABLE-or-ONCE--holiday_date-string-or-null--holiday_month-number-or-null--holiday_day-number-or-null--holiday_year-number-or-null--is_paid-boolean--status-boolean__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WeeklyOffRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"effective_to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"effective_from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"off_days_json":{"dataType":"string","required":true},"rule_name":{"dataType":"string","required":true},"country_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"partner_id":{"dataType":"double","required":true},"weekly_off_rule_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__partner_id-number--country_id-number-or-null--rule_name-string--off_days-string-Array--effective_from-string-or-null--effective_to-string-or-null--status-boolean__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"partner_id":{"dataType":"double"},"country_id":{"dataType":"double"},"rule_name":{"dataType":"string"},"off_days":{"dataType":"array","array":{"dataType":"string"}},"effective_from":{"dataType":"string"},"effective_to":{"dataType":"string"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WeeklyOffInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__partner_id-number--country_id-number-or-null--rule_name-string--off_days-string-Array--effective_from-string-or-null--effective_to-string-or-null--status-boolean__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OfficeLocationRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"radius_meters":{"dataType":"double","required":true},"longitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"latitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"address":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"city_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"state_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"country_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"location_name":{"dataType":"string","required":true},"partner_id":{"dataType":"double","required":true},"office_location_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__partner_id-number--location_name-string--country_id-number-or-null--state_id-number-or-null--city_id-number-or-null--address-string-or-null--latitude-number-or-null--longitude-number-or-null--radius_meters-number--status-boolean__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"partner_id":{"dataType":"double"},"location_name":{"dataType":"string"},"country_id":{"dataType":"double"},"state_id":{"dataType":"double"},"city_id":{"dataType":"double"},"address":{"dataType":"string"},"latitude":{"dataType":"double"},"longitude":{"dataType":"double"},"radius_meters":{"dataType":"double"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OfficeLocationInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__partner_id-number--location_name-string--country_id-number-or-null--state_id-number-or-null--city_id-number-or-null--address-string-or-null--latitude-number-or-null--longitude-number-or-null--radius_meters-number--status-boolean__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LeaveBalanceRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"is_paid":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}]},"leave_code":{"dataType":"string"},"leave_name":{"dataType":"string"},"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"balance_days":{"dataType":"double","required":true},"used_days":{"dataType":"double","required":true},"credited_days":{"dataType":"double","required":true},"opening_balance":{"dataType":"double","required":true},"leave_year":{"dataType":"double","required":true},"leave_policy_id":{"dataType":"double","required":true},"partner_id":{"dataType":"double","required":true},"employee_id":{"dataType":"double","required":true},"leave_balance_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LeaveRequestRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"is_paid":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}]},"leave_name":{"dataType":"string"},"employee_code":{"dataType":"string"},"employee_name":{"dataType":"string"},"deleted_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"approved_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"approved_by":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"approval_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["PENDING"]},{"dataType":"enum","enums":["APPROVED"]},{"dataType":"enum","enums":["REJECTED"]},{"dataType":"enum","enums":["CANCELLED"]}],"required":true},"document_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"reason":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"days_requested":{"dataType":"double","required":true},"leave_mode":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["FULL"]},{"dataType":"enum","enums":["FIRST_HALF"]},{"dataType":"enum","enums":["SECOND_HALF"]}],"required":true},"leave_to":{"dataType":"string","required":true},"leave_from":{"dataType":"string","required":true},"leave_year":{"dataType":"double","required":true},"leave_policy_id":{"dataType":"double","required":true},"partner_id":{"dataType":"double","required":true},"employee_id":{"dataType":"double","required":true},"leave_request_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__employee_id-number--partner_id-number--leave_policy_id-number--leave_from-string--leave_to-string--leave_mode-FULL-or-FIRST_HALF-or-SECOND_HALF--reason-string--document_path-string-or-null__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"employee_id":{"dataType":"double"},"partner_id":{"dataType":"double"},"leave_policy_id":{"dataType":"double"},"leave_from":{"dataType":"string"},"leave_to":{"dataType":"string"},"leave_mode":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["FULL"]},{"dataType":"enum","enums":["FIRST_HALF"]},{"dataType":"enum","enums":["SECOND_HALF"]}]},"reason":{"dataType":"string"},"document_path":{"dataType":"string"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LeaveRequestInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__employee_id-number--partner_id-number--leave_policy_id-number--leave_from-string--leave_to-string--leave_mode-FULL-or-FIRST_HALF-or-SECOND_HALF--reason-string--document_path-string-or-null__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__approval_remarks-string__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"approval_remarks":{"dataType":"string"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApproveInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__approval_remarks-string__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AttendanceRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"employee_code":{"dataType":"string"},"employee_name":{"dataType":"string"},"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["OPEN"]},{"dataType":"enum","enums":["CLOSED"]},{"dataType":"enum","enums":["EXCEPTION"]}],"required":true},"day_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["WORK_DAY"]},{"dataType":"enum","enums":["HOLIDAY"]},{"dataType":"enum","enums":["WEEKLY_OFF"]},{"dataType":"enum","enums":["LEAVE"]},{"dataType":"enum","enums":["EXCEPTION"]}],"required":true},"check_out_face_capture":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_face_capture":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_distance_meters":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_distance_meters":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_longitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_latitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_longitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_latitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"attendance_date":{"dataType":"string","required":true},"partner_id":{"dataType":"double","required":true},"employee_id":{"dataType":"double","required":true},"attendance_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MonthlyAttendanceSummaryRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"absent_days":{"dataType":"double","required":true},"check_out_count":{"dataType":"double","required":true},"check_in_count":{"dataType":"double","required":true},"total_punch_days":{"dataType":"double","required":true},"exception_days":{"dataType":"double","required":true},"weekly_off_days":{"dataType":"double","required":true},"holiday_days":{"dataType":"double","required":true},"leave_days":{"dataType":"double","required":true},"present_days":{"dataType":"double","required":true},"partner_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"employee_name":{"dataType":"string","required":true},"employee_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"employee_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__attendance_date-string--latitude-number--longitude-number--face_capture-string--remarks-string__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"attendance_date":{"dataType":"string"},"latitude":{"dataType":"double"},"longitude":{"dataType":"double"},"face_capture":{"dataType":"string"},"remarks":{"dataType":"string"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AttendancePunchInput": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial__attendance_date-string--latitude-number--longitude-number--face_capture-string--remarks-string__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TicketRoleGroup": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ADMIN"]},{"dataType":"enum","enums":["EMPLOYER"]},{"dataType":"enum","enums":["EMPLOYEE"]},{"dataType":"enum","enums":["CANDIDATE"]},{"dataType":"enum","enums":["UNKNOWN"]}],"validators":{}},
@@ -168,7 +280,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Partial_Omit_CandidateRow.candidate_id-or-candidate_code-or-created_at-or-updated_at-or-deleted_at-or-country_name-or-state_name-or-city_name__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"first_name":{"dataType":"string"},"last_name":{"dataType":"string"},"phone":{"dataType":"string"},"email":{"dataType":"string"},"passport_number":{"dataType":"string"},"country_id":{"dataType":"double"},"state_id":{"dataType":"double"},"city_id":{"dataType":"double"},"father_name":{"dataType":"string"},"address1":{"dataType":"string"},"address2":{"dataType":"string"},"pincode":{"dataType":"string"},"dob":{"dataType":"string"},"gender":{"dataType":"string"},"skills":{"dataType":"string"},"education":{"dataType":"string"},"experience":{"dataType":"string"},"industry_type":{"dataType":"string"},"resume_file_path":{"dataType":"string"},"passport_expiry_date":{"dataType":"string"},"passport_file_path":{"dataType":"string"},"aadhar_number":{"dataType":"string"},"aadhar_file_path":{"dataType":"string"},"pan_number":{"dataType":"string"},"pan_file_path":{"dataType":"string"},"voter_id_number":{"dataType":"string"},"voter_id_file_path":{"dataType":"string"},"profile_photo_file_path":{"dataType":"string"},"languages_known":{"dataType":"string"},"status":{"dataType":"string"},"is_verified":{"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}]}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"string"},"country_id":{"dataType":"double"},"state_id":{"dataType":"double"},"city_id":{"dataType":"double"},"first_name":{"dataType":"string"},"last_name":{"dataType":"string"},"phone":{"dataType":"string"},"email":{"dataType":"string"},"passport_number":{"dataType":"string"},"father_name":{"dataType":"string"},"address1":{"dataType":"string"},"address2":{"dataType":"string"},"pincode":{"dataType":"string"},"dob":{"dataType":"string"},"gender":{"dataType":"string"},"skills":{"dataType":"string"},"education":{"dataType":"string"},"experience":{"dataType":"string"},"industry_type":{"dataType":"string"},"resume_file_path":{"dataType":"string"},"passport_expiry_date":{"dataType":"string"},"passport_file_path":{"dataType":"string"},"aadhar_number":{"dataType":"string"},"aadhar_file_path":{"dataType":"string"},"pan_number":{"dataType":"string"},"pan_file_path":{"dataType":"string"},"voter_id_number":{"dataType":"string"},"voter_id_file_path":{"dataType":"string"},"profile_photo_file_path":{"dataType":"string"},"languages_known":{"dataType":"string"},"is_verified":{"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}]}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApplicationRow": {
@@ -593,7 +705,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Partial_Omit_UserCreate.username__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"first_name":{"dataType":"string"},"last_name":{"dataType":"string"},"phone":{"dataType":"string"},"email":{"dataType":"string"},"status":{"dataType":"boolean"},"role_id":{"dataType":"double"},"password":{"dataType":"string"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"boolean"},"first_name":{"dataType":"string"},"last_name":{"dataType":"string"},"phone":{"dataType":"string"},"email":{"dataType":"string"},"role_id":{"dataType":"double"},"password":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UserUpdate": {
@@ -796,6 +908,835 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'health',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_summary: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/workforce/summary',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.summary)),
+
+            async function WorkforceController_summary(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_summary, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'summary',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listLeavePolicies: Record<string, TsoaRoute.ParameterSchema> = {
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+        };
+        app.get('/workforce/leave-policies',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listLeavePolicies)),
+
+            async function WorkforceController_listLeavePolicies(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listLeavePolicies, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listLeavePolicies',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_createLeavePolicy: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"LeavePolicyInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/leave-policies',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.createLeavePolicy)),
+
+            async function WorkforceController_createLeavePolicy(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_createLeavePolicy, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'createLeavePolicy',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_updateLeavePolicy: Record<string, TsoaRoute.ParameterSchema> = {
+                leavePolicyId: {"in":"path","name":"leavePolicyId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"LeavePolicyInput"},
+        };
+        app.put('/workforce/leave-policies/:leavePolicyId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.updateLeavePolicy)),
+
+            async function WorkforceController_updateLeavePolicy(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_updateLeavePolicy, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'updateLeavePolicy',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_deleteLeavePolicy: Record<string, TsoaRoute.ParameterSchema> = {
+                leavePolicyId: {"in":"path","name":"leavePolicyId","required":true,"dataType":"double"},
+        };
+        app.delete('/workforce/leave-policies/:leavePolicyId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.deleteLeavePolicy)),
+
+            async function WorkforceController_deleteLeavePolicy(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_deleteLeavePolicy, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteLeavePolicy',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listHolidays: Record<string, TsoaRoute.ParameterSchema> = {
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+        };
+        app.get('/workforce/holidays',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listHolidays)),
+
+            async function WorkforceController_listHolidays(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listHolidays, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listHolidays',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_createHoliday: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"HolidayInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/holidays',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.createHoliday)),
+
+            async function WorkforceController_createHoliday(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_createHoliday, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'createHoliday',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_updateHoliday: Record<string, TsoaRoute.ParameterSchema> = {
+                holidayId: {"in":"path","name":"holidayId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"HolidayInput"},
+        };
+        app.put('/workforce/holidays/:holidayId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.updateHoliday)),
+
+            async function WorkforceController_updateHoliday(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_updateHoliday, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'updateHoliday',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_deleteHoliday: Record<string, TsoaRoute.ParameterSchema> = {
+                holidayId: {"in":"path","name":"holidayId","required":true,"dataType":"double"},
+        };
+        app.delete('/workforce/holidays/:holidayId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.deleteHoliday)),
+
+            async function WorkforceController_deleteHoliday(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_deleteHoliday, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteHoliday',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listWeeklyOffRules: Record<string, TsoaRoute.ParameterSchema> = {
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+        };
+        app.get('/workforce/weekly-offs',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listWeeklyOffRules)),
+
+            async function WorkforceController_listWeeklyOffRules(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listWeeklyOffRules, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listWeeklyOffRules',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_createWeeklyOffRule: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"WeeklyOffInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/weekly-offs',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.createWeeklyOffRule)),
+
+            async function WorkforceController_createWeeklyOffRule(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_createWeeklyOffRule, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'createWeeklyOffRule',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_updateWeeklyOffRule: Record<string, TsoaRoute.ParameterSchema> = {
+                weeklyOffRuleId: {"in":"path","name":"weeklyOffRuleId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"WeeklyOffInput"},
+        };
+        app.put('/workforce/weekly-offs/:weeklyOffRuleId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.updateWeeklyOffRule)),
+
+            async function WorkforceController_updateWeeklyOffRule(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_updateWeeklyOffRule, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'updateWeeklyOffRule',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_deleteWeeklyOffRule: Record<string, TsoaRoute.ParameterSchema> = {
+                weeklyOffRuleId: {"in":"path","name":"weeklyOffRuleId","required":true,"dataType":"double"},
+        };
+        app.delete('/workforce/weekly-offs/:weeklyOffRuleId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.deleteWeeklyOffRule)),
+
+            async function WorkforceController_deleteWeeklyOffRule(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_deleteWeeklyOffRule, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteWeeklyOffRule',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listOfficeLocations: Record<string, TsoaRoute.ParameterSchema> = {
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+        };
+        app.get('/workforce/offices',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listOfficeLocations)),
+
+            async function WorkforceController_listOfficeLocations(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listOfficeLocations, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listOfficeLocations',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_createOfficeLocation: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"OfficeLocationInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/offices',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.createOfficeLocation)),
+
+            async function WorkforceController_createOfficeLocation(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_createOfficeLocation, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'createOfficeLocation',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_updateOfficeLocation: Record<string, TsoaRoute.ParameterSchema> = {
+                officeLocationId: {"in":"path","name":"officeLocationId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"OfficeLocationInput"},
+        };
+        app.put('/workforce/offices/:officeLocationId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.updateOfficeLocation)),
+
+            async function WorkforceController_updateOfficeLocation(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_updateOfficeLocation, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'updateOfficeLocation',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_deleteOfficeLocation: Record<string, TsoaRoute.ParameterSchema> = {
+                officeLocationId: {"in":"path","name":"officeLocationId","required":true,"dataType":"double"},
+        };
+        app.delete('/workforce/offices/:officeLocationId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.deleteOfficeLocation)),
+
+            async function WorkforceController_deleteOfficeLocation(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_deleteOfficeLocation, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteOfficeLocation',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listLeaveBalances: Record<string, TsoaRoute.ParameterSchema> = {
+                employee_id: {"in":"query","name":"employee_id","dataType":"double"},
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+                leave_year: {"in":"query","name":"leave_year","dataType":"double"},
+        };
+        app.get('/workforce/leave-balances',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listLeaveBalances)),
+
+            async function WorkforceController_listLeaveBalances(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listLeaveBalances, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listLeaveBalances',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_listLeaveRequests: Record<string, TsoaRoute.ParameterSchema> = {
+                employee_id: {"in":"query","name":"employee_id","dataType":"double"},
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+        };
+        app.get('/workforce/leave-requests',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.listLeaveRequests)),
+
+            async function WorkforceController_listLeaveRequests(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_listLeaveRequests, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'listLeaveRequests',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_createLeaveRequest: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"LeaveRequestInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/leave-requests',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.createLeaveRequest)),
+
+            async function WorkforceController_createLeaveRequest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_createLeaveRequest, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'createLeaveRequest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_approveLeaveRequest: Record<string, TsoaRoute.ParameterSchema> = {
+                leaveRequestId: {"in":"path","name":"leaveRequestId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"ApproveInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.put('/workforce/leave-requests/:leaveRequestId/approve',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.approveLeaveRequest)),
+
+            async function WorkforceController_approveLeaveRequest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_approveLeaveRequest, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'approveLeaveRequest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_rejectLeaveRequest: Record<string, TsoaRoute.ParameterSchema> = {
+                leaveRequestId: {"in":"path","name":"leaveRequestId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"ApproveInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.put('/workforce/leave-requests/:leaveRequestId/reject',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.rejectLeaveRequest)),
+
+            async function WorkforceController_rejectLeaveRequest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_rejectLeaveRequest, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'rejectLeaveRequest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_attendance: Record<string, TsoaRoute.ParameterSchema> = {
+                employee_id: {"in":"query","name":"employee_id","dataType":"double"},
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+                date_from: {"in":"query","name":"date_from","dataType":"string"},
+                date_to: {"in":"query","name":"date_to","dataType":"string"},
+        };
+        app.get('/workforce/attendance',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.attendance)),
+
+            async function WorkforceController_attendance(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_attendance, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'attendance',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_monthlyReport: Record<string, TsoaRoute.ParameterSchema> = {
+                partner_id: {"in":"query","name":"partner_id","dataType":"double"},
+                year: {"in":"query","name":"year","dataType":"double"},
+                month: {"in":"query","name":"month","dataType":"double"},
+        };
+        app.get('/workforce/monthly-report',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.monthlyReport)),
+
+            async function WorkforceController_monthlyReport(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_monthlyReport, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'monthlyReport',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_checkIn: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"AttendancePunchInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/attendance/check-in',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.checkIn)),
+
+            async function WorkforceController_checkIn(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_checkIn, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'checkIn',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWorkforceController_checkOut: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"AttendancePunchInput"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/workforce/attendance/check-out',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController)),
+            ...(fetchMiddlewares<RequestHandler>(WorkforceController.prototype.checkOut)),
+
+            async function WorkforceController_checkOut(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWorkforceController_checkOut, request, response });
+
+                const controller = new WorkforceController();
+
+              await templateService.apiHandler({
+                methodName: 'checkOut',
                 controller,
                 response,
                 next,

@@ -153,7 +153,13 @@ INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, ico
 VALUES
   ('Attendance Dashboard', 'ADM_ATT_DASH', @m_attendance, '/attendance/dashboard', 'schedule', 51, TRUE),
   ('Daily Attendance Logs', 'ADM_ATT_LOGS', @m_attendance, '/attendance/daily-logs', 'receipt_long', 52, TRUE),
-  ('Exceptions / Regularization', 'ADM_ATT_EXC', @m_attendance, '/attendance/exceptions', 'settings', 53, TRUE)
+  ('Exceptions / Regularization', 'ADM_ATT_EXC', @m_attendance, '/attendance/exceptions', 'settings', 53, TRUE),
+  ('Leave Policies', 'ADM_ATT_POLICY', @m_attendance, '/attendance/policies', 'description', 54, TRUE),
+  ('Holiday Calendar', 'ADM_ATT_HOLIDAYS', @m_attendance, '/attendance/holidays', 'event', 55, TRUE),
+  ('Weekly Off Rules', 'ADM_ATT_WEEKOFF', @m_attendance, '/attendance/weekly-off', 'schedule', 56, TRUE),
+  ('Office Geo Locations', 'ADM_ATT_OFFICE', @m_attendance, '/attendance/offices', 'location_on', 57, TRUE),
+  ('Attendance Logs', 'ADM_ATT_LOGS_FULL', @m_attendance, '/attendance/logs', 'receipt_long', 58, TRUE),
+  ('Leave Requests', 'ADM_ATT_LEAVE_REQ', @m_attendance, '/attendance/leave-requests', 'assignment', 59, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

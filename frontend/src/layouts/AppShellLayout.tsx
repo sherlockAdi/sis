@@ -116,7 +116,8 @@ export default function AppShellLayout() {
   const isPartner = role === "SOURCING" || role === "PARTNER";
   const isAssociate = role === "ASSOCIATE";
   const isEmployer = role === "EMPLOYER" || role === "CUSTOMER";
-  const isAdminLike = !(isCandidate || isPartner || isEmployer || isAssociate);
+  const isEmployee = role === "EMPLOYEE";
+  const isAdminLike = !(isCandidate || isPartner || isEmployer || isAssociate || isEmployee);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -407,6 +408,112 @@ export default function AppShellLayout() {
       },
     ];
   }, [isAssociate]);
+
+  const employeeNavSections = useMemo(() => {
+    if (!isEmployee) return null;
+
+    return [
+      {
+        heading: "MAIN MENU",
+        items: [
+          {
+            label: "Dashboard",
+            to: withPortalBase("/employees/dashboard"),
+            icon: <HomeIcon fontSize="small" />,
+          },
+        ],
+      },
+      {
+        heading: "ATTENDANCE & LEAVE",
+        items: [
+          {
+            label: "Attendance",
+            to: withPortalBase("/employees/attendance"),
+            icon: <ScheduleIcon fontSize="small" />,
+            children: [
+              { label: "Daily Attendance", to: withPortalBase("/employees/attendance/daily-attendance"), icon: <ScheduleIcon fontSize="small" /> },
+              { label: "Attendance History", to: withPortalBase("/employees/attendance/view-attendance"), icon: <ReceiptLongIcon fontSize="small" /> },
+            ],
+          },
+          {
+            label: "Leave",
+            to: withPortalBase("/employees/attendance/leave"),
+            icon: <DescriptionIcon fontSize="small" />,
+            children: [
+              { label: "Apply Leave", to: withPortalBase("/employees/attendance/leave"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Leave Balance", to: withPortalBase("/employees/attendance/balance"), icon: <AccountBalanceWalletOutlinedIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "PROFILE",
+        items: [
+          {
+            label: "Profile",
+            to: withPortalBase("/employees/profile"),
+            icon: <PersonIcon fontSize="small" />,
+            children: [
+              { label: "Personal Info", to: withPortalBase("/employees/profile/personal-info"), icon: <BadgeIcon fontSize="small" /> },
+              { label: "View Documents", to: withPortalBase("/employees/profile/view-documents"), icon: <ArticleIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "HELPDESK",
+        items: [
+          {
+            label: "Helpdesk",
+            to: withPortalBase("/employees/helpdesk"),
+            icon: <ReceiptLongIcon fontSize="small" />,
+            children: [
+              { label: "Open Ticket / View ticket", to: withPortalBase("/employees/helpdesk/open-ticket"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Ticket Status", to: withPortalBase("/employees/helpdesk/ticket-status"), icon: <InfoIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "SETTINGS",
+        items: [
+          {
+            label: "Settings",
+            to: withPortalBase("/employees/settings"),
+            icon: <SettingsIcon fontSize="small" />,
+            children: [
+              { label: "Change Password", to: withPortalBase("/employees/settings/change-password"), icon: <SettingsOutlinedIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+    ];
+  }, [isEmployee]);
+
+  const employerNavSections = useMemo(() => {
+    if (!isEmployer) return null;
+
+    return [
+      {
+        heading: "ATTENDANCE & LEAVE",
+        items: [
+          {
+            label: "Attendance",
+            to: withPortalBase("/attendance"),
+            icon: <ScheduleIcon fontSize="small" />,
+            children: [
+              { label: "Leave Policies", to: withPortalBase("/attendance/policies"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Holiday Calendar", to: withPortalBase("/attendance/holidays"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Weekly Off Rules", to: withPortalBase("/attendance/weekly-off"), icon: <ScheduleIcon fontSize="small" /> },
+              { label: "Office Geo Locations", to: withPortalBase("/attendance/offices"), icon: <LocationOnIcon fontSize="small" /> },
+              { label: "Attendance Logs", to: withPortalBase("/attendance/logs"), icon: <ReceiptLongIcon fontSize="small" /> },
+              { label: "Monthly Report", to: withPortalBase("/attendance/monthly-report"), icon: <DescriptionIcon fontSize="small" /> },
+            ],
+          },
+        ],
+      },
+    ];
+  }, [isEmployer]);
 
   const navSections = useMemo(() => {
     if (!isAdminLike) return null;
@@ -701,7 +808,7 @@ export default function AppShellLayout() {
         // subtitle="Recruitment, Deployment & Governance Overview"
         brand="SIS Global Workforce Solutions"
         navItems={navItems}
-        navSections={candidateNavSections ?? associateNavSections ?? navSections}
+        navSections={candidateNavSections ?? associateNavSections ?? employeeNavSections ?? employerNavSections ?? navSections}
         topBarCenter={adminTopSearch}
         rightSlot={isAdminLike ? adminRightSlot : isPartner ? partnerRightSlot : effectiveRightSlot}
         bottomNav={candidateBottomNav ?? partnerBottomNav}
@@ -735,10 +842,12 @@ export default function AppShellLayout() {
             navigate(
               isCandidate
                 ? withPortalBase("/candidate/profile")
-                : isPartner
+          : isPartner
                   ? withPortalBase("/partner/profile")
                   : isAssociate
                     ? withPortalBase("/associate/dashboard")
+                    : isEmployee
+                      ? withPortalBase("/employees/profile")
                   : withPortalBase("/dashboard"),
             );
           }}
