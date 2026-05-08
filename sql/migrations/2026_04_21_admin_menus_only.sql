@@ -128,7 +128,13 @@ ON DUPLICATE KEY UPDATE
 -- Attendance Rule
 INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, icon, menu_order, status)
 VALUES
-  ('Employer Wise Attendance Rule', 'ADM_ATT_RULE', @m_attendance, '/attendance', 'schedule', 61, TRUE)
+  ('Employer Wise Attendance Rule', 'ADM_ATT_RULE', @m_attendance, '/attendance', 'schedule', 61, TRUE),
+  ('Leave Policies', 'ADM_ATT_POLICY', @m_attendance, '/attendance/policies', 'description', 62, TRUE),
+  ('Holiday Calendar', 'ADM_ATT_HOLIDAYS', @m_attendance, '/attendance/holidays', 'event', 63, TRUE),
+  ('Weekly Off Rules', 'ADM_ATT_WEEKOFF', @m_attendance, '/attendance/weekly-off', 'schedule', 64, TRUE),
+  ('Office Geo Locations', 'ADM_ATT_OFFICE', @m_attendance, '/attendance/offices', 'location_on', 65, TRUE),
+  ('Attendance Logs', 'ADM_ATT_LOGS_FULL', @m_attendance, '/attendance/logs', 'receipt_long', 66, TRUE),
+  ('Leave Requests', 'ADM_ATT_LEAVE_REQ', @m_attendance, '/attendance/leave-requests', 'assignment', 67, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

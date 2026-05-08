@@ -49,6 +49,12 @@ import CandidateOnboardingTicketsPage from "../modules/candidate/CandidateOnboar
 import EmployeesPage from "../modules/employees/EmployeesPage";
 import EmployeeProfilePage from "../modules/employees/EmployeeProfilePage";
 import EmployeeDocumentsPage from "../modules/employees/EmployeeDocumentsPage";
+import EmployeeAttendanceHomePage from "../modules/workforce/EmployeeAttendanceHomePage";
+import EmployeeDailyAttendancePage from "../modules/workforce/EmployeeDailyAttendancePage";
+import EmployeeLeavePage from "../modules/workforce/EmployeeLeavePage";
+import EmployeeLeaveBalancePage from "../modules/workforce/EmployeeLeaveBalancePage";
+import EmployeeViewAttendancePage from "../modules/workforce/EmployeeViewAttendancePage";
+import WorkforceManagementPage from "../modules/workforce/WorkforceManagementPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
@@ -372,8 +378,8 @@ export default function AppRoutes() {
             <Route path="deployment" element={<DeploymentManagementPage />} />
             <Route path="deployment/*" element={<DeploymentManagementPage />} />
 
-            <Route path="attendance" element={<PlaceholderPage title="Attendance & Workforce" />} />
-            <Route path="attendance/*" element={<PlaceholderPage title="Attendance & Workforce" />} />
+            <Route path="attendance" element={<WorkforceManagementPage />} />
+            <Route path="attendance/*" element={<WorkforceManagementPage />} />
 
             <Route path="helpdesk" element={<TicketListPage />} />
             <Route path="helpdesk/open" element={<TicketListPage />} />
@@ -387,14 +393,16 @@ export default function AppRoutes() {
 
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="employees/*" element={<EmployeesPage />} />
-            <Route path="employees/dashboard" element={<PlaceholderPage title="Employee Dashboard" description="Employee summary and quick actions will live here." />} />
+            <Route path="employees/dashboard" element={<EmployeeAttendanceHomePage />} />
             <Route path="employees/profile" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/additional-local-information" element={<PlaceholderPage title="Employee Additional Local Information" description="Local address and contact details will live here." />} />
             <Route path="employees/profile/view-documents" element={<EmployeeDocumentsPage />} />
-            <Route path="employees/attendance" element={<PlaceholderPage title="Employee Attendance" description="Daily attendance and attendance history will live here." />} />
-            <Route path="employees/attendance/daily-attendance" element={<PlaceholderPage title="Employee Daily Attendance" description="Time zone, face verification, and attendance punch will live here." />} />
-            <Route path="employees/attendance/view-attendance" element={<PlaceholderPage title="Employee Attendance History" description="Attendance history and audit logs will live here." />} />
+            <Route path="employees/attendance" element={<EmployeeAttendanceHomePage />} />
+            <Route path="employees/attendance/daily-attendance" element={<EmployeeDailyAttendancePage />} />
+            <Route path="employees/attendance/view-attendance" element={<EmployeeViewAttendancePage />} />
+            <Route path="employees/attendance/leave" element={<EmployeeLeavePage />} />
+            <Route path="employees/attendance/balance" element={<EmployeeLeaveBalancePage />} />
             <Route path="employees/helpdesk" element={<TicketListPage />} />
             <Route path="employees/helpdesk/open-ticket" element={<TicketListPage />} />
             <Route path="employees/helpdesk/create" element={<TicketCreatePage />} />
