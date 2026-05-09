@@ -50,6 +50,7 @@ import EmployeesPage from "../modules/employees/EmployeesPage";
 import EmployeeProfilePage from "../modules/employees/EmployeeProfilePage";
 import EmployeeDocumentsPage from "../modules/employees/EmployeeDocumentsPage";
 import EmployeeAttendanceHomePage from "../modules/workforce/EmployeeAttendanceHomePage";
+import EmployeeDashboardPage from "../modules/workforce/EmployeeDashboardPage";
 import EmployeeDailyAttendancePage from "../modules/workforce/EmployeeDailyAttendancePage";
 import EmployeeLeavePage from "../modules/workforce/EmployeeLeavePage";
 import EmployeeLeaveBalancePage from "../modules/workforce/EmployeeLeaveBalancePage";
@@ -409,7 +410,7 @@ export default function AppRoutes() {
 
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="employees/*" element={<EmployeesPage />} />
-            <Route path="employees/dashboard" element={<EmployeeAttendanceHomePage />} />
+            <Route path="employees/dashboard" element={<EmployeeDashboardPage />} />
             <Route path="employees/profile" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/additional-local-information" element={<PlaceholderPage title="Employee Additional Local Information" description="Local address and contact details will live here." />} />
