@@ -502,7 +502,7 @@ export default function AppShellLayout() {
             to: withPortalBase("/attendance"),
             icon: <ScheduleIcon fontSize="small" />,
             children: [
-              { label: "Leave Policies", to: withPortalBase("/attendance/policies"), icon: <DescriptionIcon fontSize="small" /> },
+              { label: "Leave Policy", to: withPortalBase("/attendance/policies"), icon: <DescriptionIcon fontSize="small" /> },
               { label: "Holiday Calendar", to: withPortalBase("/attendance/holidays"), icon: <ReceiptLongIcon fontSize="small" /> },
               { label: "Weekly Off Rules", to: withPortalBase("/attendance/weekly-off"), icon: <ScheduleIcon fontSize="small" /> },
               { label: "Office Geo Locations", to: withPortalBase("/attendance/offices"), icon: <LocationOnIcon fontSize="small" /> },

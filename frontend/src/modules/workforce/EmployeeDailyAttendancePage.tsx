@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
@@ -58,9 +58,11 @@ export default function EmployeeDailyAttendancePage() {
   const [cameraReady, setCameraReady] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [geo, setGeo] = useState<{ lat: number; lon: number; accuracy?: number } | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
   const [marking, setMarking] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const geoRequestRef = useRef<Promise<{ lat: number; lon: number; accuracy?: number } | null> | null>(null);
 
   const loadSummary = async () => {
     setLoading(true);
@@ -110,6 +112,12 @@ export default function EmployeeDailyAttendancePage() {
     }
   }, [summary?.employee?.employee_id, summary?.employee?.partner_id, selectedDate]);
 
+  useEffect(() => {
+    if (!punchModalOpen || !cameraReady || !videoRef.current || !streamRef.current) return;
+    videoRef.current.srcObject = streamRef.current;
+    void videoRef.current.play().catch(() => {});
+  }, [punchModalOpen, cameraReady]);
+
   const startCamera = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setToast({ open: true, message: "Camera is not available in this browser.", severity: "error" });
@@ -119,7 +127,6 @@ export default function EmployeeDailyAttendancePage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraReady(true);
     } catch (e: any) {
       setToast({ open: true, message: e?.message ?? "Failed to open camera", severity: "error" });
@@ -148,7 +155,9 @@ export default function EmployeeDailyAttendancePage() {
       setToast({ open: true, message: "Location is not available in this browser.", severity: "error" });
       return null;
     }
-    return new Promise<{ lat: number; lon: number; accuracy?: number } | null>((resolve) => {
+    if (geoRequestRef.current) return geoRequestRef.current;
+    setGeoLoading(true);
+    geoRequestRef.current = new Promise<{ lat: number; lon: number; accuracy?: number } | null>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const value = {
@@ -166,14 +175,21 @@ export default function EmployeeDailyAttendancePage() {
         { enableHighAccuracy: true, timeout: 12000 }
       );
     });
+    try {
+      return await geoRequestRef.current;
+    } finally {
+      geoRequestRef.current = null;
+      setGeoLoading(false);
+    }
   };
 
-  const openPunchModal = async (mode: "check-in" | "check-out") => {
+  const openPunchModal = (mode: "check-in" | "check-out") => {
     setPunchMode(mode);
     setPunchModalOpen(true);
     setPhoto(null);
     setGeo(null);
-    await startCamera();
+    void startCamera();
+    void getGeo();
   };
 
   const submitPunch = async () => {
@@ -291,70 +307,78 @@ export default function EmployeeDailyAttendancePage() {
           stopCamera();
         }}
         title={`Mark ${punchMode === "check-in" ? "Check In" : "Check Out"}`}
-        subtitle={selectedDate ? selectedDate.format("DD MMM YYYY") : ""}
-        maxWidth="md"
+        subtitle={
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25, flexWrap: "wrap" }}>
+            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+              {selectedDate ? selectedDate.format("DD MMM YYYY") : ""}
+            </Typography>
+            <Chip size="small" label={geoLoading ? "Detecting location..." : geo ? `Lat ${geo.lat.toFixed(4)}` : "Latitude pending"} sx={{ whiteSpace: "nowrap" }} />
+            <Chip size="small" label={geoLoading ? "Detecting location..." : geo ? `Lon ${geo.lon.toFixed(4)}` : "Longitude pending"} sx={{ whiteSpace: "nowrap" }} />
+            {geo?.accuracy !== undefined ? <Chip size="small" label={`Accuracy ${Math.round(geo.accuracy)} m`} sx={{ whiteSpace: "nowrap" }} /> : null}
+          </Stack>
+        }
+        maxWidth="sm"
         actions={
           <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
             <AdButton variant="text" onClick={() => setPunchModalOpen(false)} disabled={marking}>
               Cancel
             </AdButton>
-            <AdButton onClick={submitPunch} disabled={marking}>
+            <AdButton onClick={submitPunch} disabled={marking || !photo}>
               {marking ? "Saving..." : punchMode === "check-in" ? "Save Check In" : "Save Check Out"}
             </AdButton>
           </Stack>
         }
       >
-        <Stack spacing={2}>
-          <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
-            <AdCard title="Camera" animate={false} contentSx={{ p: 1.5 }}>
-              <Box sx={{ borderRadius: 2, overflow: "hidden", bgcolor: "#0f172a", minHeight: 260 }}>
-                {cameraReady ? (
-                  <video ref={videoRef} autoPlay playsInline style={{ width: "100%", height: 260, objectFit: "cover" }} />
-                ) : (
-                  <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 260, color: "#fff" }} spacing={1}>
-                    <CameraAltIcon />
-                    <Typography variant="body2">Camera preview will appear here</Typography>
-                  </Stack>
-                )}
-              </Box>
-              <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap">
-                <AdButton variant="outlined" onClick={startCamera}>
-                  Open Camera
-                </AdButton>
-                <AdButton variant="outlined" onClick={capturePhoto} disabled={!cameraReady}>
-                  Capture Selfie
-                </AdButton>
-                <AdButton variant="text" onClick={stopCamera}>
-                  Stop Camera
-                </AdButton>
+        <Stack spacing={1.5} sx={{ overflow: "visible" }}>
+          <Box
+            sx={{
+              position: "relative",
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "#0f172a",
+              width: "100%",
+              aspectRatio: "16 / 9",
+              minHeight: 300,
+              border: "1px solid rgba(148, 163, 184, 0.35)",
+              boxShadow: "0 12px 36px rgba(15, 23, 42, 0.18)",
+            }}
+          >
+            {cameraReady ? (
+              <video ref={videoRef} autoPlay muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <Stack alignItems="center" justifyContent="center" sx={{ width: "100%", height: "100%", color: "#fff" }} spacing={1}>
+                <CameraAltIcon />
+                <Typography variant="body2">Camera preview will appear here</Typography>
               </Stack>
-            </AdCard>
-
-            <AdCard title="Geo Check" animate={false} contentSx={{ p: 1.5 }}>
-              <Stack spacing={1.25}>
-                <Typography variant="body2" color="text.secondary">
-                  Location permission is used to confirm the employee is near the employer office before marking attendance.
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  <Chip size="small" label={geo ? `Lat ${geo.lat.toFixed(4)}` : "Latitude pending"} />
-                  <Chip size="small" label={geo ? `Lon ${geo.lon.toFixed(4)}` : "Longitude pending"} />
-                </Stack>
-                <AdButton variant="outlined" onClick={getGeo}>
-                  Detect Location
-                </AdButton>
-                {!canPunchToday ? (
-                  <Typography variant="caption" color="text.secondary">
-                    You can still open the modal for backdated review, but punch entry is intended for the selected day.
-                  </Typography>
-                ) : null}
-              </Stack>
-            </AdCard>
+            )}
+            <IconButton
+              onClick={capturePhoto}
+              disabled={!cameraReady}
+              aria-label="Capture Selfie"
+              sx={{
+                position: "absolute",
+                left: "50%",
+                bottom: 12,
+                transform: "translateX(-50%)",
+                bgcolor: "rgba(255,255,255,0.9)",
+                color: "primary.main",
+                boxShadow: 3,
+                "&:hover": { bgcolor: "#fff" },
+                "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.65)", color: "action.disabled" },
+              }}
+            >
+              <CameraAltIcon />
+            </IconButton>
           </Box>
-
           {photo ? (
-            <AdCard title="Captured Selfie" animate={false} contentSx={{ p: 1.5 }}>
-              <img src={photo} alt="Captured selfie" style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: 12 }} />
-            </AdCard>
+            <Typography variant="caption" color="success.main" sx={{ display: "block", mt: 1 }}>
+              Selfie captured and ready to save.
+            </Typography>
+          ) : null}
+          {!canPunchToday ? (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+              You can still open the modal for backdated review, but punch entry is intended for the selected day.
+            </Typography>
           ) : null}
         </Stack>
       </AdModal>

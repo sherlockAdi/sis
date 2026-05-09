@@ -7,6 +7,7 @@ import { signToken } from '../security/jwt';
 import { httpError } from '../utils/httpErrors';
 import { sendSmtpMail } from '../utils/smtpClient';
 import { otpEmailText } from '../utils/emailTemplates';
+import { getPartnerByUserId } from './partnerService';
 
 type UserRow = RowDataPacket & {
   user_id: number;
@@ -307,6 +308,7 @@ export async function bootstrapFirstAdmin(username: string, password: string): P
 export type SelfProfile = {
   user_id: number;
   role_id: number;
+  partner_id: number | null;
   first_name: string | null;
   last_name: string | null;
   username: string;
@@ -342,5 +344,6 @@ export async function getSelfProfile(user_id: number): Promise<SelfProfile & { m
   if (!profile) throw httpError(404, 'User not found');
 
   const menus = ((sets[1] ?? []) as (RowDataPacket & SelfMenu)[]) ?? [];
-  return { ...profile, menus };
+  const partner = await getPartnerByUserId(user_id);
+  return { ...profile, partner_id: partner?.partner_id ?? null, menus };
 }
