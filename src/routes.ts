@@ -52,6 +52,8 @@ import { EmployeesController } from './controllers/employee/EmployeesController'
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { DeploymentController } from './controllers/deployment/DeploymentController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { DashboardController } from './controllers/dashboard/DashboardController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CompaniesController } from './controllers/company/CompaniesController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CandidateProfileController } from './controllers/candidate/CandidateProfileController';
@@ -186,6 +188,11 @@ const models: TsoaRoute.Models = {
     "AttendanceRow": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"employee_code":{"dataType":"string"},"employee_name":{"dataType":"string"},"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["OPEN"]},{"dataType":"enum","enums":["CLOSED"]},{"dataType":"enum","enums":["EXCEPTION"]}],"required":true},"day_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["WORK_DAY"]},{"dataType":"enum","enums":["HOLIDAY"]},{"dataType":"enum","enums":["WEEKLY_OFF"]},{"dataType":"enum","enums":["LEAVE"]},{"dataType":"enum","enums":["EXCEPTION"]}],"required":true},"check_out_face_capture":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_face_capture":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_distance_meters":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_distance_meters":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_longitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_latitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_longitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_latitude":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"check_out_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"attendance_date":{"dataType":"string","required":true},"partner_id":{"dataType":"double","required":true},"employee_id":{"dataType":"double","required":true},"attendance_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MonthlyDayStateRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"day_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["WORK_DAY"]},{"dataType":"enum","enums":["HOLIDAY"]},{"dataType":"enum","enums":["WEEKLY_OFF"]}],"required":true},"attendance_date":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "MonthlyAttendanceSummaryRow": {
@@ -628,6 +635,46 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"travel_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"booked_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_contact":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_id":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_type_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"isaccepted":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_letter_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"deployment_id":{"dataType":"double","required":true},"ticket_booking_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_processing_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_detail_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DashboardTone": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["slate"]},{"dataType":"enum","enums":["green"]},{"dataType":"enum","enums":["red"]},{"dataType":"enum","enums":["amber"]},{"dataType":"enum","enums":["blue"]},{"dataType":"enum","enums":["orange"]},{"dataType":"enum","enums":["violet"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DashboardCard": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"tone":{"ref":"DashboardTone","required":true},"trend":{"dataType":"string","required":true},"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true},"key":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CandidateDashboardResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"recent_deployments":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"created_at":{"dataType":"string","required":true},"current_status":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"job_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"job_title":{"dataType":"string","required":true},"deployment_id":{"dataType":"double","required":true}}},"required":true},"recent_applications":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"application_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"job_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"job_title":{"dataType":"string","required":true},"application_id":{"dataType":"double","required":true}}},"required":true},"charts":{"dataType":"nestedObjectLiteral","nestedProperties":{"deployment_status_breakdown":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true},"document_status_breakdown":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true},"application_pipeline":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true}},"required":true},"cards":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardCard"},"required":true},"summary":{"dataType":"nestedObjectLiteral","nestedProperties":{"pending_actions":{"dataType":"double","required":true},"documents_pending":{"dataType":"double","required":true},"documents_uploaded":{"dataType":"double","required":true},"rejected":{"dataType":"double","required":true},"deployed":{"dataType":"double","required":true},"selected":{"dataType":"double","required":true},"shortlisted":{"dataType":"double","required":true},"interviews_scheduled":{"dataType":"double","required":true},"under_review":{"dataType":"double","required":true},"submitted_applications":{"dataType":"double","required":true},"draft_applications":{"dataType":"double","required":true},"total_applications":{"dataType":"double","required":true}},"required":true},"candidate":{"dataType":"nestedObjectLiteral","nestedProperties":{"total_deployments":{"dataType":"double","required":true},"total_applications":{"dataType":"double","required":true},"documents_pending":{"dataType":"double","required":true},"documents_uploaded":{"dataType":"double","required":true},"missing_fields_count":{"dataType":"double","required":true},"missing_fields":{"dataType":"array","array":{"dataType":"string"},"required":true},"profile_complete":{"dataType":"boolean","required":true},"is_verified":{"dataType":"boolean","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"full_name":{"dataType":"string","required":true},"last_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"first_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"candidate_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"candidate_id":{"dataType":"double","required":true}},"required":true},"generated_at":{"dataType":"string","required":true},"title":{"dataType":"string","required":true},"role":{"dataType":"enum","enums":["CANDIDATE"],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DashboardDayPoint": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"absent":{"dataType":"double","required":true},"present":{"dataType":"double","required":true},"day":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "PartnerDashboardResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"charts":{"dataType":"nestedObjectLiteral","nestedProperties":{"applications_by_day":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardDayPoint"},"required":true},"jobs_by_status":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true},"application_pipeline":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true}},"required":true},"cards":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardCard"},"required":true},"summary":{"dataType":"nestedObjectLiteral","nestedProperties":{"recent_applications":{"dataType":"double","required":true},"rejected":{"dataType":"double","required":true},"pending_actions":{"dataType":"double","required":true},"deployed":{"dataType":"double","required":true},"selected":{"dataType":"double","required":true},"interviews_scheduled":{"dataType":"double","required":true},"shortlisted":{"dataType":"double","required":true},"total_applications":{"dataType":"double","required":true},"active_jobs":{"dataType":"double","required":true},"total_jobs":{"dataType":"double","required":true}},"required":true},"partner":{"dataType":"nestedObjectLiteral","nestedProperties":{"partner_name":{"dataType":"string","required":true},"partner_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"partner_id":{"dataType":"double","required":true}},"required":true},"generated_at":{"dataType":"string","required":true},"title":{"dataType":"string","required":true},"role":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["SOURCING"]},{"dataType":"enum","enums":["PARTNER"]}],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EmployeeDashboardDayPoint": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"weekly_off":{"dataType":"double","required":true},"holiday":{"dataType":"double","required":true},"leave":{"dataType":"double","required":true},"absent":{"dataType":"double","required":true},"present":{"dataType":"double","required":true},"day":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EmployeeDashboardResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"recent_leave_requests":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"approval_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"days_requested":{"dataType":"double","required":true},"leave_mode":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"leave_to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"leave_from":{"dataType":"string","required":true},"leave_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"leave_request_id":{"dataType":"double","required":true}}},"required":true},"recent_attendance":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"check_out_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"string","required":true},"day_type":{"dataType":"string","required":true},"attendance_date":{"dataType":"string","required":true}}},"required":true},"charts":{"dataType":"nestedObjectLiteral","nestedProperties":{"leave_balance_breakdown":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true},"attendance_trend":{"dataType":"array","array":{"dataType":"refAlias","ref":"EmployeeDashboardDayPoint"},"required":true}},"required":true},"cards":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardCard"},"required":true},"summary":{"dataType":"nestedObjectLiteral","nestedProperties":{"leave_balance_days":{"dataType":"double","required":true},"rejected_leave_requests":{"dataType":"double","required":true},"approved_leave_requests":{"dataType":"double","required":true},"pending_leave_requests":{"dataType":"double","required":true},"check_out_count":{"dataType":"double","required":true},"check_in_count":{"dataType":"double","required":true},"late_checkins":{"dataType":"double","required":true},"weekly_off_days":{"dataType":"double","required":true},"holiday_days":{"dataType":"double","required":true},"leave_days":{"dataType":"double","required":true},"absent_days":{"dataType":"double","required":true},"present_days":{"dataType":"double","required":true},"working_days":{"dataType":"double","required":true},"total_days_in_month":{"dataType":"double","required":true},"year":{"dataType":"double","required":true},"month":{"dataType":"double","required":true}},"required":true},"today":{"dataType":"nestedObjectLiteral","nestedProperties":{"check_out_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"check_in_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"attendance_status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["PRESENT"]},{"dataType":"enum","enums":["ABSENT"]},{"dataType":"enum","enums":["LEAVE"]},{"dataType":"enum","enums":["HOLIDAY"]},{"dataType":"enum","enums":["WEEKLY_OFF"]},{"dataType":"enum","enums":["OPEN"]},{"dataType":"enum","enums":["NONE"]}],"required":true},"day_type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["WORK_DAY"]},{"dataType":"enum","enums":["HOLIDAY"]},{"dataType":"enum","enums":["WEEKLY_OFF"]}],"required":true},"date":{"dataType":"string","required":true}},"required":true},"employee":{"dataType":"nestedObjectLiteral","nestedProperties":{"employment_status":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"shift_timing":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"work_location":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"partner_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"partner_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"employee_name":{"dataType":"string","required":true},"employee_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"employee_id":{"dataType":"double","required":true}},"required":true},"generated_at":{"dataType":"string","required":true},"title":{"dataType":"string","required":true},"role":{"dataType":"enum","enums":["EMPLOYEE"],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DashboardResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"charts":{"dataType":"nestedObjectLiteral","nestedProperties":{"status_breakdown":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"double","required":true},"label":{"dataType":"string","required":true}}},"required":true},"attendance_by_day":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardDayPoint"},"required":true}},"required":true},"cards":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardCard"},"required":true},"summary":{"dataType":"nestedObjectLiteral","nestedProperties":{"late_checkins":{"dataType":"double","required":true},"holiday_today":{"dataType":"double","required":true},"weekly_off_today":{"dataType":"double","required":true},"deployed_this_month":{"dataType":"double","required":true},"open_jobs":{"dataType":"double","required":true},"active_partners":{"dataType":"double","required":true},"pending_approvals":{"dataType":"double","required":true},"open_tickets":{"dataType":"double","required":true},"on_leave":{"dataType":"double","required":true},"absent_today":{"dataType":"double","required":true},"present_today":{"dataType":"double","required":true},"active_employees":{"dataType":"double","required":true},"total_employees":{"dataType":"double","required":true}},"required":true},"generated_at":{"dataType":"string","required":true},"title":{"dataType":"string","required":true},"role":{"dataType":"enum","enums":["ADMIN"],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CompanyRow": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"user_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"contact_person":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"address":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"city_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"city_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"state_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"state_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"country_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"country_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"company_name":{"dataType":"string","required":true},"company_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"company_id":{"dataType":"double","required":true}},"validators":{}},
@@ -825,7 +872,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SelfProfile": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"role_status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"role_description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"role_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"role_name":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"last_login":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"string","required":true},"last_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"first_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"role_id":{"dataType":"double","required":true},"user_id":{"dataType":"double","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"role_status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"role_description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"role_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"role_name":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"last_login":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"string","required":true},"last_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"first_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"partner_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"role_id":{"dataType":"double","required":true},"user_id":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SelfMenu": {
@@ -5574,6 +5621,130 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'upsertVisaDetails',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDashboardController_candidate: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/dashboard/candidate',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController.prototype.candidate)),
+
+            async function DashboardController_candidate(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDashboardController_candidate, request, response });
+
+                const controller = new DashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'candidate',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDashboardController_partner: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/dashboard/partner',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController.prototype.partner)),
+
+            async function DashboardController_partner(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDashboardController_partner, request, response });
+
+                const controller = new DashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'partner',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDashboardController_employee: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/dashboard/employee',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController.prototype.employee)),
+
+            async function DashboardController_employee(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDashboardController_employee, request, response });
+
+                const controller = new DashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'employee',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDashboardController_admin: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/dashboard/admin',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(DashboardController.prototype.admin)),
+
+            async function DashboardController_admin(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDashboardController_admin, request, response });
+
+                const controller = new DashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'admin',
                 controller,
                 response,
                 next,

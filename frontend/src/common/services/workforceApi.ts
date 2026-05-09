@@ -180,6 +180,11 @@ export type MonthlyReport = {
   partner_id: number | null;
   date_from: string;
   date_to: string;
+  day_states: {
+    attendance_date: string;
+    day_type: "WORK_DAY" | "HOLIDAY" | "WEEKLY_OFF";
+    remarks: string | null;
+  }[];
   summary: MonthlyAttendanceSummaryRow[];
   attendance: AttendanceRow[];
 };

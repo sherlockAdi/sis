@@ -271,7 +271,7 @@ export default function AdAppShell({
             ) : null}
 
             {section.items.map((item) => {
-              const key = item.to;
+              const key = `${item.to}::${item.code ?? item.label}`;
               const hasChildren = Boolean(item.children?.length);
               const isOpen = expanded[key] ?? false;
               const selected = isSelected(item);
@@ -353,8 +353,10 @@ export default function AdAppShell({
                   {hasChildren ? (
                     <Collapse in={effectiveOpen && isOpen} timeout="auto" unmountOnExit>
                       <List disablePadding sx={{ pl: 1.5 }}>
-                        {(item.children ?? []).map((c) => (
-                          <ListItem key={c.to} disablePadding sx={{ display: "block" }}>
+                        {(item.children ?? []).map((c) => {
+                          const childKey = `${c.to}::${c.label}`;
+                          return (
+                          <ListItem key={childKey} disablePadding sx={{ display: "block" }}>
                             <ListItemButton
                               component={RouterLink}
                               to={c.to}
@@ -399,7 +401,8 @@ export default function AdAppShell({
                               />
                             </ListItemButton>
                           </ListItem>
-                        ))}
+                        );
+                        })}
                       </List>
                     </Collapse>
                   ) : null}

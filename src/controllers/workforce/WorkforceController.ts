@@ -236,6 +236,12 @@ type MonthlyReportQuery = {
   month?: number;
 };
 
+type MonthlyDayStateRow = {
+  attendance_date: string;
+  day_type: 'WORK_DAY' | 'HOLIDAY' | 'WEEKLY_OFF';
+  remarks: string | null;
+};
+
 function todayIndia(): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: INDIA_TZ,
@@ -374,7 +380,11 @@ async function getPartnerDayState(partnerId: number, dateStr: string): Promise<{
      WHERE partner_id = :partner_id
        AND status = TRUE
        AND (effective_from IS NULL OR effective_from <= :attendance_date)
-       AND (effective_to IS NULL OR effective_to >= :attendance_date)
+       AND (
+         effective_to IS NULL
+         OR effective_to >= :attendance_date
+         OR DATE(effective_to) = DATE(effective_from)
+       )
        AND JSON_CONTAINS(off_days_json, JSON_QUOTE(:weekday_name))
     ORDER BY weekly_off_rule_id DESC
     LIMIT 1`,
@@ -974,12 +984,14 @@ export class WorkforceController extends Controller {
   @Security('jwt')
   public async attendance(@Query() employee_id?: number, @Query() partner_id?: number, @Query() date_from?: string, @Query() date_to?: string): Promise<AttendanceRow[]> {
     return queryRows<AttendanceRow>(
-      `SELECT * FROM EMP_T08_attendance_logs
-       WHERE (:employee_id IS NULL OR employee_id = :employee_id)
-         AND (:partner_id IS NULL OR partner_id = :partner_id)
+      `SELECT a.*, e.employee_name, e.employee_code
+       FROM EMP_T08_attendance_logs a
+       LEFT JOIN EMP_T01_employees e ON e.employee_id = a.employee_id
+       WHERE (:employee_id IS NULL OR a.employee_id = :employee_id)
+         AND (:partner_id IS NULL OR a.partner_id = :partner_id)
          AND (:date_from IS NULL OR attendance_date >= :date_from)
          AND (:date_to IS NULL OR attendance_date < :date_to)
-       ORDER BY attendance_date DESC, attendance_id DESC`,
+       ORDER BY a.attendance_date DESC, a.attendance_id DESC`,
       {
         employee_id: employee_id ?? null,
         partner_id: partner_id ?? null,
@@ -997,6 +1009,7 @@ export class WorkforceController extends Controller {
     partner_id: number | null;
     date_from: string;
     date_to: string;
+    day_states: MonthlyDayStateRow[];
     summary: MonthlyAttendanceSummaryRow[];
     attendance: AttendanceRow[];
   }> {
@@ -1005,17 +1018,33 @@ export class WorkforceController extends Controller {
     const { date_from, date_to } = monthRange(reportYear, reportMonth);
 
     const attendance = await queryRows<AttendanceRow>(
-      `SELECT * FROM EMP_T08_attendance_logs
-       WHERE (:partner_id IS NULL OR partner_id = :partner_id)
-         AND attendance_date >= :date_from
-         AND attendance_date < :date_to
-       ORDER BY attendance_date ASC, employee_id ASC, attendance_id ASC`,
+      `SELECT a.*, e.employee_name, e.employee_code
+       FROM EMP_T08_attendance_logs a
+       LEFT JOIN EMP_T01_employees e ON e.employee_id = a.employee_id
+       WHERE (:partner_id IS NULL OR a.partner_id = :partner_id)
+         AND a.attendance_date >= :date_from
+         AND a.attendance_date < :date_to
+       ORDER BY a.attendance_date ASC, a.employee_id ASC, a.attendance_id ASC`,
       {
         partner_id: partner_id ?? null,
         date_from,
         date_to,
       }
     );
+
+    const dayStates: MonthlyDayStateRow[] = [];
+    if (partner_id) {
+      const totalDaysInMonth = new Date(reportYear, reportMonth, 0).getDate();
+      for (let day = 1; day <= totalDaysInMonth; day += 1) {
+        const attendanceDate = `${reportYear}-${String(reportMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const state = await getPartnerDayState(partner_id, attendanceDate);
+        dayStates.push({
+          attendance_date: attendanceDate,
+          day_type: state.day_type,
+          remarks: state.remarks,
+        });
+      }
+    }
 
     const employees = await queryRows<{ employee_id: number; employee_code: string | null; employee_name: string; partner_id: number | null }>(
       `SELECT e.employee_id, e.employee_code, e.employee_name, e.partner_id
@@ -1099,6 +1128,7 @@ export class WorkforceController extends Controller {
       partner_id: partner_id ?? null,
       date_from,
       date_to,
+      day_states: dayStates,
       summary,
       attendance,
     };

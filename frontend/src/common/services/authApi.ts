@@ -22,6 +22,7 @@ export type SelfMenu = {
 export type MeResponse = {
   user_id: number;
   role_id: number;
+  partner_id: number | null;
   first_name: string | null;
   last_name: string | null;
   username: string;

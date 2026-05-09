@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import Login from "../modules/login/Login";
 import AuthLogin from "../modules/login/AuthLogin";
@@ -50,11 +50,19 @@ import EmployeesPage from "../modules/employees/EmployeesPage";
 import EmployeeProfilePage from "../modules/employees/EmployeeProfilePage";
 import EmployeeDocumentsPage from "../modules/employees/EmployeeDocumentsPage";
 import EmployeeAttendanceHomePage from "../modules/workforce/EmployeeAttendanceHomePage";
+import EmployeeDashboardPage from "../modules/workforce/EmployeeDashboardPage";
 import EmployeeDailyAttendancePage from "../modules/workforce/EmployeeDailyAttendancePage";
 import EmployeeLeavePage from "../modules/workforce/EmployeeLeavePage";
 import EmployeeLeaveBalancePage from "../modules/workforce/EmployeeLeaveBalancePage";
 import EmployeeViewAttendancePage from "../modules/workforce/EmployeeViewAttendancePage";
+import OfficeLocationsPage from "../modules/workforce/OfficeLocationsPage";
+import AttendanceLogsPage from "../modules/workforce/AttendanceLogsPage";
+import HolidayPage from "../modules/workforce/HolidayPage";
+import LeavePolicyPage from "../modules/workforce/LeavePolicyPage";
+import MonthlyReportPage from "../modules/workforce/MonthlyReportPage";
 import WorkforceManagementPage from "../modules/workforce/WorkforceManagementPage";
+import LeaveRequestsPage from "../modules/workforce/LeaveRequestsPage";
+import WeeklyOffPage from "../modules/workforce/WeeklyOffPage";
 import PartnerDashboardPage from "../modules/partner/PartnerDashboardPage";
 import PartnerJobMandatesPage from "../modules/partner/PartnerJobMandatesPage";
 import PartnerSubmitCandidatePage from "../modules/partner/PartnerSubmitCandidatePage";
@@ -65,6 +73,7 @@ import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
 import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
+import PartnerFinalSelectedPage from "../modules/partner/PartnerFinalSelectedPage";
 import TicketCenterPage from "../modules/tickets/TicketCenterPage";
 import TicketDetailPage from "../modules/tickets/TicketDetailPage";
 import TicketListPage from "../modules/tickets/TicketListPage";
@@ -128,6 +137,11 @@ function PortalIndexRedirect() {
   if (role === "EMPLOYEE") return <Navigate to="employees/dashboard" replace />;
   if (role === "SOURCING" || role === "PARTNER") return <Navigate to="partner/dashboard" replace />;
   return <Navigate to="dashboard" replace />;
+}
+
+function WorkforceHolidaysRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/portal/attendance/holidays${location.search}`} replace />;
 }
 
 export default function AppRoutes() {
@@ -245,6 +259,7 @@ export default function AppRoutes() {
 
         {/* Keep previous landing available (internal demo page) */}
         <Route path="/legacy-landing" element={<LandingPage />} />
+        <Route path="/workforce/holidays" element={<WorkforceHolidaysRedirect />} />
 
         <Route path="/portal" element={<RequireAuth />}>
           <Route element={<AppShellLayout />}>
@@ -347,12 +362,7 @@ export default function AppRoutes() {
             />
             <Route
               path="partner/reports/final-selected"
-              element={
-                <PlaceholderPage
-                  title="Final Selected candidates"
-                  description="Candidates marked as final selected will be listed here."
-                />
-              }
+              element={<PartnerFinalSelectedPage />}
             />
             <Route path="companies" element={<CompaniesPage />} />
 
@@ -378,6 +388,13 @@ export default function AppRoutes() {
             <Route path="deployment" element={<DeploymentManagementPage />} />
             <Route path="deployment/*" element={<DeploymentManagementPage />} />
 
+            <Route path="attendance/policies" element={<LeavePolicyPage />} />
+            <Route path="attendance/holidays" element={<HolidayPage />} />
+            <Route path="attendance/logs" element={<AttendanceLogsPage />} />
+            <Route path="attendance/leave-requests" element={<LeaveRequestsPage />} />
+            <Route path="attendance/weekly-off" element={<WeeklyOffPage />} />
+            <Route path="attendance/offices" element={<OfficeLocationsPage />} />
+            <Route path="attendance/monthly-report" element={<MonthlyReportPage />} />
             <Route path="attendance" element={<WorkforceManagementPage />} />
             <Route path="attendance/*" element={<WorkforceManagementPage />} />
 
@@ -393,7 +410,7 @@ export default function AppRoutes() {
 
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="employees/*" element={<EmployeesPage />} />
-            <Route path="employees/dashboard" element={<EmployeeAttendanceHomePage />} />
+            <Route path="employees/dashboard" element={<EmployeeDashboardPage />} />
             <Route path="employees/profile" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/additional-local-information" element={<PlaceholderPage title="Employee Additional Local Information" description="Local address and contact details will live here." />} />

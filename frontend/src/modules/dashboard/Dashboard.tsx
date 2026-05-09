@@ -19,6 +19,7 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { AdAlertBox, AdCard, AdGrid } from "../../common/ad";
 import { useAuth } from "../../common/auth/AuthContext";
+import AdminDashboard from "./AdminDashboard";
 import WorkflowDashboard from "./WorkflowDashboard";
 import OverviewDashboard from "./OverviewDashboard";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
@@ -26,6 +27,7 @@ import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
 import type { ApiError } from "../../common/services/apiFetch";
 import { useNavigate } from "react-router-dom";
 import { withPortalBase } from "../../common/paths";
+import EmployeeDashboardPage from "../workforce/EmployeeDashboardPage";
 
 function yesNo(v: number) {
   return v ? "Yes" : "No";
@@ -617,6 +619,12 @@ export default function Dashboard() {
   const loading = false;
 
   const role = String(me?.role_code ?? "").toUpperCase();
+  if (role === "ADMIN" || role === "SUPER_ADMIN") {
+    return <AdminDashboard />;
+  }
+  if (role === "EMPLOYEE") {
+    return <EmployeeDashboardPage />;
+  }
   if (role === "CANDIDATE") {
     if (!me) return <AdAlertBox severity="error" title="Failed to load" message="Missing profile. Please login again." />;
     return <CandidateDashboard me={me} />;
