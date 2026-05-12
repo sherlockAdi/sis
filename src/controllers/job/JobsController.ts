@@ -244,7 +244,7 @@ export class JobsController extends Controller {
     const rows = await callProc<RowDataPacket & { job_id: number }>(
       `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :skills, :min_experience, :min_age, :max_age, :gender_requirement, :created_by, NULL)`,
       {
-        job_code: body.job_code ?? null,
+        job_code: null,
         job_title: body.job_title,
         category_id: body.category_id ?? null,
         country_id: body.country_id ?? null,

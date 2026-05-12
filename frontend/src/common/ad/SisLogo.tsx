@@ -14,7 +14,7 @@ export default function SisLogo({ src = bundledLogoUrl, height = 88 }: SisLogoPr
       component="img"
       src={src}
       alt="SIS Global Workforce Solutions"
-      sx={{ height, width: "auto", display: "block" }}
+      sx={{ height, width: "auto", display: "block", objectFit: "contain" }}
     />
   );
 }

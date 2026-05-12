@@ -18,8 +18,51 @@ import SearchIcon from "@mui/icons-material/Search";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import PublicIcon from "@mui/icons-material/Public";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import GroupsIcon from "@mui/icons-material/Groups";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import { PORTAL_BASE } from "../../../common/paths";
 import { jobsApi, type JobListRow } from "../../../common/services/jobsApi";
+
+const audienceCards = [
+  {
+    title: "For Job Seekers",
+    subtitle: "Discover overseas roles, register quickly, and move through a clear application path.",
+    bullets: ["Country-wise job discovery", "Fast register and apply flow", "Portal handoff for tracking"],
+    button: "Browse Jobs",
+    to: "/jobs",
+  },
+  {
+    title: "For Employers",
+    subtitle: "Share hiring needs, work with a structured sourcing process, and track progress confidently.",
+    bullets: ["Employer Zone inquiries", "Compliance-first hiring", "Deployment visibility"],
+    button: "Employer Zone",
+    to: "/employer-zone",
+  },
+  {
+    title: "For Sourcing Teams",
+    subtitle: "Submit candidates faster, keep status transparent, and improve turnaround with performance tracking.",
+    bullets: ["Job mandate list", "Quick candidate submissions", "Progress and feedback tracking"],
+    button: "Partner Zone",
+    to: "/partner-zone",
+  },
+];
+
+const trustCards = [
+  { icon: <VerifiedIcon />, title: "Structured process", body: "Shortlisting, interviews, documents, and deployment follow one clear path." },
+  { icon: <PublicIcon />, title: "Global reach", body: "Country-wise job discovery and portal routing for cross-border hiring." },
+  { icon: <SupportAgentIcon />, title: "Guided support", body: "Candidates and employers get direct CTAs and fewer dead ends." },
+  { icon: <ApartmentIcon />, title: "Corporate trust", body: "A clean public front-end backed by role-based portals and audit-friendly flows." },
+];
+
+const processSteps = [
+  "1) Discover jobs by country or role",
+  "2) Register / apply from the public site",
+  "3) Screening and shortlisting",
+  "4) Interview coordination",
+  "5) Documentation, visa, and travel",
+  "6) Deployment and status tracking",
+];
 
 export default function PublicHomePage() {
   const navigate = useNavigate();
@@ -36,6 +79,9 @@ export default function PublicHomePage() {
     ],
     [],
   );
+
+  const featuredJobCount = useMemo(() => featured.reduce((sum, group) => sum + group.items.length, 0), [featured]);
+  const featuredCountryCount = useMemo(() => featured.length || quickCountries.length, [featured.length, quickCountries]);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,36 +108,78 @@ export default function PublicHomePage() {
     };
   }, []);
 
+  const stats = [
+    { value: `${featuredCountryCount}+`, label: "Countries discovered" },
+    { value: `${featuredJobCount || "0"}+`, label: "Featured open roles" },
+    { value: "3 portals", label: "Candidate, Employer, Partner" },
+    { value: "1 process", label: "Search → apply → deploy" },
+  ];
+
   return (
     <Box>
       <Box
         sx={{
-          bgcolor: "background.paper",
-          borderBottom: "1px solid rgba(15,23,42,0.08)",
+          position: "relative",
+          overflow: "hidden",
+          color: "white",
+          background:
+            "linear-gradient(135deg, #0f172a 0%, #111827 45%, #781727 100%)",
         }}
       >
-        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.05fr 0.95fr" }, gap: 3, alignItems: "center" }}>
-            <Stack spacing={2.25}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: 1.2 }}>
-                Overseas Jobs • Employer Trust • Portal Handoff
-              </Typography>
-              <Typography variant="h2" fontWeight={950} sx={{ letterSpacing: -1.2, fontSize: { xs: 38, md: 64 } }}>
-                Your Gateway to{" "}
-                <Box component="span" sx={{ color: "primary.main" }}>
-                  Global Careers
-                </Box>
-              </Typography>
-              <Typography sx={{ color: "text.secondary", maxWidth: 720, lineHeight: 1.9 }}>
-                A trusted platform for overseas jobs, workforce deployment, and career growth.
-              </Typography>
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.10), transparent 30%), radial-gradient(circle at 90% 12%, rgba(255,255,255,0.12), transparent 22%), radial-gradient(circle at 72% 82%, rgba(183,31,52,0.18), transparent 24%)",
+            pointerEvents: "none",
+          }}
+        />
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 }, position: "relative" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", lg: "1.08fr 0.92fr" },
+              gap: { xs: 3, md: 4 },
+              alignItems: "stretch",
+            }}
+          >
+            <Stack spacing={2.5}>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {["Overseas jobs", "Employer sourcing", "Portal handoff"].map((label) => (
+                  <Chip
+                    key={label}
+                    label={label}
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.10)",
+                      color: "white",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      fontWeight: 900,
+                    }}
+                  />
+                ))}
+              </Stack>
+
+              <Stack spacing={1.75} sx={{ maxWidth: 860 }}>
+                <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.72)", letterSpacing: 1.4 }}>
+                  SIS Global Workforce Solutions
+                </Typography>
+                <Typography variant="h2" fontWeight={950} sx={{ letterSpacing: -1.4, fontSize: { xs: 42, md: 68 }, lineHeight: 0.98 }}>
+                  One portal for jobs, sourcing, and deployment
+                </Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.82)", maxWidth: 760, lineHeight: 1.9, fontSize: 16 }}>
+                  Find talent. Find work. Move faster. SIS gives candidates, employers, and sourcing teams a clear public entry point
+                  and routes each journey into the right portal without mixing experiences.
+                </Typography>
+              </Stack>
 
               <Box
                 sx={{
                   p: { xs: 2, md: 2.5 },
                   borderRadius: 4,
-                  bgcolor: "#f6f6f8",
-                  border: "1px solid rgba(15,23,42,0.10)",
+                  bgcolor: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backdropFilter: "blur(10px)",
                 }}
               >
                 <Typography fontWeight={950} sx={{ mb: 1 }}>
@@ -103,14 +191,20 @@ export default function PublicHomePage() {
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Keyword / Role / Skill"
                     fullWidth
-                    InputProps={{ sx: { bgcolor: "white", borderRadius: 3 } }}
+                    InputProps={{
+                      sx: {
+                        bgcolor: "white",
+                        borderRadius: 2,
+                        color: "text.primary",
+                      },
+                    }}
                   />
                   <Button
                     size="large"
                     variant="contained"
                     startIcon={<SearchIcon />}
                     onClick={() => navigate(`/jobs?keyword=${encodeURIComponent(keyword)}`)}
-                    sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" }, borderRadius: 3, px: 3 }}
+                    sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" }, borderRadius: 2, px: 3 }}
                   >
                     Search
                   </Button>
@@ -122,7 +216,12 @@ export default function PublicHomePage() {
                       key={c.code}
                       label={c.label}
                       onClick={() => navigate(`/jobs/country/${c.code}`)}
-                      sx={{ bgcolor: "white", border: "1px solid rgba(15,23,42,0.10)" }}
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.96)",
+                        color: "text.primary",
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        fontWeight: 900,
+                      }}
                     />
                   ))}
                 </Box>
@@ -138,48 +237,121 @@ export default function PublicHomePage() {
                 >
                   Apply Now
                 </Button>
-                <Button size="large" variant="outlined" onClick={() => navigate("/register")} sx={{ px: 3 }}>
+                <Button size="large" variant="outlined" onClick={() => navigate("/register")} sx={{ px: 3, borderColor: "rgba(255,255,255,0.42)", color: "white" }}>
                   Register Free
                 </Button>
-                <Button size="large" variant="text" onClick={() => navigate(`${PORTAL_BASE}/login`)} sx={{ fontWeight: 900 }}>
+                <Button size="large" variant="text" onClick={() => navigate(`${PORTAL_BASE}/login`)} sx={{ fontWeight: 900, color: "white" }}>
                   Portal Login
                 </Button>
               </Stack>
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "repeat(4, 1fr)" },
+                  gap: 1.5,
+                }}
+              >
+                {stats.map((s) => (
+                  <Box
+                    key={s.label}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    <Typography variant="h5" fontWeight={950}>
+                      {s.value}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.72)" }}>
+                      {s.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              <Box
+                sx={{
+                  p: { xs: 2.5, md: 3 },
+                  borderRadius: 3,
+                  bgcolor: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.3 }}>
+                  Structured pipeline
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.75, color: "rgba(255,255,255,0.78)", lineHeight: 1.8 }}>
+                  Public visitors can discover jobs, employers can start an inquiry, and sourcing teams can move straight into the right
+                  workflow.
+                </Typography>
+              </Box>
             </Stack>
 
-            <Box
-              sx={{
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid rgba(15,23,42,0.10)",
-                boxShadow: "0 20px 60px rgba(17,24,39,0.18)",
-              }}
-            >
-              <Box
-                component="img"
-                alt="Workforce collage"
-                src="/assests/home.jpeg"
-                sx={{ width: "100%", height: { xs: 240, md: 420 }, objectFit: "cover", display: "block" }}
-              />
+            <Box sx={{ display: "grid", gap: 2 }}>
+              {audienceCards.map((card, index) => (
+                <Card
+                  key={card.title}
+                  sx={{
+                    bgcolor: index === 1 ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.08)",
+                    color: "white",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    boxShadow: "none",
+                  }}
+                >
+                  <CardContent>
+                    <Stack spacing={1.5}>
+                      <Chip
+                        label={card.title}
+                        sx={{
+                          width: "fit-content",
+                          bgcolor: "rgba(255,255,255,0.12)",
+                          color: "white",
+                          fontWeight: 900,
+                        }}
+                      />
+                      <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.3 }}>
+                        {card.subtitle}
+                      </Typography>
+                      <Stack spacing={0.75}>
+                        {card.bullets.map((item) => (
+                          <Typography key={item} variant="body2" sx={{ color: "rgba(255,255,255,0.78)" }}>
+                            • {item}
+                          </Typography>
+                        ))}
+                      </Stack>
+                      <Button
+                        variant="contained"
+                        onClick={() => navigate(card.to)}
+                        sx={{ width: "fit-content", bgcolor: "white", color: "secondary.main", "&:hover": { bgcolor: "#f5f5f5" } }}
+                      >
+                        {card.button}
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
             </Box>
           </Box>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
         <Stack spacing={4}>
           <Box>
-            <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.6 }}>
-              Featured Jobs (Country-wise)
+            <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.8 }}>
+              Featured jobs by country
             </Typography>
-            <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860 }}>
-              Quick discovery by destination. Click a job to view details.
+            <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860, lineHeight: 1.8 }}>
+              Quick discovery by destination. Browse the open jobs we are currently featuring, or jump straight to the full listings.
             </Typography>
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
             {(featured.length ? featured : [{ country: "Jobs", items: [] }]).map((g) => (
-              <Card key={g.country} variant="outlined" sx={{ borderRadius: 4 }}>
+              <Card key={g.country} variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
                 <CardContent>
                   <Typography fontWeight={950}>{g.country}</Typography>
                   <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
@@ -216,33 +388,38 @@ export default function PublicHomePage() {
           </Box>
 
           <Box>
-            <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.6 }}>
-              Why Choose SIS Global Workforce Solutions
+            <Typography variant="h4" fontWeight={950} sx={{ letterSpacing: -0.8 }}>
+              Why people use SIS
             </Typography>
-            <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860 }}>
-            Connecting skilled talent with global job opportunities across trusted employers.
+            <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 860, lineHeight: 1.8 }}>
+              A focused recruitment front door that keeps candidates, employers, and sourcing teams moving in the same direction.
             </Typography>
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-            {[
-              { t: "Fast Apply & Register", d: "Short forms and clear CTAs that take users to the right portal." },
-              { t: "Country Coverage", d: "UAE, Saudi, Qatar and more — browse country pages instantly." },
-              { t: "Clear Process", d: "Apply → Screening → Interview → Visa → Deployment." },
-              { t: "Employer & Sourcing Zones", d: "Separate pages for employers and sourcing teams to build trust." },
-            ].map((s) => (
-              <Box key={s.t} sx={{ p: 2.5, borderRadius: 4, bgcolor: "white", border: "1px solid rgba(15,23,42,0.08)" }}>
-                <Typography fontWeight={950}>{s.t}</Typography>
-                <Typography variant="body2" sx={{ mt: 0.75, color: "text.secondary" }}>
-                  {s.d}
+            {trustCards.map((card) => (
+              <Box key={card.title} sx={{ p: 2.5, borderRadius: 2, bgcolor: "white", border: "1px solid rgba(15,23,42,0.08)" }}>
+                <Box sx={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 2, bgcolor: "rgba(183,31,52,0.10)", color: "primary.main" }}>
+                  {card.icon}
+                </Box>
+                <Typography fontWeight={950} sx={{ mt: 1.25 }}>
+                  {card.title}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary", lineHeight: 1.9 }}>
+                  {card.body}
                 </Typography>
               </Box>
             ))}
           </Box>
 
-          <Divider />
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1.1fr 0.9fr" },
+              gap: 2,
+              alignItems: "stretch",
+            }}
+          >
             <Box
               sx={{
                 p: { xs: 2.5, md: 3 },
@@ -252,17 +429,10 @@ export default function PublicHomePage() {
               }}
             >
               <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-                Process Flow (How it works)
+                How it works
               </Typography>
-              <Stack spacing={1} sx={{ mt: 2 }}>
-                {[
-                  "1) Discover jobs by country or role",
-                  "2) Apply / Register (quick CTA)",
-                  "3) Screening & shortlisting",
-                  "4) Interview coordination",
-                  "5) Documentation & visa process",
-                  "6) Deployment & tracking",
-                ].map((x) => (
+              <Stack spacing={1.1} sx={{ mt: 2 }}>
+                {processSteps.map((x) => (
                   <Typography key={x} sx={{ color: "text.secondary", lineHeight: 1.9 }}>
                     {x}
                   </Typography>
@@ -272,113 +442,49 @@ export default function PublicHomePage() {
 
             <Box
               sx={{
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid rgba(15,23,42,0.10)",
-                boxShadow: "0 16px 50px rgba(17,24,39,0.10)",
-              }}
-            >
-              <Box component="img" alt="Workforce" src="/assests/employee.jpeg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            </Box>
-          </Box>
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-            <Box
-              sx={{
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid rgba(15,23,42,0.10)",
-                boxShadow: "0 16px 50px rgba(17,24,39,0.10)",
-              }}
-            >
-              <Box component="img" alt="Workforce" src="/assests/partner.jpeg" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            </Box>
-            <Box
-              sx={{
                 p: { xs: 2.5, md: 3 },
-                bgcolor: "white",
+                bgcolor: "secondary.main",
+                color: "white",
                 borderRadius: 4,
-                border: "1px solid rgba(15,23,42,0.08)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: 2,
               }}
             >
-              <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
-                Employer Trust + Candidate Benefits
-              </Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 2 }}>
-                {[
-                  { icon: <VerifiedIcon />, title: "Trust", body: "Documents, approvals, and status history." },
-                  { icon: <PublicIcon />, title: "Discovery", body: "Country-wise jobs and fast filtering." },
-                  { icon: <SupportAgentIcon />, title: "Support", body: "Guided steps and clear CTAs." },
-                ].map((c) => (
-                  <Box
-                    key={c.title}
-                    sx={{
-                      flex: 1,
-                      p: 2,
-                      borderRadius: 3,
-                      bgcolor: "#f6f6f8",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <Box sx={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: 2, bgcolor: "rgba(198,40,40,0.10)", color: "primary.main" }}>
-                      {c.icon}
-                    </Box>
-                    <Typography fontWeight={950} sx={{ mt: 1 }}>
-                      {c.title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
-                      {c.body}
-                    </Typography>
-                  </Box>
-                ))}
+              <Box>
+                <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
+                  Ready to start?
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.75, opacity: 0.84, lineHeight: 1.8 }}>
+                  Candidates can browse and register. Employers can share requirements in Employer Zone. Sourcing partners can submit
+                  candidates through their portal.
+                </Typography>
+              </Box>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate("/jobs")}
+                  sx={{ bgcolor: "primary.main", color: "primary.contrastText", borderRadius: 2, "&:hover": { bgcolor: "primary.dark" } }}
+                >
+                  Browse Jobs
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate("/register")}
+                  sx={{ borderColor: "rgba(255,255,255,0.5)", color: "white", borderRadius: 2 }}
+                >
+                  Register Now
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate("/employer-zone")}
+                  sx={{ borderColor: "rgba(255,255,255,0.5)", color: "white", borderRadius: 2 }}
+                >
+                  Employer Zone
+                </Button>
               </Stack>
             </Box>
-          </Box>
-
-          <Box
-            sx={{
-              p: { xs: 2.5, md: 3 },
-              borderRadius: 4,
-              bgcolor: "secondary.main",
-              color: "white",
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              gap: 2,
-              alignItems: { xs: "flex-start", md: "center" },
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.5 }}>
-                Ready to apply or hire?
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.75, opacity: 0.84 }}>
-                Candidates: browse jobs and register. Employers: share requirements in Employer Zone.
-              </Typography>
-            </Box>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ width: { xs: "100%", md: "auto" } }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate("/jobs")}
-                sx={{ bgcolor: "primary.main", color: "primary.contrastText", borderRadius: 999, "&:hover": { bgcolor: "primary.dark" } }}
-              >
-                Browse Jobs
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate("/register")}
-                sx={{ borderColor: "rgba(255,255,255,0.5)", color: "white", borderRadius: 999 }}
-              >
-                Register Now
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate("/employer-zone")}
-                sx={{ borderColor: "rgba(255,255,255,0.5)", color: "white", borderRadius: 999 }}
-              >
-                Employer Zone
-              </Button>
-            </Stack>
           </Box>
         </Stack>
       </Container>

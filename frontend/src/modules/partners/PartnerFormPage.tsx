@@ -94,6 +94,10 @@ function mapPartnerForm(partner: Awaited<ReturnType<typeof partnersApi.get>>): F
   };
 }
 
+function digitsOnly(value: string) {
+  return value.replace(/\D/g, "");
+}
+
 export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const params = useParams();
@@ -186,6 +190,10 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
     ],
     [],
   );
+  const canSave = useMemo(
+    () => Boolean(form.partner_name.trim()),
+    [form.partner_name],
+  );
 
   const savePartner = async () => {
     setSaving(true);
@@ -211,7 +219,6 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         other_info: form.other_info.trim() || null,
         status: form.status,
       };
-      if (!payload.partner_code) throw new Error("Employer code is required");
       if (!payload.partner_name) throw new Error("Employer name is required");
 
       if (form.partner_id) {
@@ -220,10 +227,10 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
       } else {
         const created = await partnersApi.create(payload);
         const authMsg = created.user_created
-          ? `Employer created. Username: ${created.username}. ${created.emailed ? "Credentials emailed." : "Email not sent (check SMTP)." }`
+          ? `Employer created. Code: ${created.partner_code ?? "—"}. Username: ${created.username}. ${created.emailed ? "Credentials emailed." : "Email not sent (check SMTP)." }`
           : created.existing_user_used
-            ? `Employer created. Existing login account linked: ${created.username}.`
-            : `Employer created, but the login account could not be created right now${created.auth_error ? `: ${created.auth_error}` : ""}.`;
+            ? `Employer created. Code: ${created.partner_code ?? "—"}. Existing login account linked: ${created.username}.`
+            : `Employer created. Code: ${created.partner_code ?? "—"}. The login account could not be created right now${created.auth_error ? `: ${created.auth_error}` : ""}.`;
         setToast({ open: true, message: authMsg, severity: "success" });
       }
 
@@ -249,7 +256,7 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
             <AdButton variant="text" onClick={() => navigate("/portal/partners")}>
               Cancel
             </AdButton>
-            <AdButton onClick={savePartner} disabled={saving || loading}>
+            <AdButton onClick={savePartner} disabled={saving || loading || !canSave}>
               {saving ? "Saving..." : "Save Employer"}
             </AdButton>
           </Stack>
@@ -293,12 +300,25 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
                 onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
                 disabled={!form.state_id}
               />
-              <AdTextBox variant="standard" size="small" label="Employer Code" required value={form.partner_code} onChange={(v) => setForm((f) => ({ ...f, partner_code: v }))} />
               <AdTextBox variant="standard" size="small" label="Employer Name / Contact Person" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
               <AdTextBox variant="standard" size="small" label="Alternative Employee Name" value={form.alt_partner_name} onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))} />
               <AdTextBox variant="standard" size="small" label="Contact Person" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
-              <AdTextBox variant="standard" size="small" label="Employer Contact (Primary)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-              <AdTextBox variant="standard" size="small" label="Employer Contact (Alternate)" type="tel" value={form.alt_phone} onChange={(v) => setForm((f) => ({ ...f, alt_phone: v }))} />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Employer Contact (Primary)"
+                value={form.phone}
+                onChange={(v) => setForm((f) => ({ ...f, phone: digitsOnly(v) }))}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Employer Contact (Alternate)"
+                value={form.alt_phone}
+                onChange={(v) => setForm((f) => ({ ...f, alt_phone: digitsOnly(v) }))}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              />
               <AdTextBox variant="standard" size="small" label="Employer Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
               <AdSearchableDropDown
                 variant="standard"

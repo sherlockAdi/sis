@@ -36,7 +36,6 @@ import { richTextHasContent, sanitizeRichTextHtml } from "../../common/utils/ric
 
 type Form = {
   job_id?: number;
-  job_code: string;
   job_title: string;
   category_id: string;
   contract_duration_id: string;
@@ -67,7 +66,6 @@ type Form = {
 
 type FormErrors = Partial<
   Record<
-    | "job_code"
     | "job_title"
     | "category_id"
     | "contract_duration_id"
@@ -147,7 +145,6 @@ function mapApiValidationErrors(details: unknown): FormErrors {
 
   const source = details as Record<string, unknown>;
   const fields: Array<keyof FormErrors> = [
-    "job_code",
     "job_title",
     "category_id",
     "contract_duration_id",
@@ -182,7 +179,6 @@ function mapApiValidationErrors(details: unknown): FormErrors {
 function validateJobForm(form: Form): FormErrors {
   const errors: FormErrors = {};
 
-  if (!form.job_code.trim()) errors.job_code = "Job code is required";
   if (!form.job_title.trim()) errors.job_title = "Job title is required";
   if (!form.category_id) errors.category_id = "Category is required";
   if (!form.contract_duration_id) errors.contract_duration_id = "Contract duration is required";
@@ -217,7 +213,6 @@ function validateJobForm(form: Form): FormErrors {
 }
 
 const FIELD_LABELS: Record<keyof FormErrors, string> = {
-  job_code: "Job Code",
   job_title: "Job Title",
   category_id: "Category",
   contract_duration_id: "Contract Duration",
@@ -281,7 +276,6 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const [partners, setPartners] = useState<PartnerRow[]>([]);
 
   const [form, setForm] = useState<Form>({
-    job_code: "",
     job_title: "",
     category_id: "",
     contract_duration_id: "",
@@ -367,7 +361,6 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
 
         setForm({
           job_id: d.job.job_id,
-          job_code: d.job.job_code ?? "",
           job_title: d.job.job_title ?? "",
           category_id: d.job.category_id ? String(d.job.category_id) : "",
           contract_duration_id: d.job.contract_duration_id ? String(d.job.contract_duration_id) : "",
@@ -498,6 +491,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     () => docTypes.map((dt) => ({ label: dt.document_name, value: String(dt.document_type_id) })),
     [docTypes],
   );
+  const canSave = useMemo(() => Object.keys(validateJobForm(form)).length === 0, [form]);
 
   const selectedMasterDocumentIds = useMemo(
     () =>
@@ -558,7 +552,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       const jobDescription = sanitizeRichTextHtml(form.job_description).trim();
 
       const payload = {
-        job_code: form.job_code.trim() || null,
+        job_code: null,
         job_title: form.job_title.trim(),
         category_id: form.category_id ? Number(form.category_id) : null,
         country_id: form.country_id ? Number(form.country_id) : null,
@@ -642,15 +636,6 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
               }}
             >
-              <AdTextBox
-                variant="standard"
-                label="Job Code"
-                required
-                size="small"
-                value={form.job_code}
-                error={fieldErrors.job_code}
-                onChange={(v) => setForm((f) => ({ ...f, job_code: v }))}
-              />
               <AdTextBox
                 variant="standard"
                 label="Job Title"
@@ -1021,13 +1006,13 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
             <Divider />
 
             <Stack direction="row" justifyContent="flex-end" spacing={1}>
-              <AdButton variant="text" onClick={() => navigate(-1)}>
-                Cancel
-              </AdButton>
-              <AdButton onClick={save} disabled={saving || loading}>
-                {saving ? "Saving..." : "Save Job"}
-              </AdButton>
-            </Stack>
+            <AdButton variant="text" onClick={() => navigate(-1)}>
+              Cancel
+            </AdButton>
+            <AdButton onClick={save} disabled={saving || loading || !canSave}>
+              {saving ? "Saving..." : "Save Job"}
+            </AdButton>
+          </Stack>
           </Stack>
         )}
       </AdCard>

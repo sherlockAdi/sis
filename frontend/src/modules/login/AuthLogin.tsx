@@ -9,7 +9,6 @@ import {
   AdCheckBox,
   AdNotification,
   AdTextBox,
-  SisLogo,
 } from "../../common/ad";
 import { login, me, requestLoginOtp, verifyLoginOtp } from "../../common/services/authApi";
 import type { MeResponse } from "../../common/services/authApi";
@@ -127,9 +126,10 @@ export default function AuthLogin() {
   }, [demo?.username, portalAutofill]);
 
   const gradientBg = useMemo(
-    () => "linear-gradient(180deg, #d81b60 0%, #ad1457 100%)",
+    () => "linear-gradient(180deg, #0f172a 0%, #1d4ed8 100%)",
     [],
   );
+  const portalAccent = gradientBg;
 
   const panelMinHeight = { xs: "auto", md: 640 };
   const rightPanelMinHeight = { xs: "auto", md: 560 };
@@ -205,300 +205,262 @@ export default function AuthLogin() {
   return (
     <Box
       position="relative"
-      minHeight="100vh"
-      width="100vw"
+      width="100%"
+      height="100dvh"
       overflow="hidden"
-      sx={{
-        background: "linear-gradient(90deg, #d81b60 0%, #d81b60 50%, #f6f6f8 50%, #f6f6f8 100%)",
-      }}
+      sx={{ boxSizing: "border-box", background: "#0f172a" }}
     >
-
       <Box
-        position="relative"
-        zIndex={1}
-        minHeight="100vh"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ px: { xs: 2, md: 5 }, py: { xs: 2, md: 3 }, width: "100%" }}
+        display="grid"
+        height="100%"
+        gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }}
+        gridTemplateAreas={{ xs: `"login" "sis"`, md: `"sis login"` }}
+        sx={{ width: "100%", boxSizing: "border-box" }}
       >
         <Box
           sx={{
-            width: "100%",
-            maxWidth: "100%",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-            gridTemplateAreas: { xs: `"login" "sis"`, md: `"sis login"` },
-            gap: { xs: 2.5, md: 3.5 },
-            alignItems: "stretch",
+            gridArea: "sis",
+            minHeight: 0,
+            px: { xs: 3, sm: 4, md: 5 },
+            py: { xs: 3, sm: 4, md: 5 },
+            color: "white",
+            background: portalAccent,
+            display: "flex",
+            alignItems: "center",
           }}
         >
-          <Box sx={{ gridArea: "sis", display: "flex", justifyContent: { xs: "center", md: "flex-end" } }}>
-            <Box sx={{ width: "100%", maxWidth: 720 }}>
-              <Box
-                sx={{
-                  width: "100%",
-                  minHeight: panelMinHeight,
-                  borderRadius: { xs: 4, md: 6 },
-                  background: gradientBg,
-                  color: "white",
-                  overflow: "hidden",
-                  position: "relative",
-                  p: { xs: 3, md: 4 },
-                }}
-              >
-                <Stack spacing={3}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Box
-                      sx={{
-                        px: 1.5,
-                        py: 1,
-                        borderRadius: 2.5,
-                        bgcolor: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.28)",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <SisLogo height={76} />
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                        SIS Global Workforce Solutions
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Connect
-                      </Typography>
-                    </Box>
-                  </Stack>
+          <Box sx={{ width: "100%", maxWidth: 540, mx: "auto" }}>
+            <Stack spacing={3}>
+              <Typography variant="body2" sx={{ opacity: 0.88, fontWeight: 600, letterSpacing: 0.8 }}>
+                Connect
+              </Typography>
 
-                  <Box>
-                    <Typography variant="h3" fontWeight={900} sx={{ letterSpacing: -0.8, fontSize: { xs: 34, md: 46 } }}>
-                      Workforce Management Ecosystem
-                    </Typography>
-                    <Typography variant="body1" sx={{ mt: 1.5, opacity: 0.92, maxWidth: 560 }}>
-                      Digitizing the complete employee lifecycle — from sourcing and training to international deployment and beyond.
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    {[
-                      { k: "25+", v: "Countries" },
-                      { k: "50K+", v: "Workers Deployed" },
-                      { k: "200+", v: "Employer Agencies" },
-                      { k: "100+", v: "Enterprise Clients" },
-                    ].map((s) => (
-                      <Box
-                        key={s.v}
-                        sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          backgroundColor: "rgba(255,255,255,0.12)",
-                          border: "1px solid rgba(255,255,255,0.20)",
-                        }}
-                      >
-                        <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: 0.4 }}>
-                          {s.k}
-                        </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          {s.v}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Stack>
+              <Box sx={{ maxWidth: 460 }}>
+                <Typography
+                  variant="h3"
+                  fontWeight={900}
+                  sx={{ letterSpacing: -1, fontSize: { xs: 32, md: 44 }, lineHeight: 1.05 }}
+                >
+                  Workforce
+                  <br />
+                  Management
+                  <br />
+                  Ecosystem
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ mt: 2, maxWidth: 430, opacity: 0.9, lineHeight: 1.55, fontSize: { xs: 14, md: 15 } }}
+                >
+                  Digitizing the complete employee lifecycle from sourcing and training to international deployment and beyond.
+                </Typography>
               </Box>
-            </Box>
-          </Box>
 
-          <Box
-            sx={{
-              gridArea: "login",
-              display: "flex",
-              alignItems: { xs: "stretch", md: "center" },
-              justifyContent: { xs: "center", md: "flex-start" },
-            }}
-          >
-            <Box sx={{ width: "100%", maxWidth: 720 }}>
               <Box
                 sx={{
-                  width: "100%",
-                  minHeight: rightPanelMinHeight,
-                  borderRadius: { xs: 4, md: 6 },
-                  backgroundColor: "#ffffff",
-                  border: "1px solid rgba(15,23,42,0.10)",
-                  p: { xs: 2.5, md: 3 },
-                  display: "flex",
-                  flexDirection: "column",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  maxWidth: 460,
+                  mt: 2,
                 }}
               >
-                <Stack spacing={0.5} sx={{ pb: 1.75 }}>
-                  <Typography variant="h6" fontWeight={800}>
-                    {portalTitle(portal)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {portalSubtitle(portal)}
-                  </Typography>
-                </Stack>
-
-                <Stack spacing={1.5} sx={{ flex: 1 }}>
-                  <AdNotification
-                    open={toast.open}
-                    message={toast.message}
-                    severity={toast.severity}
-                    onClose={() => setToast((t) => ({ ...t, open: false }))}
-                  />
-                  {error && (
-                    <AdAlertBox severity="error" title="Sign in failed" message={error} onClose={() => setError(null)} />
-                  )}
-
-                  <Stack direction="row" spacing={1}>
-                    <Box
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        setLoginMethod("password");
-                        setError(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setLoginMethod("password");
-                          setError(null);
-                        }
-                      }}
-                      sx={{
-                        flex: 1,
-                        textAlign: "center",
-                        py: 0.9,
-                        borderRadius: 2,
-                        border: "1px solid rgba(15,23,42,0.14)",
-                        cursor: "pointer",
-                        fontWeight: 700,
-                        backgroundColor: loginMethod === "password" ? "rgba(216,27,96,0.08)" : "#fff",
-                        color: loginMethod === "password" ? "#ad1457" : "rgba(15,23,42,0.72)",
-                      }}
-                    >
-                      Password
-                    </Box>
-                    <Box
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        setLoginMethod("otp");
-                        setError(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setLoginMethod("otp");
-                          setError(null);
-                        }
-                      }}
-                      sx={{
-                        flex: 1,
-                        textAlign: "center",
-                        py: 0.9,
-                        borderRadius: 2,
-                        border: "1px solid rgba(15,23,42,0.14)",
-                        cursor: "pointer",
-                        fontWeight: 700,
-                        backgroundColor: loginMethod === "otp" ? "rgba(216,27,96,0.08)" : "#fff",
-                        color: loginMethod === "otp" ? "#ad1457" : "rgba(15,23,42,0.72)",
-                      }}
-                    >
-                      OTP
-                    </Box>
-                  </Stack>
-
-                  <AdTextBox
-                    label="Username"
-                    placeholder="Enter your username or email"
-                    required
-                    value={username}
-                    onChange={(v) => {
-                      setUsername(v);
-                      setOtp("");
-                      setOtpSent(false);
+                {[
+                  { k: "25+", v: "COUNTRIES" },
+                  { k: "50K+", v: "WORKERS DEPLOYED" },
+                ].map((s) => (
+                  <Box
+                    key={s.v}
+                    sx={{
+                      py: 2,
+                      borderTop: "1px solid rgba(255,255,255,0.14)",
                     }}
-                    prefixIcon={<PersonOutlineIcon fontSize="small" />}
-                  />
-
-                  {loginMethod === "password" ? (
-                    <AdTextBox
-                      label="Password"
-                      type="password"
-                      placeholder="Enter your password"
-                      required
-                      minLength={6}
-                      showPasswordToggle
-                      value={password}
-                      onChange={setPassword}
-                      prefixIcon={<LockOutlinedIcon fontSize="small" />}
-                      onEnter={handlePasswordLogin}
-                    />
-                  ) : (
-                    <AdTextBox
-                      label="OTP"
-                      placeholder="Enter OTP"
-                      required
-                      value={otp}
-                      onChange={setOtp}
-                      prefixIcon={<LockOutlinedIcon fontSize="small" />}
-                      disabled={!otpSent}
-                      onEnter={handleVerify}
-                    />
-                  )}
-
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <AdCheckBox label="Remember me" checked={remember} onChange={setRemember} />
-                    <AdButton variant="text" onClick={() => setError("Please contact your administrator to reset password.")}>
-                      Forgot password?
-                    </AdButton>
-                  </Stack>
-
-                  {loginMethod === "password" ? (
-                    <AdButton size="large" onClick={handlePasswordLogin} loading={submitting} sx={{ py: 1.1, borderRadius: 2 }}>
-                      Sign In
-                    </AdButton>
-                  ) : (
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-                      <AdButton
-                        size="large"
-                        variant="outlined"
-                        onClick={handleSendOtp}
-                        loading={sendingOtp}
-                        sx={{ py: 1.1, borderRadius: 2, flex: 1 }}
-                      >
-                        Send OTP
-                      </AdButton>
-                      <AdButton
-                        size="large"
-                        onClick={handleVerify}
-                        loading={submitting}
-                        disabled={!otpSent}
-                        sx={{ py: 1.1, borderRadius: 2, flex: 1 }}
-                      >
-                        Verify & Login
-                      </AdButton>
-                    </Stack>
-                  )}
-
-                  {showCandidateSignup && (
-                    <AdButton variant="text" onClick={() => navigate("/register")}>
-                      Candidate Sign Up
-                    </AdButton>
-                  )}
-
-                  <Divider sx={{ opacity: 0.8 }} />
-                  <Box sx={{ display: "flex", justifyContent: "center", pt: 1 }}>
-                    <SisLogo height={140} />
+                  >
+                    <Typography variant="h6" fontWeight={900} sx={{ lineHeight: 1 }}>
+                      {s.k}
+                    </Typography>
+                    <Typography variant="caption" sx={{ letterSpacing: 1, opacity: 0.82 }}>
+                      {s.v}
+                    </Typography>
                   </Box>
-                </Stack>
+                ))}
               </Box>
-            </Box>
+            </Stack>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            gridArea: "login",
+            minHeight: 0,
+            px: { xs: 3, sm: 4, md: 5 },
+            py: { xs: 3, sm: 4, md: 5 },
+            background: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box sx={{ width: "100%", maxWidth: 420 }}>
+            <Stack spacing={2.2}>
+              <Stack spacing={0.6} sx={{ alignItems: "center", textAlign: "center" }}>
+                <Typography variant="h5" fontWeight={800} sx={{ color: "#17324d" }}>
+                  {portalTitle(portal)}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "rgba(15,23,42,0.62)", lineHeight: 1.5 }}>
+                  {portalSubtitle(portal)}
+                </Typography>
+              </Stack>
+
+              <AdNotification
+                open={toast.open}
+                message={toast.message}
+                severity={toast.severity}
+                onClose={() => setToast((t) => ({ ...t, open: false }))}
+              />
+              {error && <AdAlertBox severity="error" title="Sign in failed" message={error} onClose={() => setError(null)} />}
+
+              <Stack direction="row" spacing={1}>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setLoginMethod("password");
+                    setError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setLoginMethod("password");
+                      setError(null);
+                    }
+                  }}
+                  sx={{
+                    flex: 1,
+                    textAlign: "center",
+                    py: 0.8,
+                    borderRadius: 2,
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    cursor: "pointer",
+                    fontWeight: 800,
+                    backgroundColor: loginMethod === "password" ? "rgba(216,27,96,0.08)" : "#fff",
+                    color: loginMethod === "password" ? "#1d4ed8" : "rgba(15,23,42,0.72)",
+                  }}
+                >
+                  Password
+                </Box>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setLoginMethod("otp");
+                    setError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setLoginMethod("otp");
+                      setError(null);
+                    }
+                  }}
+                  sx={{
+                    flex: 1,
+                    textAlign: "center",
+                    py: 0.8,
+                    borderRadius: 2,
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    cursor: "pointer",
+                    fontWeight: 800,
+                    backgroundColor: loginMethod === "otp" ? "rgba(216,27,96,0.08)" : "#fff",
+                    color: loginMethod === "otp" ? "#1d4ed8" : "rgba(15,23,42,0.72)",
+                  }}
+                >
+                  OTP
+                </Box>
+              </Stack>
+
+              <AdTextBox
+                label="Username"
+                placeholder="Enter your username or email"
+                required
+                value={username}
+                onChange={(v) => {
+                  setUsername(v);
+                  setOtp("");
+                  setOtpSent(false);
+                }}
+                prefixIcon={<PersonOutlineIcon fontSize="small" />}
+              />
+
+              {loginMethod === "password" ? (
+                <AdTextBox
+                  label="Password"
+                  type="password"
+                  placeholder="Enter your password"
+                  required
+                  minLength={6}
+                  showPasswordToggle
+                  value={password}
+                  onChange={setPassword}
+                  prefixIcon={<LockOutlinedIcon fontSize="small" />}
+                  onEnter={handlePasswordLogin}
+                />
+              ) : (
+                <AdTextBox
+                  label="OTP"
+                  placeholder="Enter OTP"
+                  required
+                  value={otp}
+                  onChange={setOtp}
+                  prefixIcon={<LockOutlinedIcon fontSize="small" />}
+                  disabled={!otpSent}
+                  onEnter={handleVerify}
+                />
+              )}
+
+              <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+                <AdCheckBox label="Remember me" checked={remember} onChange={setRemember} />
+                <AdButton variant="text" onClick={() => setError("Please contact your administrator to reset password.")}>
+                  Forgot password?
+                </AdButton>
+              </Stack>
+
+              {loginMethod === "password" ? (
+                <AdButton size="large" onClick={handlePasswordLogin} loading={submitting} sx={{ py: 0.95, borderRadius: 2 }}>
+                  Sign In
+                </AdButton>
+              ) : (
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <AdButton
+                    size="large"
+                    variant="outlined"
+                    onClick={handleSendOtp}
+                    loading={sendingOtp}
+                    sx={{ py: 0.95, borderRadius: 2, flex: 1 }}
+                  >
+                    Send OTP
+                  </AdButton>
+                  <AdButton
+                    size="large"
+                    onClick={handleVerify}
+                    loading={submitting}
+                    disabled={!otpSent}
+                    sx={{ py: 0.95, borderRadius: 2, flex: 1 }}
+                  >
+                    Verify & Login
+                  </AdButton>
+                </Stack>
+              )}
+
+              {showCandidateSignup && (
+                <AdButton variant="text" onClick={() => navigate("/register")}>
+                  Candidate Sign Up
+                </AdButton>
+              )}
+
+              <Typography variant="caption" sx={{ color: "text.secondary", textAlign: "center" }}>
+                Secure access for your portal only.
+              </Typography>
+            </Stack>
           </Box>
         </Box>
       </Box>
-
     </Box>
   );
 }
