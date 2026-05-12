@@ -222,6 +222,7 @@ export default function MonthlyReportPage() {
   const [weeklyOffRows, setWeeklyOffRows] = useState<WeeklyOffRow[]>([]);
   const [report, setReport] = useState<MonthlyReport | null>(null);
   const [reportLoading, setReportLoading] = useState(true);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
@@ -378,10 +379,11 @@ export default function MonthlyReportPage() {
   const loadReport = async () => {
     setReportLoading(true);
     setError(null);
+    setInfoMessage(null);
     try {
       if (!partnerIdNumber) {
         setReport(null);
-        setError(isAdminLike ? "Please select a partner to load the monthly report." : "Partner profile not found for this user.");
+        setInfoMessage(isAdminLike ? "Please select a partner to load the monthly report." : "Partner profile not found for this user.");
         return;
       }
       const [year, month] = reportMonth.split("-").map(Number);
@@ -406,7 +408,7 @@ export default function MonthlyReportPage() {
 
   useEffect(() => {
     if (!isAdminLike && !currentPartnerId) {
-      setError("Partner profile not found for this user.");
+      setInfoMessage("Partner profile not found for this user.");
       return;
     }
     if (!isAdminLike) setPartnerId(currentPartnerId);
@@ -420,6 +422,7 @@ export default function MonthlyReportPage() {
     <Stack spacing={2.5}>
       <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
+      {infoMessage ? <AdAlertBox severity="info" title="Message" message={infoMessage} /> : null}
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 2 }}>
@@ -474,30 +477,23 @@ export default function MonthlyReportPage() {
           {reportLoading || !report ? (
             <Box
               sx={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 2000,
+                minHeight: 320,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: "#ffffff",
-                overflow: "hidden",
+                borderRadius: 3,
+                border: "1px solid rgba(15,23,42,0.08)",
+                background: "linear-gradient(180deg, rgba(248,250,252,0.95), rgba(255,255,255,0.98))",
               }}
             >
-              <Box
-                component="video"
-                src="/assests/minimalist-lines-preloader-motion-design.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                sx={{
-                  width: "100vw",
-                  height: "100vh",
-                  display: "block",
-                  objectFit: "cover",
-                }}
-              />
+              <Stack spacing={1} alignItems="center" sx={{ py: 4, px: 2 }}>
+                <Typography variant="h6" fontWeight={900}>
+                  Loading monthly report
+                </Typography>
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                  Please wait while attendance data is being prepared.
+                </Typography>
+              </Stack>
             </Box>
           ) : (
             <Box sx={{ maxWidth: "100%", overflowX: "auto", overflowY: "hidden", opacity: 1 }}>

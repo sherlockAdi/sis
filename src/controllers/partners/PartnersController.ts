@@ -96,8 +96,7 @@ export class PartnersController extends Controller {
       other_info?: string | null;
       status?: boolean | null;
     }
-  ): Promise<{ partner_id: number; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
-    const partner_code = String(body.partner_code ?? '').trim();
+  ): Promise<{ partner_id: number; partner_code: string | null; user_id: number | null; username: string; emailed: boolean; user_created: boolean; existing_user_used: boolean; auth_error?: string | null }> {
     const partner_name = String(body.partner_name ?? '').trim();
     if (!partner_name) throw httpError(400, 'partner_name is required');
     const email = String(body.email ?? '').trim();
@@ -108,7 +107,7 @@ export class PartnersController extends Controller {
     const rows = await callProc<RowDataPacket & { partner_id: number }>(
       `CALL sp_partners('CREATE', NULL, :partner_code, :partner_name, :contact_name, :phone, :email, :address, :country_id, :state_id, :city_id, :alt_partner_name, :alt_phone, :organisation_name, :address2, :pin, :landline, :cr_licence_number, :website, :other_info, NULL, :status, NULL)`,
       {
-        partner_code: partner_code || null,
+        partner_code: null,
         partner_name,
         contact_name: body.contact_name ?? null,
         phone: body.phone ?? null,
@@ -228,7 +227,7 @@ export class PartnersController extends Controller {
       }
     }
 
-    return { partner_id, user_id, username, emailed, user_created, existing_user_used, auth_error };
+    return { partner_id, partner_code: partner.partner_code ?? null, user_id, username, emailed, user_created, existing_user_used, auth_error };
   }
 
   @Put('{partnerId}')

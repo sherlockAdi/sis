@@ -82,6 +82,10 @@ function mapForm(row: Awaited<ReturnType<typeof associatePartnersApi.get>>): For
   };
 }
 
+function digitsOnly10(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
+
 export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const params = useParams();
@@ -174,6 +178,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
     ],
     [],
   );
+  const canSave = useMemo(() => Boolean(form.associate_partner_name.trim()), [form.associate_partner_name]);
 
   const saveAssociatePartner = async () => {
     setSaving(true);
@@ -232,7 +237,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
             <AdButton variant="text" onClick={() => navigate("/portal/associate-partners")}>
               Cancel
             </AdButton>
-            <AdButton onClick={saveAssociatePartner} disabled={saving || loading}>
+            <AdButton onClick={saveAssociatePartner} disabled={saving || loading || !canSave}>
               {saving ? "Saving..." : "Save Associate Partner"}
             </AdButton>
           </Stack>
@@ -317,16 +322,18 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
                 size="small"
                 label="Primary Contact"
                 value={form.primary_contact}
-                onChange={(v) => setForm((f) => ({ ...f, primary_contact: v }))}
+                onChange={(v) => setForm((f) => ({ ...f, primary_contact: digitsOnly10(v) }))}
                 helperText="Phone number"
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
               />
               <AdTextBox
                 variant="standard"
                 size="small"
                 label="Alternate Contact"
                 value={form.alternate_contact}
-                onChange={(v) => setForm((f) => ({ ...f, alternate_contact: v }))}
+                onChange={(v) => setForm((f) => ({ ...f, alternate_contact: digitsOnly10(v) }))}
                 helperText="Phone number"
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
               />
               <AdTextBox
                 variant="standard"
