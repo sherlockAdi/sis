@@ -24,7 +24,7 @@ export default function PublicMenuPage() {
         <Stack spacing={1.75} sx={{ flex: "0 0 auto" }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <SisLogo height={76} />
+              <SisLogo height={60} />
             </Box>
             <Button
               color="inherit"
@@ -85,10 +85,10 @@ export default function PublicMenuPage() {
               </Typography>
               {[
                 { label: "Home", to: "/" },
-                { label: "About Us", to: "/about" },
+                { label: "About SIS", to: "/about" },
                 { label: "Jobs", to: "/jobs" },
                 { label: "Employer Zone", to: "/employer-zone" },
-                { label: "Employer Sourcing Zone", to: "/partner-zone" },
+                { label: "Partner Zone", to: "/partner-zone" },
                 { label: "Get Registered", to: "/register" },
               ].map((l) => (
                 <Button
@@ -125,8 +125,8 @@ export default function PublicMenuPage() {
               </Typography>
               {[
                 { label: "Candidate Login", portal: "candidate" },
-                { label: "Customer Login", portal: "employer" },
-                { label: "Employer Login", portal: "sourcing" },
+                { label: "Employer Login", portal: "employer" },
+                { label: "Sourcing Login", portal: "sourcing" },
                 { label: "Admin Login", portal: "administrator" },
               ].map((p) => (
                 <Button
@@ -228,7 +228,7 @@ export default function PublicMenuPage() {
               }}
             >
               <Typography variant="overline" sx={{ opacity: 0.75 }}>
-                Employer zone (sections)
+                Partner zone (sections)
               </Typography>
               {[
                 { label: "Benefits", to: "/partner-zone#benefits" },
