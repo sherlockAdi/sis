@@ -5,7 +5,7 @@ import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/
 import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
-import { credentialsEmailText } from '../../utils/emailTemplates';
+import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
 
 type CandidateRow = {
   candidate_id: number;
@@ -225,6 +225,12 @@ export class PublicCandidateSignupController extends Controller {
             cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Candidate portal credentials',
             text: credentialsEmailText({
+              name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+              username,
+              temporaryPassword: plainPassword,
+              portalLabel: 'Candidate',
+            }),
+            html: credentialsEmailHtml({
               name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
               username,
               temporaryPassword: plainPassword,

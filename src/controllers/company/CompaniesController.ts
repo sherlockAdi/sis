@@ -5,7 +5,7 @@ import { httpError } from '../../utils/httpErrors';
 import { env } from '../../config/env';
 import { sendSmtpMail } from '../../utils/smtpClient';
 import { hashPassword } from '../../services/authService';
-import { credentialsEmailText } from '../../utils/emailTemplates';
+import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
 
 type CompanyRow = {
   company_id: number;
@@ -187,6 +187,12 @@ export class CompaniesController extends Controller {
             cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Company portal credentials',
             text: credentialsEmailText({
+              name: company.contact_person ?? company.company_name,
+              username,
+              temporaryPassword: plainPassword,
+              portalLabel: 'Company',
+            }),
+            html: credentialsEmailHtml({
               name: company.contact_person ?? company.company_name,
               username,
               temporaryPassword: plainPassword,

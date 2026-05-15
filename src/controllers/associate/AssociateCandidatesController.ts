@@ -7,7 +7,8 @@ import { getOrCreateAssociatePartnerByUserId, getRoleCodeForUserId } from '../..
 import { getCandidateProfileMissingFields } from '../../utils/candidateProfileCompleteness';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
-import { accountLinkedEmailText, credentialsEmailText } from '../../utils/emailTemplates';
+import { accountLinkedEmailHtml, accountLinkedEmailText, credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type AssociateCandidateRow = {
   candidate_id: number;
@@ -81,6 +82,17 @@ type AssociateJobDocRow = {
   is_required: 0 | 1;
   file_path: string | null;
   uploaded_at: string | null;
+};
+
+type AssociateApplicationListRow = {
+  application_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  phone: string | null;
+  email: string | null;
+  job_id: number;
+  job_title: string;
+  status: string | null;
 };
 
 function normalizeCandidateRow(row: AssociateCandidateRow): AssociateCandidateRow {
@@ -180,6 +192,14 @@ async function getAssociateApplication(application_id: number): Promise<{ applic
   const application = rows[0];
   if (!application) throw httpError(404, 'Application not found');
   return application;
+}
+
+async function getAssociateApplicationDetail(application_id: number, candidate_id: number): Promise<AssociateApplicationListRow | null> {
+  const rows = await callProc<RowDataPacket & AssociateApplicationListRow>(
+    `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
+    { candidate_id }
+  );
+  return rows.find((row) => Number(row.application_id) === Number(application_id)) ?? null;
 }
 
 async function upsertAssociateCandidateProfile(
@@ -560,6 +580,19 @@ export class AssociateCandidatesController extends Controller {
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
               });
+          const mailHtml = existingUser
+            ? accountLinkedEmailHtml({
+                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+              })
+            : credentialsEmailHtml({
+                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+              });
 
           await sendSmtpMail(
             {
@@ -576,6 +609,7 @@ export class AssociateCandidatesController extends Controller {
                 ? 'SIS Global Connect - Candidate account updated'
                 : 'SIS Global Connect - Candidate account confirmed',
               text: mailText,
+              html: mailHtml,
             }
           );
           emailed = true;
@@ -746,6 +780,30 @@ export class AssociateCandidatesController extends Controller {
       `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
       { application_id: applicationId, status: 'Applied' }
     );
+
+    const appDetail = await getAssociateApplicationDetail(applicationId, candidate.candidate_id);
+    if (appDetail) {
+      await sendStatusNotification({
+        recipient: {
+          name: appDetail.candidate_name,
+          email: appDetail.email,
+          phone: appDetail.phone,
+          whatsapp: appDetail.phone,
+        },
+        subject: `${appDetail.job_title} - Application submitted`,
+        headline: 'Job applied',
+        statusLabel: String(appDetail.status ?? 'Applied'),
+        greeting: `Hello ${appDetail.candidate_name},`,
+        summary: `Your application for ${appDetail.job_title} has been submitted successfully.`,
+        rows: [
+          { label: 'Application ID', value: String(appDetail.application_id) },
+          { label: 'Job', value: String(appDetail.job_title) },
+          { label: 'Candidate', value: String(appDetail.candidate_name) },
+          { label: 'Current Status', value: String(appDetail.status ?? 'Applied') },
+        ],
+        nextSteps: ['Track the application status in your candidate portal.'],
+      });
+    }
 
     return { submitted: true };
   }

@@ -5,7 +5,8 @@ import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/
 import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
-import { credentialsEmailText } from '../../utils/emailTemplates';
+import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type CandidateRow = {
   candidate_id: number;
@@ -138,6 +139,12 @@ function randomPassword(len = 10): string {
   let out = '';
   for (let i = 0; i < len; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
   return out;
+}
+
+function candidateDisplayName(candidate: Partial<CandidateRow>): string {
+  return `${String(candidate.first_name ?? '').trim()} ${String(candidate.last_name ?? '').trim()}`.trim()
+    || String(candidate.candidate_code ?? '').trim()
+    || 'Candidate';
 }
 
 const REGISTRATION_CC = ['mrsrivastava@neuralinfo.org'];
@@ -299,6 +306,12 @@ export class RecruitmentCandidatesController extends Controller {
               temporaryPassword: plainPassword ?? '',
               portalLabel: 'Candidate',
             }),
+            html: credentialsEmailHtml({
+              name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+              username,
+              temporaryPassword: plainPassword ?? '',
+              portalLabel: 'Candidate',
+            }),
           }
         );
         emailed = true;
@@ -316,6 +329,12 @@ export class RecruitmentCandidatesController extends Controller {
     @Path() candidateId: number,
     @Body() body: Partial<Omit<CandidateRow, 'candidate_id' | 'candidate_code' | 'created_at' | 'updated_at' | 'deleted_at' | 'country_name' | 'state_name' | 'city_name'>>
   ): Promise<{ updated: true }> {
+    const beforeRows = await callProc<RowDataPacket & CandidateRow>(
+      `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      { candidate_id: candidateId }
+    );
+    const before = beforeRows[0] ? normalizeCandidateRow(beforeRows[0]) : undefined;
+
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
       `CALL sp_rec_candidates('UPDATE', :candidate_id, :first_name, :last_name, :phone, :email, :passport_number, :country_id, :state_id, :city_id, :status, NULL)`,
       {
@@ -335,6 +354,46 @@ export class RecruitmentCandidatesController extends Controller {
     await upsertCandidateProfile(candidateId, body);
     if (typeof body.is_verified === 'boolean') {
       await setCandidateVerified(candidateId, body.is_verified);
+    }
+
+    const afterRows = await callProc<RowDataPacket & CandidateRow>(
+      `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      { candidate_id: candidateId }
+    );
+    const after = afterRows[0] ? normalizeCandidateRow(afterRows[0]) : undefined;
+
+    if (after && (body.status != null || typeof body.is_verified === 'boolean')) {
+      const statusChanged = String(before?.status ?? '').trim() !== String(after.status ?? '').trim();
+      const verificationChanged = typeof body.is_verified === 'boolean';
+      if (statusChanged || verificationChanged) {
+        const statusLabel = String(after.status ?? 'Updated').trim() || 'Updated';
+        const name = candidateDisplayName(after);
+        await sendStatusNotification({
+          recipient: {
+            name,
+            email: after.email,
+            phone: after.phone,
+            whatsapp: after.phone,
+          },
+          subject: `Candidate profile updated for ${name}`,
+          headline: 'Candidate profile update',
+          statusLabel,
+          greeting: `Hello ${name},`,
+          summary: statusChanged
+            ? `Your candidate profile status has changed from "${String(before?.status ?? '—')}" to "${String(after.status ?? '—')}".`
+            : 'Your candidate profile verification status has been updated.',
+          rows: [
+            { label: 'Candidate Code', value: String(after.candidate_code ?? '—') },
+            { label: 'Email', value: String(after.email ?? '—') },
+            { label: 'Phone', value: String(after.phone ?? '—') },
+            { label: 'Verification', value: String(after.is_verified ? 'Verified' : 'Pending') },
+          ],
+          nextSteps: [
+            'Review your profile details in the portal.',
+            'Contact the recruitment team if any information looks incorrect.',
+          ],
+        });
+      }
     }
     return { updated: true };
   }

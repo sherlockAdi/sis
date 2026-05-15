@@ -37,5 +37,15 @@ export const env = {
   SMTP_SECURE: (process.env.SMTP_SECURE ?? 'true').toLowerCase() === 'true',
   SMTP_USER: process.env.SMTP_USER ?? '',
   SMTP_PASS: process.env.SMTP_PASS ?? '',
-  SMTP_FROM: process.env.SMTP_FROM ?? ''
+  SMTP_FROM: process.env.SMTP_FROM ?? '',
+
+  // Notification webhooks for SMS / WhatsApp providers (optional)
+  SMS_WEBHOOK_URL: process.env.SMS_WEBHOOK_URL ?? '',
+  WHATSAPP_WEBHOOK_URL: process.env.WHATSAPP_WEBHOOK_URL ?? '',
+  NOTIFICATION_FROM_NAME: process.env.NOTIFICATION_FROM_NAME ?? 'SIS Global Connect',
+  NOTIFICATION_SIGNATURE_NAME: process.env.NOTIFICATION_SIGNATURE_NAME ?? 'SIS Global Connect Team',
+  NOTIFICATION_SIGNATURE_TITLE: process.env.NOTIFICATION_SIGNATURE_TITLE ?? 'Candidate & Workforce Support',
+  NOTIFICATION_SIGNATURE_EMAIL: process.env.NOTIFICATION_SIGNATURE_EMAIL ?? '',
+  NOTIFICATION_SIGNATURE_PHONE: process.env.NOTIFICATION_SIGNATURE_PHONE ?? '',
+  NOTIFICATION_SIGNATURE_WEBSITE: process.env.NOTIFICATION_SIGNATURE_WEBSITE ?? ''
 };

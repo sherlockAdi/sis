@@ -5,7 +5,7 @@ import { env } from '../../config/env';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { httpError } from '../../utils/httpErrors';
 import { sendSmtpMail } from '../../utils/smtpClient';
-import { credentialsEmailText } from '../../utils/emailTemplates';
+import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
 
 type AssociatePartnerRow = {
   associate_partner_id: number;
@@ -222,6 +222,12 @@ export class AssociatePartnersController extends Controller {
             cc: REGISTRATION_CC,
             subject: 'SIS Global Connect — Associate Partner Login',
             text: credentialsEmailText({
+              name: associatePartner.associate_partner_name,
+              username,
+              temporaryPassword: plainPassword,
+              portalLabel: 'Associate Partner Portal',
+            }),
+            html: credentialsEmailHtml({
               name: associatePartner.associate_partner_name,
               username,
               temporaryPassword: plainPassword,

@@ -18,7 +18,11 @@ function normalizeLines(s: string): string {
   return s.replace(/\r?\n/g, '\r\n');
 }
 
-function buildMessage(input: { from: string; to: string; cc?: string[]; subject: string; text: string }): string {
+function escapeBoundaryValue(value: string): string {
+  return value.replace(/[^A-Za-z0-9'()+_,\-./:=?]/g, '_');
+}
+
+function buildMessage(input: { from: string; to: string; cc?: string[]; subject: string; text: string; html?: string }): string {
   const cc = (input.cc ?? []).map((v) => String(v).trim()).filter(Boolean);
   const headers = [
     `From: ${input.from}`,
@@ -26,18 +30,40 @@ function buildMessage(input: { from: string; to: string; cc?: string[]; subject:
     ...(cc.length ? [`Cc: ${cc.join(', ')}`] : []),
     `Subject: ${input.subject}`,
     `MIME-Version: 1.0`,
+  ];
+  const html = String(input.html ?? '').trim();
+  if (!html) {
+    headers.push(`Content-Type: text/plain; charset="utf-8"`);
+    headers.push(`Content-Transfer-Encoding: 7bit`);
+    return normalizeLines(headers.join('\n') + '\n\n' + input.text) + '\r\n';
+  }
+
+  const boundary = `boundary_${escapeBoundaryValue(`${Date.now()}_${Math.random().toString(36).slice(2)}`)}`;
+  headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+
+  const body = [
+    `--${boundary}`,
     `Content-Type: text/plain; charset="utf-8"`,
     `Content-Transfer-Encoding: 7bit`,
-  ];
-  return normalizeLines(headers.join('\n') + '\n\n' + input.text) + '\r\n';
+    '',
+    String(input.text ?? '').trim(),
+    `--${boundary}`,
+    `Content-Type: text/html; charset="utf-8"`,
+    `Content-Transfer-Encoding: 7bit`,
+    '',
+    html,
+    `--${boundary}--`,
+    '',
+  ].join('\n');
+
+  return normalizeLines(headers.join('\n') + '\n\n' + body) + '\r\n';
 }
 
 type Reply = { code: number; lines: string[] };
 
-export async function sendSmtpMail(
-  cfg: SmtpConfig,
-  input: { to: string; cc?: string[]; subject: string; text: string }
-): Promise<void> {
+type MailInput = { to: string; cc?: string[]; subject: string; text: string; html?: string };
+
+export async function sendSmtpMail(cfg: SmtpConfig, input: MailInput): Promise<void> {
   if (!cfg.host || !cfg.user || !cfg.pass) {
     throw new Error('SMTP is not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS)');
   }
