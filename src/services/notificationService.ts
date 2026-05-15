@@ -39,6 +39,12 @@ type NotificationTemplateRow = RowDataPacket & {
   status: 0 | 1 | boolean;
 };
 
+type CandidateAssociateRefRow = RowDataPacket & {
+  candidate_id: number;
+  associate_partner_id: number | null;
+  partner_email: string | null;
+};
+
 export type NotificationRecipient = {
   name?: string | null;
   email?: string | null;
@@ -49,6 +55,7 @@ export type NotificationRecipient = {
 export type NotificationPayload = NotificationMessageInput & {
   recipient: NotificationRecipient;
   channels?: Array<'email' | 'phone' | 'whatsapp'>;
+  referenceCandidateId?: number | null;
   rendered?: {
     subject: string;
     text: string;
@@ -92,6 +99,22 @@ function normalizeEmailList(values?: string[]): string[] | undefined {
 
 function defaultCc(cc?: string[]): string[] | undefined {
   return normalizeEmailList([...(DEFAULT_NOTIFICATION_CC ?? []), ...(cc ?? [])]);
+}
+
+async function resolveAssociatePartnerCc(candidateId?: number | null): Promise<string | undefined> {
+  if (!candidateId || !Number.isFinite(candidateId)) return undefined;
+
+  const [rows] = await pool.query<(RowDataPacket & CandidateAssociateRefRow)[]>(
+    `SELECT c.candidate_id, c.associate_partner_id, a.email AS partner_email
+     FROM REC_T01_candidates c
+     LEFT JOIN ASSOC_T01_associate_partners a ON a.associate_partner_id = c.associate_partner_id
+     WHERE c.candidate_id = :candidate_id
+     LIMIT 1`,
+    { candidate_id: candidateId },
+  );
+
+  const partnerEmail = trimToNull(rows[0]?.partner_email);
+  return partnerEmail ?? undefined;
 }
 
 function escapeHtml(value: string): string {
@@ -265,6 +288,7 @@ function buildChannelMessage(input: NotificationMessageInput & { recipient: Noti
 
 export async function sendNotification(payload: NotificationPayload): Promise<NotificationResult> {
   const channels = payload.channels ?? ['email', 'phone', 'whatsapp'];
+  const partnerCc = await resolveAssociatePartnerCc(payload.referenceCandidateId);
   const subject = payload.rendered?.subject ?? buildNotificationSubject(payload.subject);
   const text = payload.rendered?.text ?? buildChannelMessage({ ...payload, signature: signature() });
   const html = payload.rendered?.html ?? buildNotificationHtml({ ...payload, signature: signature() });
@@ -304,6 +328,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<No
         },
         {
           to: recipientEmail,
+          cc: defaultCc(partnerCc ? [partnerCc] : undefined),
           subject,
           text,
           html,
@@ -400,10 +425,12 @@ async function sendEmailTemplate(input: {
   text: string;
   html: string;
   cc?: string[];
+  referenceCandidateId?: number | null;
 }): Promise<boolean> {
   const recipientEmail = trimToNull(input.recipientEmail);
   if (!recipientEmail) return false;
   if (!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS)) return false;
+  const partnerCc = await resolveAssociatePartnerCc(input.referenceCandidateId);
 
   await sendSmtpMail(
     {
@@ -416,7 +443,7 @@ async function sendEmailTemplate(input: {
     },
     {
       to: recipientEmail,
-      cc: defaultCc(input.cc),
+      cc: defaultCc(partnerCc ? [...(input.cc ?? []), partnerCc] : input.cc),
       subject: input.subject,
       text: input.text,
       html: input.html,
@@ -460,6 +487,7 @@ export async function sendCredentialNotification(input: {
   portalLabel?: string;
   subject?: string;
   cc?: string[];
+  referenceCandidateId?: number | null;
 }): Promise<NotificationResult> {
   console.log('[notification] credential prepare', JSON.stringify({ recipient: input.recipient, portalLabel: input.portalLabel ?? null }));
   const fallbackSubject = input.subject ?? `SIS Global Connect - ${input.portalLabel ?? 'Account'} credentials`;
@@ -491,7 +519,14 @@ export async function sendCredentialNotification(input: {
   const subject = rendered.subject;
   const text = rendered.text;
   const html = rendered.html;
-  const email_sent = await sendEmailTemplate({ recipientEmail: input.recipient.email, subject, text, html, cc: input.cc });
+  const email_sent = await sendEmailTemplate({
+    recipientEmail: input.recipient.email,
+    subject,
+    text,
+    html,
+    cc: input.cc,
+    referenceCandidateId: input.referenceCandidateId,
+  });
   console.log('[notification] credential result', JSON.stringify({ email_sent, subject }));
   return { email_sent, phone_sent: false, whatsapp_sent: false };
 }
@@ -503,6 +538,7 @@ export async function sendAccountLinkedNotification(input: {
   portalLabel?: string;
   subject?: string;
   cc?: string[];
+  referenceCandidateId?: number | null;
 }): Promise<NotificationResult> {
   console.log('[notification] linked-account prepare', JSON.stringify({ recipient: input.recipient, portalLabel: input.portalLabel ?? null }));
   const fallbackSubject = input.subject ?? `SIS Global Connect - ${input.portalLabel ?? 'Account'} updated`;
@@ -535,7 +571,14 @@ export async function sendAccountLinkedNotification(input: {
   const subject = rendered.subject;
   const text = rendered.text;
   const html = rendered.html;
-  const email_sent = await sendEmailTemplate({ recipientEmail: input.recipient.email, subject, text, html, cc: input.cc });
+  const email_sent = await sendEmailTemplate({
+    recipientEmail: input.recipient.email,
+    subject,
+    text,
+    html,
+    cc: input.cc,
+    referenceCandidateId: input.referenceCandidateId,
+  });
   console.log('[notification] linked-account result', JSON.stringify({ email_sent, subject }));
   return { email_sent, phone_sent: false, whatsapp_sent: false };
 }

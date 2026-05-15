@@ -153,6 +153,7 @@ export class DeploymentController extends Controller {
           { label: 'Current Status', value: String(deployment.current_status ?? body.status ?? 'Created') },
         ],
         nextSteps: ['Check the portal for the latest deployment progress and instructions.'],
+        referenceCandidateId: deployment.candidate_id,
       });
     }
     return { deployment_id };
@@ -188,6 +189,7 @@ export class DeploymentController extends Controller {
         'Check the portal for any new instructions or document requests.',
         'Contact the operations team if you need clarification.',
       ],
+      referenceCandidateId: deployment.candidate_id,
     });
   }
 

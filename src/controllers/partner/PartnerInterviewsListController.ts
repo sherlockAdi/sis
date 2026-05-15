@@ -182,6 +182,7 @@ export class PartnerInterviewsListController extends Controller {
           'Check the portal for interview timing and instructions.',
           'Read the interview remarks carefully before attending.',
         ],
+        referenceCandidateId: app.candidate_id,
       });
     } else {
       console.log('[partner/interview] notification skipped', JSON.stringify({

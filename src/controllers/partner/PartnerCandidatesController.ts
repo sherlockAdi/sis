@@ -1,5 +1,6 @@
 import { Controller, Get, Path, Request, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
+import { pool } from '../../db/pool';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import { getPartnerByUserId } from '../../services/partnerService';
@@ -55,6 +56,23 @@ type PartnerCandidateDocumentRow = {
   uploaded_at: string | null;
 };
 
+type PartnerCandidateTradeLinkRow = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+type PartnerCandidateTradeTestRow = {
+  candidate_id: number;
+  trade_video_file_path: string | null;
+  trade_video_file_name: string | null;
+  trade_video_file_size: number | null;
+  trade_video_uploaded_at: string | null;
+  trade_video_links_json: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type PartnerApplicationRow = {
   application_id: number;
   candidate_id: number;
@@ -65,7 +83,19 @@ type PartnerApplicationRow = {
 export class PartnerCandidatesController extends Controller {
   @Get('{candidateId}')
   @Security('jwt')
-  public async get(@Path() candidateId: number, @Request() req: any): Promise<{ candidate: PartnerCandidateRow; documents: PartnerCandidateDocumentRow[] }> {
+  public async get(
+    @Path() candidateId: number,
+    @Request() req: any
+  ): Promise<{ candidate: PartnerCandidateRow; documents: PartnerCandidateDocumentRow[]; trade_test: {
+    candidate_id: number;
+    trade_video_file_path: string | null;
+    trade_video_file_name: string | null;
+    trade_video_file_size: number | null;
+    trade_video_uploaded_at: string | null;
+    trade_video_links: PartnerCandidateTradeLinkRow[];
+    created_at: string;
+    updated_at: string;
+  } }> {
     const user = (req as any).user as { user_id?: number } | undefined;
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
 
@@ -92,6 +122,56 @@ export class PartnerCandidatesController extends Controller {
       { candidate_id: candidateId }
     );
 
-    return { candidate, documents };
+    const [tradeRows] = await pool.query<(RowDataPacket & PartnerCandidateTradeTestRow)[]>(
+      `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json, created_at, updated_at
+       FROM REC_T04_candidate_trade_tests
+       WHERE candidate_id = :candidate_id
+       LIMIT 1`,
+      { candidate_id: candidateId }
+    );
+
+    const tradeRow = tradeRows[0];
+    let tradeVideoLinks: PartnerCandidateTradeLinkRow[] = [];
+    if (tradeRow?.trade_video_links_json) {
+      try {
+        const parsed = JSON.parse(tradeRow.trade_video_links_json);
+        if (Array.isArray(parsed)) {
+          tradeVideoLinks = parsed
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                const url = String(item ?? '').trim();
+                return url ? { id: `link_${index}`, title: '', url } : null;
+              }
+              if (!item || typeof item !== 'object') return null;
+              const row = item as PartnerCandidateTradeLinkRow;
+              const url = String(row.url ?? '').trim();
+              if (!url) return null;
+              return {
+                id: String(row.id ?? `link_${index}`),
+                title: String(row.title ?? ''),
+                url,
+              };
+            })
+            .filter((item): item is PartnerCandidateTradeLinkRow => Boolean(item));
+        }
+      } catch {
+        tradeVideoLinks = [];
+      }
+    }
+
+    return {
+      candidate,
+      documents,
+      trade_test: {
+        candidate_id: tradeRow?.candidate_id ?? candidateId,
+        trade_video_file_path: tradeRow?.trade_video_file_path ?? null,
+        trade_video_file_name: tradeRow?.trade_video_file_name ?? null,
+        trade_video_file_size: tradeRow?.trade_video_file_size === null || tradeRow?.trade_video_file_size === undefined ? null : Number(tradeRow.trade_video_file_size),
+        trade_video_uploaded_at: tradeRow?.trade_video_uploaded_at ?? null,
+        trade_video_links: tradeVideoLinks,
+        created_at: tradeRow?.created_at ?? new Date(0).toISOString(),
+        updated_at: tradeRow?.updated_at ?? new Date(0).toISOString(),
+      },
+    };
   }
 }

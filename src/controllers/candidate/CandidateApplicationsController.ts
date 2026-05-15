@@ -250,6 +250,7 @@ export class CandidateApplicationsController extends Controller {
           { label: 'Current Status', value: String(updated.status ?? 'Applied') },
         ],
         nextSteps: ['Track the application status in your candidate portal.'],
+        referenceCandidateId: updated.candidate_id,
       });
     }
 
@@ -298,6 +299,7 @@ export class CandidateApplicationsController extends Controller {
           { label: 'Current Status', value: String(app.status ?? 'Applied') },
         ],
         nextSteps: ['Continue tracking the application from your candidate portal.'],
+        referenceCandidateId: app.candidate_id,
       });
     }
     return { application_id };

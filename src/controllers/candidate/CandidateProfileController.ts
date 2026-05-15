@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Put, Request, Route, Security, Tags } from 'tsoa';
-import type { RowDataPacket } from 'mysql2/promise';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { pool } from '../../db/pool';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import type { JwtPayload } from '../../security/jwt';
@@ -55,6 +56,42 @@ type CandidateProfileResponse = CandidateProfileRow & {
   missing_fields: string[];
 };
 
+type CandidateTradeLinkInput = {
+  id?: string | null;
+  title?: string | null;
+  url?: string | null;
+};
+
+type CandidateTradeTestRow = {
+  candidate_id: number;
+  trade_video_file_path: string | null;
+  trade_video_file_name: string | null;
+  trade_video_file_size: number | null;
+  trade_video_uploaded_at: string | null;
+  trade_video_links_json: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type CandidateTradeTestResponse = {
+  candidate_id: number;
+  trade_video_file_path: string | null;
+  trade_video_file_name: string | null;
+  trade_video_file_size: number | null;
+  trade_video_uploaded_at: string | null;
+  trade_video_links: Array<{ id: string; title: string; url: string }>;
+  created_at: string;
+  updated_at: string;
+};
+
+type CandidateTradeTestUpdateBody = {
+  trade_video_file_path?: string | null;
+  trade_video_file_name?: string | null;
+  trade_video_file_size?: number | null;
+  trade_video_uploaded_at?: string | null;
+  trade_video_links?: CandidateTradeLinkInput[];
+};
+
 function normalizeCandidate(row: CandidateProfileRow): CandidateProfileRow {
   return {
     ...row,
@@ -72,6 +109,125 @@ function requireUser(req: any): JwtPayload {
 function toNull(value: string | null | undefined): string | null {
   const v = String(value ?? '').trim();
   return v ? v : null;
+}
+
+function toNullableNumber(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toMysqlDatetime(value: string | null | undefined): string | null {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return [
+    date.getUTCFullYear(),
+    '-',
+    pad(date.getUTCMonth() + 1),
+    '-',
+    pad(date.getUTCDate()),
+    ' ',
+    pad(date.getUTCHours()),
+    ':',
+    pad(date.getUTCMinutes()),
+    ':',
+    pad(date.getUTCSeconds()),
+  ].join('');
+}
+
+function normalizeTradeLinks(value: unknown): Array<{ id: string; title: string; url: string }> {
+  const raw = Array.isArray(value) ? value : [];
+  return raw
+    .map((item, index) => {
+      if (typeof item === 'string') {
+        const url = String(item ?? '').trim();
+        return url ? { id: `link_${index}`, title: '', url } : null;
+      }
+
+      if (!item || typeof item !== 'object') return null;
+      const row = item as CandidateTradeLinkInput;
+      const url = toNull(row.url);
+      if (!url) return null;
+      return {
+        id: toNull(row.id) || `link_${index}`,
+        title: toNull(row.title) || '',
+        url,
+      };
+    })
+    .filter((item): item is { id: string; title: string; url: string } => Boolean(item));
+}
+
+async function getTradeTestForCandidate(candidate_id: number): Promise<CandidateTradeTestResponse> {
+  const [rows] = await pool.query<(RowDataPacket & CandidateTradeTestRow)[]>(
+    `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json, created_at, updated_at
+     FROM REC_T04_candidate_trade_tests
+     WHERE candidate_id = :candidate_id
+     LIMIT 1`,
+    { candidate_id }
+  );
+
+  const row = rows[0];
+  if (!row) {
+    return {
+      candidate_id,
+      trade_video_file_path: null,
+      trade_video_file_name: null,
+      trade_video_file_size: null,
+      trade_video_uploaded_at: null,
+      trade_video_links: [],
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  let trade_video_links: Array<{ id: string; title: string; url: string }> = [];
+  if (row.trade_video_links_json) {
+    try {
+      trade_video_links = normalizeTradeLinks(JSON.parse(row.trade_video_links_json));
+    } catch {
+      trade_video_links = [];
+    }
+  }
+
+  return {
+    candidate_id: row.candidate_id,
+    trade_video_file_path: row.trade_video_file_path,
+    trade_video_file_name: row.trade_video_file_name,
+    trade_video_file_size: row.trade_video_file_size === null ? null : Number(row.trade_video_file_size),
+    trade_video_uploaded_at: row.trade_video_uploaded_at,
+    trade_video_links,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+async function upsertTradeTestForCandidate(candidate_id: number, body: CandidateTradeTestUpdateBody): Promise<void> {
+  const links = normalizeTradeLinks(body.trade_video_links ?? []);
+  await pool.query<ResultSetHeader>(
+    `INSERT INTO REC_T04_candidate_trade_tests
+      (candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json)
+     VALUES
+      (:candidate_id, :trade_video_file_path, :trade_video_file_name, :trade_video_file_size, :trade_video_uploaded_at, :trade_video_links_json)
+     ON DUPLICATE KEY UPDATE
+      trade_video_file_path = VALUES(trade_video_file_path),
+      trade_video_file_name = VALUES(trade_video_file_name),
+      trade_video_file_size = VALUES(trade_video_file_size),
+      trade_video_uploaded_at = VALUES(trade_video_uploaded_at),
+      trade_video_links_json = VALUES(trade_video_links_json)`,
+    {
+      candidate_id,
+      trade_video_file_path: toNull(body.trade_video_file_path),
+      trade_video_file_name: toNull(body.trade_video_file_name),
+      trade_video_file_size: toNullableNumber(body.trade_video_file_size),
+      trade_video_uploaded_at: toMysqlDatetime(body.trade_video_uploaded_at),
+      trade_video_links_json: JSON.stringify(links),
+    }
+  );
 }
 
 async function getCandidateForUser(user_id: number): Promise<CandidateProfileRow> {
@@ -155,6 +311,26 @@ export class CandidateProfileController extends Controller {
     );
 
     await upsertCandidateProfile(candidate.candidate_id, body);
+    return { updated: true };
+  }
+
+  @Get('trade-test')
+  @Security('jwt')
+  public async tradeTest(@Request() req: any): Promise<CandidateTradeTestResponse> {
+    const user = requireUser(req);
+    const candidate = await getCandidateForUser(user.user_id);
+    return getTradeTestForCandidate(candidate.candidate_id);
+  }
+
+  @Put('trade-test')
+  @Security('jwt')
+  public async updateTradeTest(
+    @Request() req: any,
+    @Body() body: CandidateTradeTestUpdateBody
+  ): Promise<{ updated: true }> {
+    const user = requireUser(req);
+    const candidate = await getCandidateForUser(user.user_id);
+    await upsertTradeTestForCandidate(candidate.candidate_id, body);
     return { updated: true };
   }
 }

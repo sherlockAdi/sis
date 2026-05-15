@@ -94,6 +94,23 @@ export type PartnerCandidateDocumentRow = {
   uploaded_at: string | null;
 };
 
+export type PartnerCandidateTradeLinkRow = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+export type PartnerCandidateTradeTestRow = {
+  candidate_id: number;
+  trade_video_file_path: string | null;
+  trade_video_file_name: string | null;
+  trade_video_file_size: number | null;
+  trade_video_uploaded_at: string | null;
+  trade_video_links: PartnerCandidateTradeLinkRow[];
+  created_at: string;
+  updated_at: string;
+};
+
 export const partnersApi = {
   list: (include_inactive = true) =>
     apiFetch<PartnerRow[]>(`/partners?include_inactive=${include_inactive ? "true" : "false"}`, { method: "GET" }),
@@ -153,7 +170,7 @@ export const partnerPortalApi = {
   },
   candidates: {
     get: (candidate_id: number) =>
-      apiFetch<{ candidate: PartnerCandidateRow; documents: PartnerCandidateDocumentRow[] }>(
+      apiFetch<{ candidate: PartnerCandidateRow; documents: PartnerCandidateDocumentRow[]; trade_test: PartnerCandidateTradeTestRow }>(
         `/partner/candidates/${candidate_id}`,
         { method: "GET" },
       ),

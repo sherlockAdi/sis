@@ -499,6 +499,7 @@ export class AssociateCandidatesController extends Controller {
   }> {
     const { associatePartner } = await requireAssociatePartner(req);
     const candidate = await getAssociateCandidate(candidateId, associatePartner.associate_partner_id);
+    const realCandidateEmail = String(candidate.email ?? '').trim();
 
     const original_email = String(body.original_email ?? '').trim();
     const original_phone = String(body.original_phone ?? '').trim();
@@ -573,6 +574,7 @@ export class AssociateCandidatesController extends Controller {
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
               })
             : sendCredentialNotification({
                 recipient: {
@@ -582,10 +584,39 @@ export class AssociateCandidatesController extends Controller {
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
               }));
           emailed = true;
         } catch {
           emailed = false;
+        }
+      }
+
+      if (realCandidateEmail && realCandidateEmail !== original_email) {
+        try {
+          await (existingUser
+            ? sendAccountLinkedNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: realCandidateEmail,
+                },
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
+              })
+            : sendCredentialNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: realCandidateEmail,
+                },
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
+              }));
+        } catch {
+          // Best-effort second delivery to the candidate's original email.
         }
       }
     } catch (e: any) {
@@ -773,6 +804,7 @@ export class AssociateCandidatesController extends Controller {
           { label: 'Current Status', value: String(appDetail.status ?? 'Applied') },
         ],
         nextSteps: ['Track the application status in your candidate portal.'],
+        referenceCandidateId: candidateId,
       });
     }
 

@@ -293,6 +293,7 @@ export class RecruitmentCandidatesController extends Controller {
           temporaryPassword: plainPassword ?? '',
           portalLabel: 'Candidate',
           cc: REGISTRATION_CC,
+          referenceCandidateId: candidate_id,
         });
         emailed = true;
       } catch {
@@ -372,6 +373,7 @@ export class RecruitmentCandidatesController extends Controller {
             'Review your profile details in the portal.',
             'Contact the recruitment team if any information looks incorrect.',
           ],
+          referenceCandidateId: candidateId,
         });
       }
     }

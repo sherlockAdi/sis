@@ -160,6 +160,7 @@ export class RecruitmentApplicationsController extends Controller {
         { label: 'Current Status', value: String(app.status ?? '—') },
       ],
       nextSteps,
+      referenceCandidateId: app.candidate_id,
     });
   }
 
@@ -194,6 +195,7 @@ export class RecruitmentApplicationsController extends Controller {
         { label: 'Current Status', value: String(currentStatus ?? '—') },
       ],
       nextSteps: meta.nextSteps,
+      referenceCandidateId: app.candidate_id,
     });
   }
 

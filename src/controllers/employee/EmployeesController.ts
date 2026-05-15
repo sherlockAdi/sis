@@ -383,6 +383,7 @@ export class EmployeesController extends Controller {
           'Review your joining details in the portal.',
           'Complete any remaining onboarding or verification steps.',
         ],
+        referenceCandidateId: employee.candidate_id,
       });
     }
 
@@ -423,6 +424,7 @@ export class EmployeesController extends Controller {
           { label: 'Current Status', value: String(before.employment_status ?? 'Disabled') },
         ],
         nextSteps: ['Contact HR or the administration team if this change was unexpected.'],
+        referenceCandidateId: before.candidate_id,
       });
     }
     logEmployeeApi('disable:done', { employee_id: employeeId });

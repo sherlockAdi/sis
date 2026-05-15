@@ -1,4 +1,5 @@
 import { apiFetch } from "./apiFetch";
+import type { CandidateRow } from "./recruitmentApi";
 
 export type CandidateApplicationRow = {
   application_id: number;
@@ -33,6 +34,23 @@ export type CandidateDocumentRow = {
   uploaded_at: string | null;
 };
 
+export type CandidateTradeLinkRow = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+export type CandidateTradeTestRow = {
+  candidate_id: number;
+  trade_video_file_path: string | null;
+  trade_video_file_name: string | null;
+  trade_video_file_size: number | null;
+  trade_video_uploaded_at: string | null;
+  trade_video_links: CandidateTradeLinkRow[];
+  created_at: string;
+  updated_at: string;
+};
+
 export const candidateApi = {
   profile: {
     me: () =>
@@ -47,6 +65,20 @@ export const candidateApi = {
         >
       >,
     ) => apiFetch<{ updated: true }>(`/candidate/profile`, { method: "PUT", body: JSON.stringify(input) }),
+  },
+  tradeTest: {
+    get: () => apiFetch<CandidateTradeTestRow>(`/candidate/profile/trade-test`, { method: "GET" }),
+    update: (input: {
+      trade_video_file_path?: string | null;
+      trade_video_file_name?: string | null;
+      trade_video_file_size?: number | null;
+      trade_video_uploaded_at?: string | null;
+      trade_video_links?: CandidateTradeLinkRow[];
+    }) =>
+      apiFetch<{ updated: true }>(`/candidate/profile/trade-test`, {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }),
   },
   documents: {
     list: () => apiFetch<CandidateDocumentRow[]>(`/candidate/documents`, { method: "GET" }),

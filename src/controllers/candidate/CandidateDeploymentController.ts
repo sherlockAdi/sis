@@ -168,6 +168,7 @@ export class CandidateDeploymentController extends Controller {
           { label: 'Remarks', value: String(after.remarks ?? '—') },
         ],
         nextSteps: ['Review the latest visa and deployment details in the portal.'],
+        referenceCandidateId: after.candidate_id,
       });
     }
 
