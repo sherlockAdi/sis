@@ -247,11 +247,12 @@ VALUES
   ('Job Categories', 'ADM_SET_JOB_CATS', @m_settings, '/masters/job/categories', 'category', 113, TRUE),
   ('Document Types', 'ADM_SET_DOC_TYPES', @m_settings, '/masters/documents/types', 'description', 114, TRUE),
   ('Notification Settings', 'ADM_SET_NOTIF', @m_settings, '/settings/notifications', 'settings', 115, TRUE),
-  ('Integration Settings', 'ADM_SET_INTEG', @m_settings, '/settings/integrations', 'settings', 116, TRUE),
-  ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 117, TRUE),
-  ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 118, TRUE),
-  ('Education', 'ADM_SET_EDUCATION', @m_settings, '/settings/education', 'school', 119, TRUE),
-  ('Skills', 'ADM_SET_SKILLS', @m_settings, '/settings/skills', 'handyman', 120, TRUE)
+  ('Notification Templates', 'ADM_SET_NOTIF_TEMPLATES', @m_settings, '/admin/notification-templates', 'mail', 116, TRUE),
+  ('Integration Settings', 'ADM_SET_INTEG', @m_settings, '/settings/integrations', 'settings', 117, TRUE),
+  ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 118, TRUE),
+  ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 119, TRUE),
+  ('Education', 'ADM_SET_EDUCATION', @m_settings, '/settings/education', 'school', 120, TRUE),
+  ('Skills', 'ADM_SET_SKILLS', @m_settings, '/settings/skills', 'handyman', 121, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

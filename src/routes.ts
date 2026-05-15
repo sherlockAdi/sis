@@ -72,6 +72,8 @@ import { PermissionsController } from './controllers/auth/PermissionsController'
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { OtpsController } from './controllers/auth/OtpsController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { NotificationTemplatesController } from './controllers/auth/NotificationTemplatesController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { MenusController } from './controllers/auth/MenusController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { MenuFeedController } from './controllers/auth/MenuFeedController';
@@ -813,6 +815,26 @@ const models: TsoaRoute.Models = {
     "OtpVerifyRequest": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"otp_code":{"dataType":"string","required":true},"otp_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NotificationTemplateRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]},{"dataType":"boolean"}],"required":true},"signature_title":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"signature_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"html_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"text_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"subject_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"recipient_type":{"dataType":"string","required":true},"channel":{"dataType":"string","required":true},"category":{"dataType":"string","required":true},"template_name":{"dataType":"string","required":true},"template_code":{"dataType":"string","required":true},"template_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NotificationTemplateCreate": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"boolean"},"signature_title":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"signature_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"html_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"text_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"subject_template":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"recipient_type":{"dataType":"string"},"channel":{"dataType":"string"},"category":{"dataType":"string"},"template_name":{"dataType":"string","required":true},"template_code":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial_NotificationTemplateCreate_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"template_code":{"dataType":"string"},"template_name":{"dataType":"string"},"category":{"dataType":"string"},"channel":{"dataType":"string"},"recipient_type":{"dataType":"string"},"subject_template":{"dataType":"string"},"text_template":{"dataType":"string"},"html_template":{"dataType":"string"},"signature_name":{"dataType":"string"},"signature_title":{"dataType":"string"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NotificationTemplateUpdate": {
+        "dataType": "refAlias",
+        "type": {"ref":"Partial_NotificationTemplateCreate_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Menu": {
@@ -7007,6 +7029,161 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'verify',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNotificationTemplatesController_list: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/notification-templates',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController)),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController.prototype.list)),
+
+            async function NotificationTemplatesController_list(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNotificationTemplatesController_list, request, response });
+
+                const controller = new NotificationTemplatesController();
+
+              await templateService.apiHandler({
+                methodName: 'list',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNotificationTemplatesController_get: Record<string, TsoaRoute.ParameterSchema> = {
+                templateId: {"in":"path","name":"templateId","required":true,"dataType":"double"},
+        };
+        app.get('/notification-templates/:templateId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController)),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController.prototype.get)),
+
+            async function NotificationTemplatesController_get(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNotificationTemplatesController_get, request, response });
+
+                const controller = new NotificationTemplatesController();
+
+              await templateService.apiHandler({
+                methodName: 'get',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNotificationTemplatesController_create: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"NotificationTemplateCreate"},
+        };
+        app.post('/notification-templates',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController)),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController.prototype.create)),
+
+            async function NotificationTemplatesController_create(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNotificationTemplatesController_create, request, response });
+
+                const controller = new NotificationTemplatesController();
+
+              await templateService.apiHandler({
+                methodName: 'create',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNotificationTemplatesController_update: Record<string, TsoaRoute.ParameterSchema> = {
+                templateId: {"in":"path","name":"templateId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"NotificationTemplateUpdate"},
+        };
+        app.put('/notification-templates/:templateId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController)),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController.prototype.update)),
+
+            async function NotificationTemplatesController_update(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNotificationTemplatesController_update, request, response });
+
+                const controller = new NotificationTemplatesController();
+
+              await templateService.apiHandler({
+                methodName: 'update',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNotificationTemplatesController_disable: Record<string, TsoaRoute.ParameterSchema> = {
+                templateId: {"in":"path","name":"templateId","required":true,"dataType":"double"},
+        };
+        app.delete('/notification-templates/:templateId',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController)),
+            ...(fetchMiddlewares<RequestHandler>(NotificationTemplatesController.prototype.disable)),
+
+            async function NotificationTemplatesController_disable(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNotificationTemplatesController_disable, request, response });
+
+                const controller = new NotificationTemplatesController();
+
+              await templateService.apiHandler({
+                methodName: 'disable',
                 controller,
                 response,
                 next,

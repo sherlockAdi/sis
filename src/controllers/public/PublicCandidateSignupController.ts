@@ -2,10 +2,8 @@ import { Body, Controller, Post, Route, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
-import { env } from '../../config/env';
 import { httpError } from '../../utils/httpErrors';
-import { sendSmtpMail } from '../../utils/smtpClient';
-import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendCredentialNotification } from '../../services/notificationService';
 
 type CandidateRow = {
   candidate_id: number;
@@ -209,35 +207,18 @@ export class PublicCandidateSignupController extends Controller {
     }
 
     let emailed = false;
-    if (user_created && candidate.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (user_created && candidate.email) {
       try {
-        await sendSmtpMail(
-          {
-            host: env.SMTP_HOST,
-            port: env.SMTP_PORT,
-            secure: env.SMTP_SECURE,
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
-            from: env.SMTP_FROM || env.SMTP_USER
+        await sendCredentialNotification({
+          recipient: {
+            name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+            email: candidate.email,
           },
-          {
-            to: candidate.email,
-            cc: REGISTRATION_CC,
-            subject: 'SIS Global Connect — Candidate portal credentials',
-            text: credentialsEmailText({
-              name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Candidate',
-            }),
-            html: credentialsEmailHtml({
-              name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Candidate',
-            }),
-          }
-        );
+          username,
+          temporaryPassword: plainPassword,
+          portalLabel: 'Candidate',
+          cc: REGISTRATION_CC,
+        });
         emailed = true;
       } catch {
         emailed = false;

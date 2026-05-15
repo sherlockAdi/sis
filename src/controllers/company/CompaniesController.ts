@@ -2,10 +2,8 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Query, Route, Security,
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
-import { env } from '../../config/env';
-import { sendSmtpMail } from '../../utils/smtpClient';
 import { hashPassword } from '../../services/authService';
-import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendCredentialNotification } from '../../services/notificationService';
 
 type CompanyRow = {
   company_id: number;
@@ -171,35 +169,18 @@ export class CompaniesController extends Controller {
 
     // Email credentials (best-effort)
     let emailed = false;
-    if (company.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (company.email) {
       try {
-        await sendSmtpMail(
-          {
-            host: env.SMTP_HOST,
-            port: env.SMTP_PORT,
-            secure: env.SMTP_SECURE,
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
-            from: env.SMTP_FROM || env.SMTP_USER
+        await sendCredentialNotification({
+          recipient: {
+            name: company.contact_person ?? company.company_name,
+            email: company.email,
           },
-          {
-            to: company.email,
-            cc: REGISTRATION_CC,
-            subject: 'SIS Global Connect — Company portal credentials',
-            text: credentialsEmailText({
-              name: company.contact_person ?? company.company_name,
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Company',
-            }),
-            html: credentialsEmailHtml({
-              name: company.contact_person ?? company.company_name,
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Company',
-            }),
-          }
-        );
+          username,
+          temporaryPassword: plainPassword,
+          portalLabel: 'Company',
+          cc: REGISTRATION_CC,
+        });
         emailed = true;
       } catch {
         emailed = false;

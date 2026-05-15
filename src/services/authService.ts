@@ -5,8 +5,7 @@ import { callProc, callProcSets } from '../db/proc';
 import { pool } from '../db/pool';
 import { signToken } from '../security/jwt';
 import { httpError } from '../utils/httpErrors';
-import { sendSmtpMail } from '../utils/smtpClient';
-import { otpEmailHtml, otpEmailText } from '../utils/emailTemplates';
+import { sendOtpNotification } from './notificationService';
 import { getPartnerByUserId } from './partnerService';
 
 type UserRow = RowDataPacket & {
@@ -147,22 +146,14 @@ export async function requestLoginOtp(username: string): Promise<{ sent: true; t
     },
   );
 
-  await sendSmtpMail(
-    {
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE,
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-      from: env.SMTP_FROM,
+  await sendOtpNotification({
+    recipient: {
+      name: user.username,
+      email: user.email,
     },
-    {
-      to: user.email,
-      subject: 'SIS Global Connect — Login OTP',
-      text: otpEmailText({ name: user.username, otpCode, expiresMinutes }),
-      html: otpEmailHtml({ name: user.username, otpCode, expiresMinutes }),
-    },
-  );
+    otpCode,
+    expiresMinutes,
+  });
 
   return { sent: true, to: user.email };
 }

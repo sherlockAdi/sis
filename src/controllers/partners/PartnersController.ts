@@ -2,10 +2,8 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Query, Route, Security,
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
-import { env } from '../../config/env';
-import { sendSmtpMail } from '../../utils/smtpClient';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
-import { credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendCredentialNotification } from '../../services/notificationService';
 
 type PartnerRow = {
   partner_id: number;
@@ -198,35 +196,18 @@ export class PartnersController extends Controller {
     }
 
     let emailed = false;
-    if (user_created && partner.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (user_created && partner.email) {
       try {
-        await sendSmtpMail(
-          {
-            host: env.SMTP_HOST,
-            port: env.SMTP_PORT,
-            secure: env.SMTP_SECURE,
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
-            from: env.SMTP_FROM,
+        await sendCredentialNotification({
+          recipient: {
+            name: partner.partner_name,
+            email: partner.email,
           },
-          {
-            to: partner.email,
-            cc: REGISTRATION_CC,
-            subject: 'SIS Global Connect — Partner Login',
-            text: credentialsEmailText({
-              name: partner.partner_name,
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Partner Portal',
-            }),
-            html: credentialsEmailHtml({
-              name: partner.partner_name,
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Partner Portal',
-            }),
-          }
-        );
+          username,
+          temporaryPassword: plainPassword,
+          portalLabel: 'Partner Portal',
+          cc: REGISTRATION_CC,
+        });
         emailed = true;
       } catch {
         emailed = false;

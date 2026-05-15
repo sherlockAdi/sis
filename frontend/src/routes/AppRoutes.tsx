@@ -25,6 +25,7 @@ import LanguagesPage from "../modules/settings/LanguagesPage";
 import EducationMasterPage from "../modules/settings/EducationMasterPage";
 import SkillsMasterPage from "../modules/settings/SkillsMasterPage";
 import MenuManagementPage from "../modules/admin/MenuManagementPage";
+import NotificationTemplatesPage from "../modules/admin/NotificationTemplatesPage";
 import JobsPage from "../modules/job/JobsPage";
 import JobsPreviewPage from "../modules/job/JobsPreviewPage";
 import JobFormPage from "../modules/job/JobFormPage";
@@ -228,6 +229,10 @@ export default function AppRoutes() {
           path="/admin/menu-management"
           element={<Navigate to="/portal/admin/menu-management" replace />}
         />
+        <Route
+          path="/admin/notification-templates"
+          element={<Navigate to="/portal/admin/notification-templates" replace />}
+        />
         <Route path="/jobs-preview" element={<Navigate to="/portal/jobs-preview" replace />} />
         <Route
           path="/recruitment/applications"
@@ -286,6 +291,7 @@ export default function AppRoutes() {
             <Route path="settings/education" element={<EducationMasterPage />} />
             <Route path="settings/skills" element={<SkillsMasterPage />} />
             <Route path="admin/menu-management" element={<MenuManagementPage />} />
+            <Route path="admin/notification-templates" element={<NotificationTemplatesPage />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="jobs/new" element={<JobFormPage mode="create" />} />
             <Route path="jobs/:jobId" element={<JobFormPage mode="edit" />} />

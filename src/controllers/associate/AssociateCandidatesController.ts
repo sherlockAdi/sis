@@ -1,14 +1,11 @@
 import { Body, Controller, Get, Path, Post, Put, Request, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
-import { env } from '../../config/env';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { getOrCreateAssociatePartnerByUserId, getRoleCodeForUserId } from '../../services/associatePartnerService';
 import { getCandidateProfileMissingFields } from '../../utils/candidateProfileCompleteness';
 import { httpError } from '../../utils/httpErrors';
-import { sendSmtpMail } from '../../utils/smtpClient';
-import { accountLinkedEmailHtml, accountLinkedEmailText, credentialsEmailHtml, credentialsEmailText } from '../../utils/emailTemplates';
-import { sendStatusNotification } from '../../services/notificationService';
+import { sendAccountLinkedNotification, sendCredentialNotification, sendStatusNotification } from '../../services/notificationService';
 
 type AssociateCandidateRow = {
   candidate_id: number;
@@ -565,53 +562,27 @@ export class AssociateCandidatesController extends Controller {
         is_verified: true,
       });
 
-      if (original_email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+      if (original_email) {
         try {
-          const mailText = existingUser
-            ? accountLinkedEmailText({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+          await (existingUser
+            ? sendAccountLinkedNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: original_email,
+                },
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
               })
-            : credentialsEmailText({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+            : sendCredentialNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: original_email,
+                },
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
-              });
-          const mailHtml = existingUser
-            ? accountLinkedEmailHtml({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
-                username,
-                temporaryPassword: plainPassword,
-                portalLabel: 'Candidate',
-              })
-            : credentialsEmailHtml({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
-                username,
-                temporaryPassword: plainPassword,
-                portalLabel: 'Candidate',
-              });
-
-          await sendSmtpMail(
-            {
-              host: env.SMTP_HOST,
-              port: env.SMTP_PORT,
-              secure: env.SMTP_SECURE,
-              user: env.SMTP_USER,
-              pass: env.SMTP_PASS,
-              from: env.SMTP_FROM,
-            },
-            {
-              to: original_email,
-              subject: existingUser
-                ? 'SIS Global Connect - Candidate account updated'
-                : 'SIS Global Connect - Candidate account confirmed',
-              text: mailText,
-              html: mailHtml,
-            }
-          );
+              }));
           emailed = true;
         } catch {
           emailed = false;
