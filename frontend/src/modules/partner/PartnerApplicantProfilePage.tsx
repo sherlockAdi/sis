@@ -6,7 +6,13 @@ import dayjs from "dayjs";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { mastersApi, type DocumentType } from "../../common/services/mastersApi";
-import { partnerPortalApi, type PartnerApplicationRow, type PartnerCandidateDocumentRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
+import {
+  partnerPortalApi,
+  type PartnerApplicationRow,
+  type PartnerCandidateDocumentRow,
+  type PartnerCandidateRow,
+  type PartnerCandidateTradeTestRow,
+} from "../../common/services/partnersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { formatJsonList } from "../../common/utils/jsonList";
 
@@ -30,6 +36,7 @@ export default function PartnerApplicantProfilePage() {
 
   const [candidate, setCandidate] = useState<PartnerCandidateRow | null>(null);
   const [docs, setDocs] = useState<PartnerCandidateDocumentRow[]>([]);
+  const [tradeTest, setTradeTest] = useState<PartnerCandidateTradeTestRow | null>(null);
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
   const [applications, setApplications] = useState<PartnerApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<PartnerInterviewRow[]>([]);
@@ -74,6 +81,7 @@ export default function PartnerApplicantProfilePage() {
         const res = await partnerPortalApi.candidates.get(candidateId);
         setCandidate(res.candidate);
         setDocs(res.documents ?? []);
+        setTradeTest(res.trade_test ?? null);
       } catch (e: any) {
         setError((e as ApiError)?.message ?? "Failed to load candidate");
       } finally {
@@ -141,6 +149,8 @@ export default function PartnerApplicantProfilePage() {
     () => interviews.filter((i) => Number(i.candidate_id) === Number(candidateId) && Number(i.application_id) === Number(activeApplication?.application_id)),
     [activeApplication?.application_id, interviews, candidateId],
   );
+  const tradeVideoLinks = tradeTest?.trade_video_links ?? [];
+  const hasTradeVideo = Boolean(tradeTest?.trade_video_file_path?.trim());
 
   const journey = useMemo(() => buildJourney(activeApplication, candidateInterviews), [activeApplication, candidateInterviews]);
   const currentJourney = journey.find((step) => step.state === "current") ?? journey[0] ?? null;
@@ -296,6 +306,7 @@ export default function PartnerApplicantProfilePage() {
                 <SummaryStat label="Application" value={activeApplication ? `#${activeApplication.application_id}` : "—"} helper={activeApplication?.application_date ? formatDateTime(activeApplication.application_date) : "No application selected"} />
                 <SummaryStat label="Interview" value={candidateInterviews.length ? String(candidateInterviews.length) : "0"} helper={candidateInterviews[0]?.mode_name ?? "No interview yet"} />
                 <SummaryStat label="Documents" value={String(docRows.length)} helper={docRows.length ? "Files uploaded" : "No documents"} />
+                <SummaryStat label="Trade Media" value={`${hasTradeVideo ? 1 : 0} / ${tradeVideoLinks.length}`} helper={hasTradeVideo ? "Video plus links" : "Links only"} />
               </Stack>
             </Box>
           </AdCard>
@@ -470,6 +481,74 @@ export default function PartnerApplicantProfilePage() {
                 />
               </Stack>
             </AdCard>
+
+            <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.82)" }} contentSx={{ p: 2.25 }}>
+              <Stack spacing={1.5}>
+                <Stack spacing={0.25}>
+                  <Typography fontWeight={900}>Trade Test Media</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Trade video file and link references shared by the candidate.
+                  </Typography>
+                </Stack>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      md: "repeat(2, minmax(0, 1fr))",
+                    },
+                    gap: 1.5,
+                  }}
+                >
+                  <SectionCard title="Trade Video File">
+                    <ProfileField label="File Name" value={tradeTest?.trade_video_file_name} />
+                    <ProfileField label="Size" value={tradeTest?.trade_video_file_size ? formatBytes(tradeTest.trade_video_file_size) : "—"} />
+                    <ProfileField label="Uploaded At" value={tradeTest?.trade_video_uploaded_at} />
+                    <FileField label="Open Video" value={tradeTest?.trade_video_file_path} onOpen={openDoc} />
+                  </SectionCard>
+
+                  <SectionCard title="Trade Video Links">
+                    {tradeVideoLinks.length ? (
+                      <Stack spacing={1}>
+                        {tradeVideoLinks.map((link) => (
+                          <Box
+                            key={link.id}
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr auto",
+                              gap: 1,
+                              alignItems: "center",
+                              px: 1.25,
+                              py: 0.9,
+                              borderRadius: 2,
+                              bgcolor: "rgba(248,250,252,0.9)",
+                              border: "1px solid rgba(148,163,184,0.16)",
+                            }}
+                          >
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body2" fontWeight={800} sx={{ wordBreak: "break-word" }}>
+                                {link.title || "Trade video link"}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-all" }}>
+                                {link.url}
+                              </Typography>
+                            </Box>
+                            <IconButton size="small" onClick={() => window.open(link.url, "_blank", "noopener,noreferrer")} aria-label="Open trade video link">
+                              <OpenInNewIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No trade video links available.
+                      </Typography>
+                    )}
+                  </SectionCard>
+                </Box>
+              </Stack>
+            </AdCard>
           </Box>
         </Stack>
       ) : null}
@@ -540,6 +619,13 @@ function FileField({
       )}
     </Box>
   );
+}
+
+function formatBytes(bytes: number | null): string {
+  if (!bytes || !Number.isFinite(bytes)) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 type JourneyStepModel = {

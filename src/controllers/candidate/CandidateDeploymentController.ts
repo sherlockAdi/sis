@@ -2,6 +2,7 @@ import { Body, Controller, Get, Put, Request, Route, Security, Tags } from 'tsoa
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type CandidateDeploymentRow = {
   deployment_id: number;
@@ -132,10 +133,44 @@ export class CandidateDeploymentController extends Controller {
     if (!visa_detail_id) throw httpError(500, 'Failed to save visa details');
 
     // Auto-move to Visa Processing when visa details are saved
+    const beforeRows = await callProc<RowDataPacket & CandidateDeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id }
+    );
+    const before = beforeRows[0];
     await callProc(
       `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, NULL, NULL, :user_id)`,
       { deployment_id, status: 'Visa Processing', user_id: user.user_id }
     );
+
+    const afterRows = await callProc<RowDataPacket & CandidateDeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id }
+    );
+    const after = afterRows[0];
+    if (after && String(before?.current_status ?? '').trim() !== String(after.current_status ?? '').trim()) {
+      await sendStatusNotification({
+        recipient: {
+          name: after.candidate_name,
+          email: after.email,
+          phone: after.phone,
+          whatsapp: after.phone,
+        },
+        subject: `${after.job_title} - ${String(after.current_status ?? 'Updated')}`,
+        headline: 'Deployment status updated',
+        statusLabel: String(after.current_status ?? 'Updated'),
+        greeting: `Hello ${after.candidate_name},`,
+        summary: `Your deployment status has changed from "${String(before?.current_status ?? '—')}" to "${String(after.current_status ?? '—')}".`,
+        rows: [
+          { label: 'Deployment ID', value: String(after.deployment_id) },
+          { label: 'Job', value: String(after.job_title) },
+          { label: 'Candidate', value: String(after.candidate_name) },
+          { label: 'Remarks', value: String(after.remarks ?? '—') },
+        ],
+        nextSteps: ['Review the latest visa and deployment details in the portal.'],
+        referenceCandidateId: after.candidate_id,
+      });
+    }
 
     return { visa_detail_id };
   }

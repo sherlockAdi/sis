@@ -2,6 +2,7 @@ import { Body, Controller, Get, Path, Post, Put, Query, Request, Route, Security
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type DeploymentRow = {
   deployment_id: number;
@@ -126,7 +127,70 @@ export class DeploymentController extends Controller {
 
     const deployment_id = rows[0]?.deployment_id;
     if (!deployment_id) throw httpError(500, 'Failed to create deployment');
+
+    const deploymentRows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id }
+    );
+    const deployment = deploymentRows[0];
+    if (deployment) {
+      await sendStatusNotification({
+        recipient: {
+          name: deployment.candidate_name,
+          email: deployment.email,
+          phone: deployment.phone,
+          whatsapp: deployment.phone,
+        },
+        subject: `${deployment.job_title} - Deployment created`,
+        headline: 'Deployment created',
+        statusLabel: String(deployment.current_status ?? body.status ?? 'Created'),
+        greeting: `Hello ${deployment.candidate_name},`,
+        summary: `A deployment record has been created for your application to ${deployment.job_title}.`,
+        rows: [
+          { label: 'Deployment ID', value: String(deployment.deployment_id) },
+          { label: 'Job', value: String(deployment.job_title) },
+          { label: 'Candidate', value: String(deployment.candidate_name) },
+          { label: 'Current Status', value: String(deployment.current_status ?? body.status ?? 'Created') },
+        ],
+        nextSteps: ['Check the portal for the latest deployment progress and instructions.'],
+        referenceCandidateId: deployment.candidate_id,
+      });
+    }
     return { deployment_id };
+  }
+
+  private async notifyDeploymentChange(deploymentId: number, beforeStatus: string | null | undefined, afterStatus: string | null | undefined, remarks: string | null | undefined): Promise<void> {
+    const rows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+    const deployment = rows[0];
+    if (!deployment) return;
+
+    await sendStatusNotification({
+      recipient: {
+        name: deployment.candidate_name,
+        email: deployment.email,
+        phone: deployment.phone,
+        whatsapp: deployment.phone,
+      },
+      subject: `${deployment.job_title} - ${String(afterStatus ?? 'Updated')}`,
+      headline: 'Deployment status updated',
+      statusLabel: String(afterStatus ?? 'Updated'),
+      greeting: `Hello ${deployment.candidate_name},`,
+      summary: `Your deployment status has changed from "${String(beforeStatus ?? '—')}" to "${String(afterStatus ?? '—')}".`,
+      rows: [
+        { label: 'Deployment ID', value: String(deployment.deployment_id) },
+        { label: 'Job', value: String(deployment.job_title) },
+        { label: 'Candidate', value: String(deployment.candidate_name) },
+        { label: 'Remarks', value: String(remarks ?? deployment.remarks ?? '—') },
+      ],
+      nextSteps: [
+        'Check the portal for any new instructions or document requests.',
+        'Contact the operations team if you need clarification.',
+      ],
+      referenceCandidateId: deployment.candidate_id,
+    });
   }
 
   @Put('{deploymentId}/status')
@@ -142,6 +206,12 @@ export class DeploymentController extends Controller {
     const status = String((body as any)?.status ?? '').trim();
     if (!status) throw httpError(400, 'status is required');
 
+    const beforeRows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+    const before = beforeRows[0];
+
     await callProc(
       `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, :visa_type_id, :remarks, :user_id)`,
       {
@@ -152,6 +222,15 @@ export class DeploymentController extends Controller {
         user_id: user.user_id,
       }
     );
+
+    const afterRows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+    const after = afterRows[0];
+    if (after && String(before?.current_status ?? '').trim() !== String(after.current_status ?? '').trim()) {
+      await this.notifyDeploymentChange(deploymentId, before?.current_status, after.current_status, body.remarks ?? null);
+    }
     return { updated: true };
   }
 
@@ -245,10 +324,24 @@ export class DeploymentController extends Controller {
     if (!visa_detail_id) throw httpError(500, 'Failed to save visa details');
 
     // Auto-move to Visa Processing when visa details are saved
+    const beforeRows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+    const before = beforeRows[0];
     await callProc(
       `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, NULL, NULL, :user_id)`,
       { deployment_id: deploymentId, status: 'Visa Processing', user_id: user.user_id }
     );
+
+    const afterRows = await callProc<RowDataPacket & DeploymentRow>(
+      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+    const after = afterRows[0];
+    if (after && String(before?.current_status ?? '').trim() !== String(after.current_status ?? '').trim()) {
+      await this.notifyDeploymentChange(deploymentId, before?.current_status, after.current_status, body.remarks ?? null);
+    }
 
     return { visa_detail_id };
   }

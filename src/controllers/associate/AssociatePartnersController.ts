@@ -1,11 +1,9 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
-import { env } from '../../config/env';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { httpError } from '../../utils/httpErrors';
-import { sendSmtpMail } from '../../utils/smtpClient';
-import { credentialsEmailText } from '../../utils/emailTemplates';
+import { sendCredentialNotification } from '../../services/notificationService';
 
 type AssociatePartnerRow = {
   associate_partner_id: number;
@@ -206,29 +204,18 @@ export class AssociatePartnersController extends Controller {
     }
 
     let emailed = false;
-    if (user_created && associatePartner.email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (user_created && associatePartner.email) {
       try {
-        await sendSmtpMail(
-          {
-            host: env.SMTP_HOST,
-            port: env.SMTP_PORT,
-            secure: env.SMTP_SECURE,
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
-            from: env.SMTP_FROM,
+        await sendCredentialNotification({
+          recipient: {
+            name: associatePartner.associate_partner_name,
+            email: associatePartner.email,
           },
-          {
-            to: associatePartner.email,
-            cc: REGISTRATION_CC,
-            subject: 'SIS Global Connect — Associate Partner Login',
-            text: credentialsEmailText({
-              name: associatePartner.associate_partner_name,
-              username,
-              temporaryPassword: plainPassword,
-              portalLabel: 'Associate Partner Portal',
-            }),
-          }
-        );
+          username,
+          temporaryPassword: plainPassword,
+          portalLabel: 'Associate Partner Portal',
+          cc: REGISTRATION_CC,
+        });
         emailed = true;
       } catch {
         emailed = false;

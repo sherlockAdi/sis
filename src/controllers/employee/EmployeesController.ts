@@ -4,6 +4,7 @@ import { pool } from '../../db/pool';
 import { callProc } from '../../db/proc';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { httpError } from '../../utils/httpErrors';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type EmployeeRow = {
   employee_id: number;
@@ -64,6 +65,13 @@ function normalizeStatus(value: string | null | undefined): string {
 
 function logEmployeeApi(step: string, details: Record<string, unknown> = {}) {
   console.log(`[EmployeesController] ${step}`, JSON.stringify(details));
+}
+
+function employeeDisplayName(employee: Partial<EmployeeRow & EmployeeDetailRow>): string {
+  return String(employee.employee_name ?? '').trim()
+    || `${String(employee.first_name ?? '').trim()} ${String(employee.last_name ?? '').trim()}`.trim()
+    || String(employee.employee_code ?? '').trim()
+    || 'Employee';
 }
 
 @Route('employees')
@@ -346,6 +354,39 @@ export class EmployeesController extends Controller {
       logEmployeeApi('from-deployment:missing-employee-id', { deployment_id, user_id: user.user_id });
       throw httpError(500, 'Failed to create employee');
     }
+
+    const employeeRows = await callProc<RowDataPacket & EmployeeDetailRow>(
+      `CALL sp_emp_employees('GET', :employee_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      { employee_id }
+    );
+    const employee = employeeRows[0];
+    if (employee) {
+      await sendStatusNotification({
+        recipient: {
+          name: employeeDisplayName(employee),
+          email: employee.login_email ?? employee.email ?? null,
+          phone: employee.employee_contact_number ?? employee.phone ?? null,
+          whatsapp: employee.employee_contact_number ?? employee.phone ?? null,
+        },
+        subject: `Employee created for deployment ${deployment_id}`,
+        headline: 'Employee record created',
+        statusLabel: String(body.employment_status ?? 'Created'),
+        greeting: `Hello ${employeeDisplayName(employee)},`,
+        summary: 'Your deployment has been converted into an employee record and the workforce profile is now active.',
+        rows: [
+          { label: 'Employee ID', value: String(employee.employee_id) },
+          { label: 'Employee Code', value: String(employee.employee_code ?? '—') },
+          { label: 'Deployment ID', value: String(deployment_id) },
+          { label: 'Employment Status', value: String(body.employment_status ?? employee.employment_status ?? 'Active') },
+        ],
+        nextSteps: [
+          'Review your joining details in the portal.',
+          'Complete any remaining onboarding or verification steps.',
+        ],
+        referenceCandidateId: employee.candidate_id,
+      });
+    }
+
     logEmployeeApi('from-deployment:done', { deployment_id, employee_id, user_id: user.user_id });
     return { employee_id };
   }
@@ -354,11 +395,38 @@ export class EmployeesController extends Controller {
   @Security('jwt')
   public async disable(@Path() employeeId: number): Promise<{ disabled: true }> {
     logEmployeeApi('disable:start', { employee_id: employeeId });
+    const beforeRows = await callProc<RowDataPacket & EmployeeDetailRow>(
+      `CALL sp_emp_employees('GET', :employee_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      { employee_id: employeeId }
+    );
+    const before = beforeRows[0];
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
       `CALL sp_emp_employees('DISABLE', :employee_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { employee_id: employeeId }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Employee not found');
+    if (before) {
+      await sendStatusNotification({
+        recipient: {
+          name: employeeDisplayName(before),
+          email: before.login_email ?? before.email ?? null,
+          phone: before.employee_contact_number ?? before.phone ?? null,
+          whatsapp: before.employee_contact_number ?? before.phone ?? null,
+        },
+        subject: `Employee profile disabled for ${employeeDisplayName(before)}`,
+        headline: 'Employee status updated',
+        statusLabel: 'Disabled',
+        greeting: `Hello ${employeeDisplayName(before)},`,
+        summary: 'Your employee profile has been disabled in the system.',
+        rows: [
+          { label: 'Employee ID', value: String(before.employee_id) },
+          { label: 'Employee Code', value: String(before.employee_code ?? '—') },
+          { label: 'Current Status', value: String(before.employment_status ?? 'Disabled') },
+        ],
+        nextSteps: ['Contact HR or the administration team if this change was unexpected.'],
+        referenceCandidateId: before.candidate_id,
+      });
+    }
     logEmployeeApi('disable:done', { employee_id: employeeId });
     return { disabled: true };
   }

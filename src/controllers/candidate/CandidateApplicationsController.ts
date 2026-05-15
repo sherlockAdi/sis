@@ -4,6 +4,7 @@ import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import type { JwtPayload } from '../../security/jwt';
 import { getCandidateProfileMissingFields, type CandidateProfileLike } from '../../utils/candidateProfileCompleteness';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type CandidateRow = {
   candidate_id: number;
@@ -224,6 +225,35 @@ export class CandidateApplicationsController extends Controller {
       { application_id: applicationId, status: 'Applied' }
     );
 
+    const updatedRows = await callProc<RowDataPacket & CandidateApplicationRow>(
+      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
+      { application_id: applicationId }
+    );
+    const updated = updatedRows[0];
+    if (updated) {
+      await sendStatusNotification({
+        recipient: {
+          name: updated.candidate_name,
+          email: updated.email,
+          phone: updated.phone,
+          whatsapp: updated.phone,
+        },
+        subject: `${updated.job_title} - ${String(updated.status ?? 'Applied')}`,
+        headline: 'Application submitted',
+        statusLabel: String(updated.status ?? 'Applied'),
+        greeting: `Hello ${updated.candidate_name},`,
+        summary: `Your application for ${updated.job_title} has been submitted successfully.`,
+        rows: [
+          { label: 'Application ID', value: String(updated.application_id) },
+          { label: 'Job', value: String(updated.job_title) },
+          { label: 'Candidate', value: String(updated.candidate_name) },
+          { label: 'Current Status', value: String(updated.status ?? 'Applied') },
+        ],
+        nextSteps: ['Track the application status in your candidate portal.'],
+        referenceCandidateId: updated.candidate_id,
+      });
+    }
+
     return { submitted: true };
   }
 
@@ -243,6 +273,35 @@ export class CandidateApplicationsController extends Controller {
     );
     const application_id = rows[0]?.application_id;
     if (!application_id) throw httpError(500, 'Failed to create application');
+
+    const appRows = await callProc<RowDataPacket & CandidateApplicationRow>(
+      `CALL sp_rec_applications('GET', :application_id, NULL, NULL, NULL, NULL, NULL)`,
+      { application_id }
+    );
+    const app = appRows[0];
+    if (app) {
+      await sendStatusNotification({
+        recipient: {
+          name: app.candidate_name,
+          email: app.email,
+          phone: app.phone,
+          whatsapp: app.phone,
+        },
+        subject: `${app.job_title} - Application submitted`,
+        headline: 'Job applied',
+        statusLabel: String(app.status ?? 'Applied'),
+        greeting: `Hello ${app.candidate_name},`,
+        summary: `Your application for ${app.job_title} has been created successfully.`,
+        rows: [
+          { label: 'Application ID', value: String(app.application_id) },
+          { label: 'Job', value: String(app.job_title) },
+          { label: 'Candidate', value: String(app.candidate_name) },
+          { label: 'Current Status', value: String(app.status ?? 'Applied') },
+        ],
+        nextSteps: ['Continue tracking the application from your candidate portal.'],
+        referenceCandidateId: app.candidate_id,
+      });
+    }
     return { application_id };
   }
 

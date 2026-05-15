@@ -32,6 +32,23 @@ export type Permission = {
   created_at: string;
 };
 
+export type NotificationTemplate = {
+  template_id: number;
+  template_code: string;
+  template_name: string;
+  category: string;
+  channel: string;
+  recipient_type: string;
+  subject_template: string | null;
+  text_template: string | null;
+  html_template: string | null;
+  signature_name: string | null;
+  signature_title: string | null;
+  status: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export const adminApi = {
   roles: {
     list: () => apiFetch<Role[]>(`/roles`, { method: "GET" }),
@@ -89,6 +106,40 @@ export const adminApi = {
       input: Partial<{ can_view: boolean; can_add: boolean; can_edit: boolean; can_delete: boolean }>,
     ) => apiFetch<{ updated: true }>(`/permissions/${permissionId}`, { method: "PUT", body: JSON.stringify(input) }),
     remove: (permissionId: number) => apiFetch<{ deleted: true }>(`/permissions/${permissionId}`, { method: "DELETE" }),
+  },
+  notificationTemplates: {
+    list: () => apiFetch<NotificationTemplate[]>(`/notification-templates`, { method: "GET" }),
+    get: (templateId: number) => apiFetch<NotificationTemplate>(`/notification-templates/${templateId}`, { method: "GET" }),
+    create: (input: Partial<Omit<NotificationTemplate, "template_id" | "created_at" | "updated_at" | "status">> & {
+      template_code: string;
+      template_name: string;
+      category?: string;
+      channel?: string;
+      recipient_type?: string;
+      subject_template?: string | null;
+      text_template?: string | null;
+      html_template?: string | null;
+      signature_name?: string | null;
+      signature_title?: string | null;
+      status?: boolean;
+    }) => apiFetch<{ template_id: number }>(`/notification-templates`, { method: "POST", body: JSON.stringify(input) }),
+    update: (
+      templateId: number,
+      input: Partial<{
+        template_code: string;
+        template_name: string;
+        category: string;
+        channel: string;
+        recipient_type: string;
+        subject_template: string | null;
+        text_template: string | null;
+        html_template: string | null;
+        signature_name: string | null;
+        signature_title: string | null;
+        status: boolean;
+      }>,
+    ) => apiFetch<{ updated: true }>(`/notification-templates/${templateId}`, { method: "PUT", body: JSON.stringify(input) }),
+    disable: (templateId: number) => apiFetch<{ disabled: true }>(`/notification-templates/${templateId}`, { method: "DELETE" }),
   },
   users: {
     create: (input: {

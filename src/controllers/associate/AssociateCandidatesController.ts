@@ -1,13 +1,11 @@
 import { Body, Controller, Get, Path, Post, Put, Request, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
-import { env } from '../../config/env';
 import { findExistingUserByUsernameOrEmail, hashPassword } from '../../services/authService';
 import { getOrCreateAssociatePartnerByUserId, getRoleCodeForUserId } from '../../services/associatePartnerService';
 import { getCandidateProfileMissingFields } from '../../utils/candidateProfileCompleteness';
 import { httpError } from '../../utils/httpErrors';
-import { sendSmtpMail } from '../../utils/smtpClient';
-import { accountLinkedEmailText, credentialsEmailText } from '../../utils/emailTemplates';
+import { sendAccountLinkedNotification, sendCredentialNotification, sendStatusNotification } from '../../services/notificationService';
 
 type AssociateCandidateRow = {
   candidate_id: number;
@@ -81,6 +79,17 @@ type AssociateJobDocRow = {
   is_required: 0 | 1;
   file_path: string | null;
   uploaded_at: string | null;
+};
+
+type AssociateApplicationListRow = {
+  application_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  phone: string | null;
+  email: string | null;
+  job_id: number;
+  job_title: string;
+  status: string | null;
 };
 
 function normalizeCandidateRow(row: AssociateCandidateRow): AssociateCandidateRow {
@@ -180,6 +189,14 @@ async function getAssociateApplication(application_id: number): Promise<{ applic
   const application = rows[0];
   if (!application) throw httpError(404, 'Application not found');
   return application;
+}
+
+async function getAssociateApplicationDetail(application_id: number, candidate_id: number): Promise<AssociateApplicationListRow | null> {
+  const rows = await callProc<RowDataPacket & AssociateApplicationListRow>(
+    `CALL sp_rec_applications('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL, NULL, NULL)`,
+    { candidate_id }
+  );
+  return rows.find((row) => Number(row.application_id) === Number(application_id)) ?? null;
 }
 
 async function upsertAssociateCandidateProfile(
@@ -482,6 +499,7 @@ export class AssociateCandidatesController extends Controller {
   }> {
     const { associatePartner } = await requireAssociatePartner(req);
     const candidate = await getAssociateCandidate(candidateId, associatePartner.associate_partner_id);
+    const realCandidateEmail = String(candidate.email ?? '').trim();
 
     const original_email = String(body.original_email ?? '').trim();
     const original_phone = String(body.original_phone ?? '').trim();
@@ -545,42 +563,60 @@ export class AssociateCandidatesController extends Controller {
         is_verified: true,
       });
 
-      if (original_email && env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+      if (original_email) {
         try {
-          const mailText = existingUser
-            ? accountLinkedEmailText({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+          await (existingUser
+            ? sendAccountLinkedNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: original_email,
+                },
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
               })
-            : credentialsEmailText({
-                name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+            : sendCredentialNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: original_email,
+                },
                 username,
                 temporaryPassword: plainPassword,
                 portalLabel: 'Candidate',
-              });
-
-          await sendSmtpMail(
-            {
-              host: env.SMTP_HOST,
-              port: env.SMTP_PORT,
-              secure: env.SMTP_SECURE,
-              user: env.SMTP_USER,
-              pass: env.SMTP_PASS,
-              from: env.SMTP_FROM,
-            },
-            {
-              to: original_email,
-              subject: existingUser
-                ? 'SIS Global Connect - Candidate account updated'
-                : 'SIS Global Connect - Candidate account confirmed',
-              text: mailText,
-            }
-          );
+                referenceCandidateId: candidateId,
+              }));
           emailed = true;
         } catch {
           emailed = false;
+        }
+      }
+
+      if (realCandidateEmail && realCandidateEmail !== original_email) {
+        try {
+          await (existingUser
+            ? sendAccountLinkedNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: realCandidateEmail,
+                },
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
+              })
+            : sendCredentialNotification({
+                recipient: {
+                  name: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim(),
+                  email: realCandidateEmail,
+                },
+                username,
+                temporaryPassword: plainPassword,
+                portalLabel: 'Candidate',
+                referenceCandidateId: candidateId,
+              }));
+        } catch {
+          // Best-effort second delivery to the candidate's original email.
         }
       }
     } catch (e: any) {
@@ -746,6 +782,31 @@ export class AssociateCandidatesController extends Controller {
       `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
       { application_id: applicationId, status: 'Applied' }
     );
+
+    const appDetail = await getAssociateApplicationDetail(applicationId, candidate.candidate_id);
+    if (appDetail) {
+      await sendStatusNotification({
+        recipient: {
+          name: appDetail.candidate_name,
+          email: appDetail.email,
+          phone: appDetail.phone,
+          whatsapp: appDetail.phone,
+        },
+        subject: `${appDetail.job_title} - Application submitted`,
+        headline: 'Job applied',
+        statusLabel: String(appDetail.status ?? 'Applied'),
+        greeting: `Hello ${appDetail.candidate_name},`,
+        summary: `Your application for ${appDetail.job_title} has been submitted successfully.`,
+        rows: [
+          { label: 'Application ID', value: String(appDetail.application_id) },
+          { label: 'Job', value: String(appDetail.job_title) },
+          { label: 'Candidate', value: String(appDetail.candidate_name) },
+          { label: 'Current Status', value: String(appDetail.status ?? 'Applied') },
+        ],
+        nextSteps: ['Track the application status in your candidate portal.'],
+        referenceCandidateId: candidateId,
+      });
+    }
 
     return { submitted: true };
   }

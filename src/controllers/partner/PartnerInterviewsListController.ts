@@ -3,6 +3,7 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
 import { httpError } from '../../utils/httpErrors';
 import { getPartnerByUserId } from '../../services/partnerService';
+import { sendStatusNotification } from '../../services/notificationService';
 
 type PartnerInterviewRow = {
   interview_id: number;
@@ -19,7 +20,37 @@ type PartnerInterviewRow = {
 
 type PartnerApplicationRow = {
   application_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  phone: string | null;
+  email: string | null;
   job_id: number;
+  job_title: string;
+  job_code: string | null;
+  application_date: string | null;
+  status: string | null;
+};
+
+type CandidateContactRow = {
+  candidate_id: number;
+  candidate_code: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  email: string | null;
+};
+
+type PartnerApplicationDetailRow = {
+  application_id: number;
+  job_id: number;
+  candidate_id: number;
+  candidate_name: string;
+  phone: string | null;
+  email: string | null;
+  job_title: string;
+  job_code: string | null;
+  application_date: string | null;
+  status: string | null;
 };
 
 type ScheduleInterviewBody = {
@@ -83,10 +114,83 @@ export class PartnerInterviewsListController extends Controller {
     const interview_id = rows[0]?.interview_id;
     if (!interview_id) throw httpError(500, 'Failed to schedule interview');
 
+    const interviewRows = await callProc<RowDataPacket & PartnerInterviewRow>(
+      `CALL sp_rec_interviews('LIST_BY_APPLICATION', NULL, :application_id, NULL, NULL, NULL, NULL)`,
+      { application_id }
+    );
+    const interview = interviewRows.find((row) => Number(row.interview_id) === Number(interview_id));
+
     await callProc(
       `CALL sp_rec_applications('UPDATE', :application_id, NULL, NULL, NULL, :status, NULL)`,
       { application_id, status: 'Interview' }
     );
+
+    const appRows = await callProc<RowDataPacket & PartnerApplicationDetailRow>(
+      `CALL sp_rec_applications('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, :partner_id)`,
+      { partner_id: partner.partner_id }
+    );
+    const app = appRows.find((row) => Number(row.application_id) === Number(application_id));
+    const candidateRows = app?.candidate_id
+      ? await callProc<RowDataPacket & CandidateContactRow>(
+          `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+          { candidate_id: app.candidate_id }
+        )
+      : [];
+    const candidate = candidateRows[0];
+
+    if (app && candidate) {
+      const recipientName = String(app.candidate_name ?? `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim()).trim() || 'Candidate';
+      const recipientEmail = app.email ?? candidate.email ?? null;
+      const recipientPhone = app.phone ?? candidate.phone ?? null;
+      const interviewDate = interview?.interview_date ?? interview_date;
+      const interviewMode = interview?.mode_name ?? 'Interview';
+      const interviewRemarks = interview?.remarks ?? body.remarks ?? null;
+      console.log('[partner/interview] notification source', JSON.stringify({
+        application_id,
+        candidate_id: app.candidate_id,
+        candidate_name: app.candidate_name,
+        job_title: app.job_title,
+        email: recipientEmail,
+        phone: recipientPhone,
+        interview_date: interviewDate,
+        interview_mode: interviewMode,
+        interview_remarks: interviewRemarks,
+      }));
+      await sendStatusNotification({
+        recipient: {
+          name: recipientName,
+          email: recipientEmail,
+          phone: recipientPhone,
+          whatsapp: recipientPhone,
+        },
+        subject: `${app.job_title} - Interview scheduled`,
+        headline: 'Interview scheduled',
+        statusLabel: 'Interview',
+        greeting: `Hello ${recipientName},`,
+        summary: `An interview has been scheduled for your application to ${app.job_title}.`,
+        rows: [
+          { label: 'Job', value: String(app.job_title) },
+          { label: 'Candidate', value: recipientName },
+          { label: 'Candidate Email', value: String(recipientEmail ?? '—') },
+          { label: 'Candidate Phone', value: String(recipientPhone ?? '—') },
+          { label: 'Interview Mode', value: String(interviewMode ?? '—') },
+          { label: 'Interview Date', value: String(interviewDate ?? '—') },
+          { label: 'Interview Remarks', value: String(interviewRemarks ?? '—') },
+          { label: 'Current Status', value: String(app.status ?? 'Interview') },
+        ],
+        nextSteps: [
+          'Check the portal for interview timing and instructions.',
+          'Read the interview remarks carefully before attending.',
+        ],
+        referenceCandidateId: app.candidate_id,
+      });
+    } else {
+      console.log('[partner/interview] notification skipped', JSON.stringify({
+        application_id,
+        has_application: Boolean(app),
+        has_candidate: Boolean(candidate),
+      }));
+    }
 
     return { interview_id };
   }
