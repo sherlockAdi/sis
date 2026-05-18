@@ -68,6 +68,9 @@ type PartnerCandidateTradeTestRow = {
   trade_video_file_name: string | null;
   trade_video_file_size: number | null;
   trade_video_uploaded_at: string | null;
+  trade_video_source: string | null;
+  trade_video_external_file_id: string | null;
+  trade_video_external_file_url: string | null;
   trade_video_links_json: string | null;
   created_at: string;
   updated_at: string;
@@ -92,6 +95,9 @@ export class PartnerCandidatesController extends Controller {
     trade_video_file_name: string | null;
     trade_video_file_size: number | null;
     trade_video_uploaded_at: string | null;
+    trade_video_source: string | null;
+    trade_video_external_file_id: string | null;
+    trade_video_external_file_url: string | null;
     trade_video_links: PartnerCandidateTradeLinkRow[];
     created_at: string;
     updated_at: string;
@@ -123,7 +129,7 @@ export class PartnerCandidatesController extends Controller {
     );
 
     const [tradeRows] = await pool.query<(RowDataPacket & PartnerCandidateTradeTestRow)[]>(
-      `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json, created_at, updated_at
+      `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_source, trade_video_external_file_id, trade_video_external_file_url, trade_video_links_json, created_at, updated_at
        FROM REC_T04_candidate_trade_tests
        WHERE candidate_id = :candidate_id
        LIMIT 1`,
@@ -168,6 +174,9 @@ export class PartnerCandidatesController extends Controller {
         trade_video_file_name: tradeRow?.trade_video_file_name ?? null,
         trade_video_file_size: tradeRow?.trade_video_file_size === null || tradeRow?.trade_video_file_size === undefined ? null : Number(tradeRow.trade_video_file_size),
         trade_video_uploaded_at: tradeRow?.trade_video_uploaded_at ?? null,
+        trade_video_source: tradeRow?.trade_video_source ?? 'storage',
+        trade_video_external_file_id: tradeRow?.trade_video_external_file_id ?? null,
+        trade_video_external_file_url: tradeRow?.trade_video_external_file_url ?? null,
         trade_video_links: tradeVideoLinks,
         created_at: tradeRow?.created_at ?? new Date(0).toISOString(),
         updated_at: tradeRow?.updated_at ?? new Date(0).toISOString(),

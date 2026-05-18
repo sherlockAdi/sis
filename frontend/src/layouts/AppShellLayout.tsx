@@ -242,6 +242,7 @@ export default function AppShellLayout() {
             icon: <PersonIcon fontSize="small" />,
             children: [
               { label: "Personal Info", to: withPortalBase("/candidate/profile/settings"), icon: <BadgeIcon fontSize="small" /> },
+              { label: "Change Password", to: withPortalBase("/candidate/profile/change-password"), icon: <SettingsOutlinedIcon fontSize="small" /> },
               { label: "Upload Documents", to: withPortalBase("/candidate/profile/documents"), icon: <ArticleIcon fontSize="small" /> },
               { label: "Upload Trade Video", to: withPortalBase("/candidate/profile/trade-test"), icon: <VideoCallIcon fontSize="small" /> },
             ],
@@ -313,9 +314,7 @@ export default function AppShellLayout() {
             label: "Settings",
             to: withPortalBase("/candidate/profile/settings"),
             icon: <SettingsIcon fontSize="small" />,
-            children: [
-              { label: "Change Password", to: withPortalBase("/candidate/profile/settings"), icon: <SettingsOutlinedIcon fontSize="small" /> },
-            ],
+            children: [{ label: "Change Password", to: withPortalBase("/candidate/profile/change-password"), icon: <SettingsOutlinedIcon fontSize="small" /> }],
           },
         ],
       },

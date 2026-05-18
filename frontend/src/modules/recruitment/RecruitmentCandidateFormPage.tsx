@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chip, Divider, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, Container, Divider, Stack, TextField, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import dayjs from "dayjs";
@@ -7,12 +7,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   AdAlertBox,
   AdButton,
-  AdCard,
-  AdCheckBox,
   AdDatePicker,
+  AdDropDown,
   AdNotification,
   AdSearchableDropDown,
-  AdTextArea,
   AdTextBox,
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
@@ -21,6 +19,7 @@ import { listCities, listCountries, listStates, type CityRow, type Country, type
 
 type Form = {
   candidate_id?: number;
+  candidate_code: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -55,6 +54,8 @@ type Form = {
   created_at: string;
   updated_at: string;
   deleted_at: string;
+  profile_complete: boolean;
+  missing_fields: string[];
 };
 
 type UploadKey = "resume" | "passport" | "aadhar" | "pan" | "voter" | "photo";
@@ -63,6 +64,7 @@ type PendingFiles = Record<UploadKey, File | null>;
 
 const emptyForm: Form = {
   candidate_id: undefined,
+  candidate_code: "",
   first_name: "",
   last_name: "",
   phone: "",
@@ -97,7 +99,62 @@ const emptyForm: Form = {
   created_at: "",
   updated_at: "",
   deleted_at: "",
+  profile_complete: false,
+  missing_fields: [],
 };
+
+const REQUIRED_FIELDS: Array<{ key: keyof Form; label: string }> = [
+  { key: "first_name", label: "First Name" },
+  { key: "last_name", label: "Last Name" },
+  { key: "phone", label: "Mobile" },
+  { key: "email", label: "Email" },
+  { key: "passport_number", label: "Passport Number" },
+  { key: "country_id", label: "Country" },
+  { key: "state_id", label: "State" },
+  { key: "city_id", label: "City" },
+  { key: "father_name", label: "Father's Name" },
+  { key: "address1", label: "Address 1" },
+  { key: "address2", label: "Address 2" },
+  { key: "pincode", label: "Pincode" },
+  { key: "dob", label: "DOB" },
+  { key: "gender", label: "Gender" },
+  { key: "skills", label: "Skills" },
+  { key: "education", label: "Education" },
+  { key: "experience", label: "Experience" },
+  { key: "industry_type", label: "Industry Type" },
+  { key: "resume_file_path", label: "Resume Upload" },
+  { key: "passport_expiry_date", label: "Passport Expiry Date" },
+  { key: "passport_file_path", label: "Passport Upload" },
+  { key: "aadhar_number", label: "Aadhaar Number" },
+  { key: "aadhar_file_path", label: "Aadhaar Upload" },
+  { key: "pan_number", label: "PAN Number" },
+  { key: "pan_file_path", label: "PAN Upload" },
+  { key: "voter_id_number", label: "Voter ID Number" },
+  { key: "voter_id_file_path", label: "Voter ID Upload" },
+  { key: "profile_photo_file_path", label: "Profile Photo" },
+  { key: "languages_known", label: "Languages Known" },
+];
+
+function hasValue(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0;
+  if (typeof value === "boolean") return value;
+  const text = String(value).trim();
+  if (!text) return false;
+  if (text.startsWith("[") && text.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parsed.length > 0;
+    } catch {
+      // fall through
+    }
+  }
+  return text.length > 0;
+}
+
+function getMissingFields(candidate: Form): string[] {
+  return REQUIRED_FIELDS.filter((field) => !hasValue(candidate[field.key])).map((field) => field.label);
+}
 
 const emptyPendingFiles: PendingFiles = {
   resume: null,
@@ -121,6 +178,7 @@ function fileExt(name: string): string {
 function mapCandidateForm(candidate: CandidateRow): Form {
   return {
     candidate_id: candidate.candidate_id,
+    candidate_code: candidate.candidate_code ?? "",
     first_name: candidate.first_name ?? "",
     last_name: candidate.last_name ?? "",
     phone: candidate.phone ?? "",
@@ -155,6 +213,8 @@ function mapCandidateForm(candidate: CandidateRow): Form {
     created_at: candidate.created_at ?? "",
     updated_at: candidate.updated_at ?? "",
     deleted_at: candidate.deleted_at ?? "",
+    profile_complete: Boolean((candidate as any).profile_complete),
+    missing_fields: (candidate as any).missing_fields ?? [],
   };
 }
 
@@ -245,13 +305,22 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
     () => cities.map((c) => ({ label: c.city_name, value: String(c.city_id) })),
     [cities],
   );
+  const missingFields = useMemo(() => getMissingFields(form), [form]);
+  const profileComplete = missingFields.length === 0;
   const statusOptions = useMemo(
     () => [
-    { label: "New", value: "New" },
-    { label: "Active", value: "Active" },
-    { label: "Inactive", value: "Inactive" },
-  ],
-  [],
+      { label: "New", value: "New" },
+      { label: "Active", value: "Active" },
+      { label: "Inactive", value: "Inactive" },
+    ],
+    [],
+  );
+  const verifiedOptions = useMemo(
+    () => [
+      { label: "No", value: "0" },
+      { label: "Yes", value: "1" },
+    ],
+    [],
   );
   const genderOptions = useMemo(
     () => [
@@ -413,68 +482,88 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
   };
 
   return (
-    <Stack spacing={2.5} sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
-      <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+    <Container maxWidth="lg" sx={{ py: { xs: 1, md: 1.5 } }}>
+      <Stack spacing={1.5}>
+        <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
 
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ flexWrap: "wrap" }}>
-        <Stack spacing={0.25}>
-          <Typography variant="h5" fontWeight={900}>
-            {form.candidate_id ? "Edit Candidate" : "Add Candidate"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Candidate registration and profile data
-          </Typography>
-        </Stack>
-        <AdButton variant="text" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate("/portal/recruitment/candidates")}>
-          Back to Candidates
-        </AdButton>
-      </Stack>
-
-      {error && <AdAlertBox severity="error" title="Error" message={error} />}
-
-      <AdCard
-        animate={false}
-        title={form.candidate_id ? "Edit Candidate" : "Add Candidate"}
-        subtitle="Use the full screen form for registration and candidate profile data"
-        headerRight={
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <AdButton variant="text" onClick={() => navigate("/portal/recruitment/candidates")}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={saveCandidate} disabled={saving || loading}>
-              {saving ? "Saving..." : form.candidate_id ? "Update Candidate" : "Save Candidate"}
-            </AdButton>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ flexWrap: "wrap" }}>
+          <Stack spacing={0.25}>
+            <Typography variant="h5" fontWeight={900}>
+              {form.candidate_id ? "Edit Candidate" : "Add Candidate"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Candidate registration and profile data
+            </Typography>
           </Stack>
-        }
-        sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }}
-        contentSx={{ p: 2.5 }}
-      >
-        {loading ? (
-          <Typography variant="body2" color="text.secondary">
-            Loading candidate details...
-          </Typography>
-        ) : (
-          <Stack spacing={2.5}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2" fontWeight={800}>
-                Registration
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="First Name" required value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
-                <AdTextBox label="Last Name" required value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
+          <AdButton variant="text" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate("/portal/recruitment/candidates")}>
+            Back to Candidates
+          </AdButton>
+        </Stack>
+
+        {error ? <AdAlertBox severity="error" title="Error" message={error} /> : null}
+        {loading ? <Alert severity="info">Loading candidate details...</Alert> : null}
+        {!loading && !profileComplete ? (
+          <Alert severity="warning">
+            Candidate profile incomplete. Missing: {missingFields.length ? missingFields.join(", ") : "unknown fields"}.
+          </Alert>
+        ) : null}
+
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(148, 163, 184, 0.42)",
+            bgcolor: "#fff",
+            boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Stack spacing={1.25}>
+              <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                  {form.candidate_code ? <Chip size="small" label={`Code: ${form.candidate_code}`} /> : null}
+                  <Chip size="small" label={profileComplete ? "Complete" : "Incomplete"} color={profileComplete ? "success" : "warning"} />
+                  <Chip size="small" label={form.is_verified ? "Verified" : "Pending Approval"} color={form.is_verified ? "success" : "warning"} />
+                </Stack>
+
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <AdButton variant="contained" onClick={saveCandidate} disabled={saving || loading}>
+                    {saving ? "Saving..." : form.candidate_id ? "Update Candidate" : "Save Candidate"}
+                  </AdButton>
+                </Stack>
               </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Mobile" required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-                <AdTextBox label="Email" required type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+
+              <Divider />
+
+              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, alignItems: "start" }}>
+                <AdTextBox variant="standard" size="small" label="First Name" required value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
+                <AdTextBox variant="standard" size="small" label="Last Name" required value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
+                <AdTextBox variant="standard" size="small" label="Mobile" required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                <AdTextBox variant="standard" size="small" label="Email" required type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
+                <AdTextBox variant="standard" size="small" label="Passport Number" required value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
                 <AdSearchableDropDown
+                  variant="standard"
+                  label="Status"
+                  options={statusOptions}
+                  value={form.status}
+                  onChange={(v) => setForm((f) => ({ ...f, status: String(v) || "New" }))}
+                />
+                <AdDropDown
+                  variant="standard"
+                  label="Verified"
+                  options={verifiedOptions}
+                  value={form.is_verified ? "1" : "0"}
+                  onChange={(v) => setForm((f) => ({ ...f, is_verified: String(v) === "1" }))}
+                />
+                <AdSearchableDropDown
+                  variant="standard"
                   label="Country"
                   options={countryOptions}
                   value={form.country_id}
                   onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))}
                 />
                 <AdSearchableDropDown
+                  variant="standard"
                   label="State"
                   options={stateOptions}
                   value={form.state_id}
@@ -482,137 +571,176 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                   disabled={!form.country_id}
                 />
                 <AdSearchableDropDown
+                  variant="standard"
                   label="City"
                   options={cityOptions}
                   value={form.city_id}
                   onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
                   disabled={!form.state_id}
                 />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdSearchableDropDown
-                  label="Status"
-                  options={statusOptions}
-                  value={form.status}
-                  onChange={(v) => setForm((f) => ({ ...f, status: String(v) || "New" }))}
+                <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
+                <TextField
+                  variant="standard"
+                  size="small"
+                  label="DOB"
+                  type="date"
+                  value={form.dob}
+                  onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
                 />
-                <AdCheckBox
-                  label="Verified"
-                  checked={form.is_verified}
-                  onChange={(checked) => setForm((f) => ({ ...f, is_verified: checked }))}
-                />
-                <AdTextBox
-                  label="Passport Number"
-                  required
-                  value={form.passport_number}
-                  onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))}
-                />
-              </Stack>
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle2" fontWeight={800}>
-                Profile Fields
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
-                <AdDatePicker label="DOB" value={form.dob ? dayjs(form.dob) : null} onChange={(v) => setForm((f) => ({ ...f, dob: v ? v.format("YYYY-MM-DD") : "" }))} />
-                <AdSearchableDropDown
+                <AdDropDown
+                  variant="standard"
                   label="Gender"
                   options={genderOptions}
                   value={form.gender}
                   onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
                 />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextArea label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
-                <AdTextArea label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
-                <AdTextBox label="Skills" value={form.skills} onChange={(v) => setForm((f) => ({ ...f, skills: v }))} />
-                <AdTextBox label="Languages Known" value={form.languages_known} onChange={(v) => setForm((f) => ({ ...f, languages_known: v }))} />
-              </Stack>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdTextBox label="Education" value={form.education} onChange={(v) => setForm((f) => ({ ...f, education: v }))} />
-                <AdTextBox label="Experience" value={form.experience} onChange={(v) => setForm((f) => ({ ...f, experience: v }))} />
-                <AdTextBox label="Industry Type" value={form.industry_type} onChange={(v) => setForm((f) => ({ ...f, industry_type: v }))} />
-              </Stack>
+                <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
+                  <TextField
+                    variant="standard"
+                    size="small"
+                    label="Address 1"
+                    value={form.address1}
+                    onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))}
+                    fullWidth
+                    multiline
+                    minRows={2}
+                  />
+                </Box>
+                <Box sx={{ gridColumn: { xs: "auto", md: "3 / span 2" } }}>
+                  <TextField
+                    variant="standard"
+                    size="small"
+                    label="Address 2"
+                    value={form.address2}
+                    onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))}
+                    fullWidth
+                    multiline
+                    minRows={2}
+                  />
+                </Box>
+                <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
+                <AdTextBox variant="standard" size="small" label="Education" value={form.education} onChange={(v) => setForm((f) => ({ ...f, education: v }))} />
+                <AdTextBox variant="standard" size="small" label="Skills" value={form.skills} onChange={(v) => setForm((f) => ({ ...f, skills: v }))} />
+                <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
+                  <TextField
+                    variant="standard"
+                    size="small"
+                    label="Experience"
+                    value={form.experience}
+                    onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))}
+                    fullWidth
+                    multiline
+                    minRows={2}
+                  />
+                </Box>
+                <AdTextBox variant="standard" size="small" label="Industry Type" value={form.industry_type} onChange={(v) => setForm((f) => ({ ...f, industry_type: v }))} />
+                <AdTextBox variant="standard" size="small" label="Languages Known" value={form.languages_known} onChange={(v) => setForm((f) => ({ ...f, languages_known: v }))} />
+              </Box>
             </Stack>
+          </CardContent>
+        </Card>
 
-            <Divider />
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle2" fontWeight={800}>
-                Documents
-              </Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                <AdDatePicker
-                  label="Passport Expiry Date"
-                  value={form.passport_expiry_date ? dayjs(form.passport_expiry_date) : null}
-                  onChange={(v) => setForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : "" }))}
-                />
-                <AdTextBox label="Aadhar Number" value={form.aadhar_number} onChange={(v) => setForm((f) => ({ ...f, aadhar_number: v }))} />
-                <AdTextBox label="PAN No." value={form.pan_number} onChange={(v) => setForm((f) => ({ ...f, pan_number: v }))} />
-                <AdTextBox label="Voter ID Number" value={form.voter_id_number} onChange={(v) => setForm((f) => ({ ...f, voter_id_number: v }))} />
+        <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 0,
+              borderColor: "rgba(148, 163, 184, 0.42)",
+              bgcolor: "#fff",
+              boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+              <Stack spacing={1.5}>
+                <Typography fontWeight={950}>Profile Summary</Typography>
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
+                  <AdDatePicker
+                    variant="standard"
+                    label="Passport Expiry Date"
+                    value={form.passport_expiry_date ? dayjs(form.passport_expiry_date) : null}
+                    onChange={(v) => setForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : "" }))}
+                  />
+                  <AdTextBox variant="standard" size="small" label="Aadhaar Number" value={form.aadhar_number} onChange={(v) => setForm((f) => ({ ...f, aadhar_number: v }))} />
+                  <AdTextBox variant="standard" size="small" label="PAN Number" value={form.pan_number} onChange={(v) => setForm((f) => ({ ...f, pan_number: v }))} />
+                  <AdTextBox variant="standard" size="small" label="Voter ID Number" value={form.voter_id_number} onChange={(v) => setForm((f) => ({ ...f, voter_id_number: v }))} />
+                </Box>
               </Stack>
+            </CardContent>
+          </Card>
 
-              <Stack spacing={1.25}>
-                {fileChoices.map((spec) => (
-                  <Stack key={spec.key} direction={{ xs: "column", md: "row" }} spacing={1.25} alignItems={{ md: "center" }}>
-                    <Stack sx={{ minWidth: { md: 280 } }}>
-                      <Typography variant="body2" fontWeight={700}>
-                        {spec.label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {spec.current ? "File attached" : "Not uploaded yet"}
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <AdButton component="label" variant="outlined" startIcon={<UploadFileIcon fontSize="small" />}>
-                        Choose File
-                        <input
-                          hidden
-                          type="file"
-                          accept={spec.accept}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] ?? null;
-                            setPendingFiles((prev) => ({ ...prev, [spec.key]: file }));
-                          }}
-                        />
-                      </AdButton>
-                      {pendingFiles[spec.key] ? <Chip size="small" color="info" label={pendingFiles[spec.key]!.name} /> : null}
-                      {spec.current ? <Chip size="small" color="success" label="Saved" /> : null}
-                    </Stack>
-                  </Stack>
-                ))}
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 0,
+              borderColor: "rgba(148, 163, 184, 0.42)",
+              bgcolor: "#fff",
+              boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+              <Stack spacing={2}>
+                <Typography fontWeight={950}>Documents</Typography>
+
+                {fileChoices.map((doc) => {
+                  const filePath = doc.current;
+                  return (
+                    <Box
+                      key={doc.key}
+                      sx={{
+                        px: 0.25,
+                        py: 0.75,
+                        borderBottom: "1px solid rgba(226,232,240,0.85)",
+                        "&:last-of-type": { borderBottom: 0 },
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="space-between">
+                        <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                          <Typography fontWeight={800} sx={{ minWidth: 0, wordBreak: "break-word" }}>
+                            {doc.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {filePath ? "File attached" : "Not uploaded yet"}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.75} flexShrink={0}>
+                          <AdButton variant="text" onClick={() => (filePath ? void recruitmentApi.files.presignDownload(filePath).then((presign) => window.open(presign.url, "_blank", "noopener,noreferrer")) : undefined)} disabled={!filePath}>
+                            View
+                          </AdButton>
+                          <Button variant="outlined" component="label" startIcon={<UploadFileIcon />}>
+                            {filePath ? "Replace" : "Upload"}
+                            <input
+                              type="file"
+                              hidden
+                              accept={doc.accept}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] ?? null;
+                                setPendingFiles((prev) => ({ ...prev, [doc.key]: file }));
+                              }}
+                            />
+                          </Button>
+                        </Stack>
+                      </Stack>
+                      {pendingFiles[doc.key] ? (
+                        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.75 }}>
+                          <Chip size="small" color="info" label={pendingFiles[doc.key]!.name} />
+                        </Stack>
+                      ) : null}
+                    </Box>
+                  );
+                })}
               </Stack>
-            </Stack>
+            </CardContent>
+          </Card>
+        </Box>
 
-            {form.candidate_id ? (
-              <>
-                <Divider />
-                <Stack spacing={0.5}>
-                  <Typography variant="subtitle2" fontWeight={800}>
-                    System Fields
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Created At: {form.created_at || "—"}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Updated At: {form.updated_at || "—"}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Deleted At: {form.deleted_at || "—"}
-                  </Typography>
-                </Stack>
-              </>
-            ) : null}
-          </Stack>
-        )}
-      </AdCard>
-    </Stack>
+        <Stack direction="row" justifyContent="flex-end">
+          <Typography variant="caption" color="text.secondary">
+            Created At: {form.created_at || "—"} {form.updated_at ? `• Updated At: ${form.updated_at}` : ""}
+          </Typography>
+        </Stack>
+      </Stack>
+    </Container>
   );
 }

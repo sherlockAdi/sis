@@ -13,6 +13,7 @@ import StatesPage from "../modules/location/StatesPage";
 import CitiesPage from "../modules/location/CitiesPage";
 import InterviewModesPage from "../modules/masters/InterviewModesPage";
 import VisaTypesPage from "../modules/masters/VisaTypesPage";
+import VisaChecklistMasterPage from "../modules/masters/VisaChecklistMasterPage";
 import JobCategoriesPage from "../modules/masters/JobCategoriesPage";
 import ContractDurationsPage from "../modules/masters/ContractDurationsPage";
 import DocumentTypesPage from "../modules/masters/DocumentTypesPage";
@@ -31,6 +32,7 @@ import JobsPreviewPage from "../modules/job/JobsPreviewPage";
 import JobFormPage from "../modules/job/JobFormPage";
 import RecruitmentApplicationsPage from "../modules/recruitment/RecruitmentApplicationsPage";
 import RecruitmentCandidatesPage from "../modules/recruitment/RecruitmentCandidatesPage";
+import LeadCandidatesPage from "../modules/recruitment/LeadCandidatesPage";
 import RecruitmentCandidateFormPage from "../modules/recruitment/RecruitmentCandidateFormPage";
 import RecruitmentScreeningInterviewsPage from "../modules/recruitment/RecruitmentScreeningInterviewsPage";
 import CandidateJobsPage from "../modules/candidate/CandidateJobsPage";
@@ -221,6 +223,10 @@ export default function AppRoutes() {
           element={<Navigate to="/portal/masters/documents/types" replace />}
         />
         <Route
+          path="/masters/deployment/visa-checklists"
+          element={<Navigate to="/portal/masters/deployment/visa-checklists" replace />}
+        />
+        <Route
           path="/masters/payments/categories"
           element={<Navigate to="/portal/masters/payments/categories" replace />}
         />
@@ -241,6 +247,10 @@ export default function AppRoutes() {
         <Route
           path="/recruitment/candidates"
           element={<Navigate to="/portal/recruitment/candidates" replace />}
+        />
+        <Route
+          path="/recruitment/lead-candidates"
+          element={<Navigate to="/portal/recruitment/lead-candidates" replace />}
         />
         <Route path="/candidate/jobs" element={<Navigate to="/portal/candidate/jobs" replace />} />
         <Route
@@ -280,6 +290,7 @@ export default function AppRoutes() {
             <Route path="masters/job/categories" element={<JobCategoriesPage />} />
             <Route path="masters/job/contract-durations" element={<ContractDurationsPage />} />
             <Route path="masters/documents/types" element={<DocumentTypesPage />} />
+            <Route path="masters/deployment/visa-checklists" element={<VisaChecklistMasterPage />} />
             <Route path="masters/payments/categories" element={<PaymentCategoriesPage />} />
             <Route path="settings" element={<SystemSettingsPage />} />
             <Route path="settings/employment-types" element={<EmploymentTypesPage />} />
@@ -298,6 +309,7 @@ export default function AppRoutes() {
             <Route path="jobs-preview" element={<JobsPreviewPage />} />
             <Route path="recruitment/applications" element={<RecruitmentApplicationsPage />} />
             <Route path="recruitment/candidates" element={<RecruitmentCandidatesPage />} />
+            <Route path="recruitment/lead-candidates" element={<LeadCandidatesPage />} />
             <Route path="recruitment/candidates/new" element={<RecruitmentCandidateFormPage mode="create" />} />
             <Route path="recruitment/candidates/:candidateId" element={<RecruitmentCandidateFormPage mode="edit" />} />
             <Route path="candidate/home" element={<CandidateHomePage />} />

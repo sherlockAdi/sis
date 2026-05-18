@@ -79,6 +79,17 @@ export type DocumentType = {
   created_at: string;
 };
 
+export type VisaChecklistMasterItem = {
+  checklist_item_id: number;
+  checklist_item_code: string;
+  checklist_item_name: string;
+  sort_order: number;
+  is_required: number;
+  status: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PaymentCategory = {
   payment_category_id: number;
   category_name: string;
@@ -217,6 +228,33 @@ export const mastersApi = {
     update: (id: number, input: Partial<{ document_name: string; is_required: boolean; status: boolean }>) =>
       apiFetch(`/masters/documents/types/${id}`, { method: "PUT", body: JSON.stringify(input) }),
     disable: (id: number) => apiFetch(`/masters/documents/types/${id}`, { method: "DELETE" }),
+  },
+  deploymentVisaChecklists: {
+    list: (include_inactive = true) =>
+      apiFetch<VisaChecklistMasterItem[]>(
+        `/masters/deployment/visa-checklists?include_inactive=${include_inactive ? "true" : "false"}`,
+        { method: "GET" },
+      ),
+    create: (
+      input: {
+        checklist_item_code: string;
+        checklist_item_name: string;
+        sort_order?: number;
+        is_required?: boolean;
+        status?: boolean;
+      },
+    ) => apiFetch(`/masters/deployment/visa-checklists`, { method: "POST", body: JSON.stringify(input) }),
+    update: (
+      id: number,
+      input: Partial<{
+        checklist_item_code: string;
+        checklist_item_name: string;
+        sort_order: number;
+        is_required: boolean;
+        status: boolean;
+      }>,
+    ) => apiFetch(`/masters/deployment/visa-checklists/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+    disable: (id: number) => apiFetch(`/masters/deployment/visa-checklists/${id}`, { method: "DELETE" }),
   },
   paymentCategories: {
     list: (include_inactive = true) =>

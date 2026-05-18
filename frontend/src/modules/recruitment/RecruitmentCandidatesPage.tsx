@@ -22,6 +22,15 @@ import { formatJsonList } from "../../common/utils/jsonList";
 
 type VerificationFilter = "" | "verified" | "unverified";
 
+export type RecruitmentCandidatesPageProps = {
+  title?: string;
+  subtitle?: string;
+  forceVerificationFilter?: VerificationFilter;
+  hideVerificationFilter?: boolean;
+  hideAddCandidate?: boolean;
+  rowActionMode?: "full" | "verify-only" | "none";
+};
+
 function initials(firstName?: string | null, lastName?: string | null): string {
   const a = String(firstName ?? "").trim().charAt(0);
   const b = String(lastName ?? "").trim().charAt(0);
@@ -150,7 +159,14 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-export default function RecruitmentCandidatesPage() {
+export default function RecruitmentCandidatesPage({
+  title = "Candidate List",
+  subtitle = "View full candidate profiles and verify registrations",
+  forceVerificationFilter,
+  hideVerificationFilter = false,
+  hideAddCandidate = false,
+  rowActionMode = "full",
+}: RecruitmentCandidatesPageProps = {}) {
   const navigate = useNavigate();
   const [rows, setRows] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +176,7 @@ export default function RecruitmentCandidatesPage() {
     message: "",
     severity: "success",
   });
-  const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("");
+  const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>(forceVerificationFilter ?? "");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRow | null>(null);
   const [verifiedOverrides, setVerifiedOverrides] = useState<Record<number, boolean>>({});
 
@@ -190,6 +206,12 @@ export default function RecruitmentCandidatesPage() {
           : row.is_verified,
     }));
   }, [rows, verifiedOverrides]);
+
+  useEffect(() => {
+    if (typeof forceVerificationFilter !== "undefined") {
+      setVerificationFilter(forceVerificationFilter);
+    }
+  }, [forceVerificationFilter]);
 
   const filteredRows = useMemo(() => {
     return rowsWithVerification.filter((row) => {
@@ -285,71 +307,96 @@ export default function RecruitmentCandidatesPage() {
         },
       },
       { field: "created_at", headerName: "Created At", width: 170 },
-      {
-        field: "__actions",
-        headerName: "Actions",
-        width: 240,
-        sortable: false,
-        filterable: false,
-        renderCell: (p: any) => {
-          const r = p.row as CandidateRow;
-          const verified = isVerifiedCandidate(r);
-          return (
-            <Stack direction="row" spacing={0.5}>
-              <AdButton
-                variant="text"
-                startIcon={<VisibilityOutlinedIcon fontSize="small" />}
-                onClick={(e: any) => {
-                  e?.stopPropagation?.();
-                  setSelectedCandidate(r);
-                }}
-              >
-                View
-              </AdButton>
-              <AdButton
-                variant="text"
-                color={verified ? "warning" : "success"}
-                startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
-                onClick={(e: any) => {
-                  e?.stopPropagation?.();
-                  void setVerified(r, !verified);
-                }}
-              >
-                {verified ? "Unverify" : "Verify"}
-              </AdButton>
-              <AdButton
-                variant="text"
-                startIcon={<EditIcon fontSize="small" />}
-                onClick={(e: any) => {
-                  e?.stopPropagation?.();
-                  navigate(`/portal/recruitment/candidates/${r.candidate_id}`);
-                }}
-              >
-                Edit
-              </AdButton>
-              <AdButton
-                variant="text"
-                color="error"
-                startIcon={<DeleteOutlineIcon fontSize="small" />}
-                onClick={async (e: any) => {
-                  e?.stopPropagation?.();
-                  try {
-                    await recruitmentApi.candidates.disable(r.candidate_id);
-                    setToast({ open: true, message: "Candidate disabled", severity: "success" });
-                    refresh();
-                  } catch (err: any) {
-                    setToast({ open: true, message: (err as Error)?.message ?? "Failed", severity: "error" });
-                  }
-                }}
-              >
-                Disable
-              </AdButton>
-            </Stack>
-          );
-        },
-      },
+      ...((rowActionMode === "full" || rowActionMode === "verify-only")
+        ? [
+            {
+              field: "__actions",
+              headerName: "Actions",
+              width: rowActionMode === "verify-only" ? 140 : 240,
+              sortable: false,
+              filterable: false,
+              renderCell: (p: any) => {
+                const r = p.row as CandidateRow;
+                const verified = isVerifiedCandidate(r);
+                const profileComplete = getMissingFields(r).length === 0;
+                return (
+                  <Stack direction="row" spacing={0.5}>
+                    {rowActionMode === "full" ? (
+                      <>
+                        <AdButton
+                          variant="text"
+                          startIcon={<VisibilityOutlinedIcon fontSize="small" />}
+                          onClick={(e: any) => {
+                            e?.stopPropagation?.();
+                            setSelectedCandidate(r);
+                          }}
+                        >
+                          View
+                        </AdButton>
+                        <AdButton
+                          variant="text"
+                          color={verified ? "warning" : "success"}
+                          startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
+                          disabled={!verified && !profileComplete}
+                          onClick={(e: any) => {
+                            e?.stopPropagation?.();
+                            if (!verified && !profileComplete) return;
+                            void setVerified(r, !verified);
+                          }}
+                        >
+                          {verified ? "Unverify" : "Verify"}
+                        </AdButton>
+                        <AdButton
+                          variant="text"
+                          startIcon={<EditIcon fontSize="small" />}
+                          onClick={(e: any) => {
+                            e?.stopPropagation?.();
+                            navigate(`/portal/recruitment/candidates/${r.candidate_id}`);
+                          }}
+                        >
+                          Edit
+                        </AdButton>
+                        <AdButton
+                          variant="text"
+                          color="error"
+                          startIcon={<DeleteOutlineIcon fontSize="small" />}
+                          onClick={async (e: any) => {
+                            e?.stopPropagation?.();
+                            try {
+                              await recruitmentApi.candidates.disable(r.candidate_id);
+                              setToast({ open: true, message: "Candidate disabled", severity: "success" });
+                              refresh();
+                            } catch (err: any) {
+                              setToast({ open: true, message: (err as Error)?.message ?? "Failed", severity: "error" });
+                            }
+                          }}
+                        >
+                          Disable
+                        </AdButton>
+                      </>
+                    ) : (
+                      <AdButton
+                        variant="contained"
+                        color="success"
+                        disabled={!profileComplete}
+                        startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
+                        onClick={(e: any) => {
+                          e?.stopPropagation?.();
+                          if (!profileComplete) return;
+                          void setVerified(r, true);
+                        }}
+                      >
+                        Verify
+                      </AdButton>
+                    )}
+                  </Stack>
+                );
+              },
+            },
+          ]
+        : []),
     ],
-    [navigate],
+    [navigate, rowActionMode],
   );
 
   return (
@@ -359,35 +406,47 @@ export default function RecruitmentCandidatesPage() {
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }} spacing={1.5}>
         <Stack spacing={0.25}>
           <Typography variant="h5" fontWeight={900}>
-            Candidate List
+            {title}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            View full candidate profiles and verify registrations
+            {subtitle}
           </Typography>
         </Stack>
-        <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => navigate("/portal/recruitment/candidates/new")}>
-          Add Candidate
-        </AdButton>
+        {!hideAddCandidate ? (
+          <AdButton startIcon={<AddIcon fontSize="small" />} onClick={() => navigate("/portal/recruitment/candidates/new")}>
+            Add Candidate
+          </AdButton>
+        ) : null}
       </Stack>
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ xs: "stretch", md: "center" }}>
-        <Box sx={{ minWidth: { xs: "100%", md: 220 } }}>
-          <AdDropDown
-            label="Verification"
-            variant="standard"
-            value={verificationFilter}
-            options={[
-              { label: "All Candidates", value: "" },
-              { label: "Verified Only", value: "verified" },
-              { label: "Unverified Only", value: "unverified" },
-            ]}
-            onChange={(v) => setVerificationFilter(String(v) as VerificationFilter)}
-          />
-        </Box>
+      {!hideVerificationFilter ? (
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ xs: "stretch", md: "center" }}>
+          <Box sx={{ minWidth: { xs: "100%", md: 220 } }}>
+            <AdDropDown
+              label="Verification"
+              variant="standard"
+              value={verificationFilter}
+              options={[
+                { label: "All Candidates", value: "" },
+                { label: "Verified Only", value: "verified" },
+                { label: "Unverified Only", value: "unverified" },
+              ]}
+              onChange={(v) => {
+                if (typeof forceVerificationFilter === "undefined") {
+                  setVerificationFilter(String(v) as VerificationFilter);
+                }
+              }}
+            />
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Showing {filteredRows.length} of {rows.length} candidates
+          </Typography>
+        </Stack>
+      ) : (
         <Typography variant="body2" color="text.secondary">
-          Showing {filteredRows.length} of {rows.length} candidates
+          Showing {filteredRows.length} verified candidates
         </Typography>
-      </Stack>
+      )}
 
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
@@ -441,21 +500,35 @@ export default function RecruitmentCandidatesPage() {
               </Stack>
 
               <Stack direction="row" spacing={1}>
-                <AdButton
-                  variant={isVerifiedCandidate(selectedCandidateResolved) ? "outlined" : "contained"}
-                  color={isVerifiedCandidate(selectedCandidateResolved) ? "warning" : "success"}
-                  startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
-                  onClick={() => void setVerified(selectedCandidateResolved, !isVerifiedCandidate(selectedCandidateResolved))}
-                >
-                  {isVerifiedCandidate(selectedCandidateResolved) ? "Unverify" : "Verify"}
-                </AdButton>
-                <AdButton
-                  variant="text"
-                  startIcon={<EditIcon fontSize="small" />}
-                  onClick={() => navigate(`/portal/recruitment/candidates/${selectedCandidateResolved.candidate_id}`)}
-                >
-                  Edit Candidate
-                </AdButton>
+              {rowActionMode === "full" ? (
+                <>
+                  {(() => {
+                    const profileComplete = selectedProfileComplete;
+                    const verified = isVerifiedCandidate(selectedCandidateResolved);
+                    return (
+                      <AdButton
+                        variant={verified ? "outlined" : "contained"}
+                        color={verified ? "warning" : "success"}
+                        disabled={!verified && !profileComplete}
+                        startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
+                        onClick={() => {
+                          if (!verified && !profileComplete) return;
+                          void setVerified(selectedCandidateResolved, !verified);
+                        }}
+                      >
+                        {verified ? "Unverify" : "Verify"}
+                      </AdButton>
+                    );
+                  })()}
+                  <AdButton
+                    variant="text"
+                    startIcon={<EditIcon fontSize="small" />}
+                    onClick={() => navigate(`/portal/recruitment/candidates/${selectedCandidateResolved.candidate_id}`)}
+                  >
+                    Edit Candidate
+                  </AdButton>
+                </>
+              ) : null}
               </Stack>
 
               <SectionCard title="Registration Details">

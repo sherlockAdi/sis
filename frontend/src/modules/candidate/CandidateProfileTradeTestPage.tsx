@@ -34,10 +34,18 @@ type TradeTestDraft = {
   trade_video_file_name: string | null;
   trade_video_file_size: number | null;
   trade_video_uploaded_at: string | null;
+  trade_video_source: "storage" | "google_drive";
+  trade_video_external_file_id: string | null;
+  trade_video_external_file_url: string | null;
   trade_video_links: TradeLinkDraft[];
 };
 
 const MAX_VIDEO_BYTES = 10 * 1024 * 1024;
+const GOOGLE_DRIVE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID ?? "969767735969-572rpu8jqa44sobk193j6pkuspmk9llv.apps.googleusercontent.com";
+const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+
+let googleIdentityScriptPromise: Promise<void> | null = null;
 
 function makeId() {
   return `tt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -55,12 +63,133 @@ function sanitizeFileName(name: string): string {
   return cleaned || "video.mp4";
 }
 
+function extractGoogleDriveFileId(value: string): string | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return text.length >= 10 ? text : null;
+}
+
+function buildGoogleDriveShareUrl(fileId: string | null): string | null {
+  const id = String(fileId ?? "").trim();
+  return id ? `https://drive.google.com/file/d/${id}/view?usp=sharing` : null;
+}
+
+function loadGoogleIdentityScript(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if ((window as any).google?.accounts?.oauth2) return Promise.resolve();
+  if (!googleIdentityScriptPromise) {
+    googleIdentityScriptPromise = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector('script[data-google-identity="true"]') as HTMLScriptElement | null;
+      if (existing) {
+        existing.addEventListener("load", () => resolve(), { once: true });
+        existing.addEventListener("error", () => reject(new Error("Failed to load Google Identity Services")), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.dataset.googleIdentity = "true";
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Failed to load Google Identity Services"));
+      document.head.appendChild(script);
+    });
+  }
+  return googleIdentityScriptPromise;
+}
+
+async function requestGoogleAccessToken(): Promise<string> {
+  await loadGoogleIdentityScript();
+  const google = (window as any).google;
+  if (!google?.accounts?.oauth2?.initTokenClient) {
+    throw new Error("Google sign-in is not available in this browser");
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_DRIVE_CLIENT_ID,
+      scope: GOOGLE_DRIVE_SCOPE,
+      callback: (response: any) => {
+        if (response?.error) {
+          reject(new Error(response.error_description || response.error));
+          return;
+        }
+        if (!response?.access_token) {
+          reject(new Error("Google did not return an access token"));
+          return;
+        }
+        resolve(response.access_token);
+      },
+    });
+
+    tokenClient.requestAccessToken({ prompt: "consent" });
+  });
+}
+
+async function uploadToGoogleDrive(file: File, accessToken: string): Promise<{ fileId: string; webViewLink: string | null }> {
+  const metadata = { name: file.name, mimeType: file.type || "video/mp4" };
+  const boundary = `boundary_${Date.now().toString(16)}_${Math.random().toString(36).slice(2, 10)}`;
+  const body = new Blob([
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+    JSON.stringify(metadata),
+    `\r\n--${boundary}\r\nContent-Type: ${file.type || "application/octet-stream"}\r\n\r\n`,
+    file,
+    `\r\n--${boundary}--`,
+  ]);
+
+  const createRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": `multipart/related; boundary=${boundary}`,
+    },
+    body,
+  });
+  if (!createRes.ok) {
+    throw new Error(`Google Drive upload failed (${createRes.status})`);
+  }
+  const created = await createRes.json();
+  const fileId = String(created?.id ?? "").trim();
+  if (!fileId) throw new Error("Google Drive did not return a file id");
+
+  try {
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role: "reader", type: "anyone" }),
+    });
+  } catch {
+    // Best effort only.
+  }
+
+  return {
+    fileId,
+    webViewLink: created?.webViewLink ? String(created.webViewLink) : buildGoogleDriveShareUrl(fileId),
+  };
+}
+
 function makeEmptyDraft(): TradeTestDraft {
   return {
     trade_video_file_path: null,
     trade_video_file_name: null,
     trade_video_file_size: null,
     trade_video_uploaded_at: null,
+    trade_video_source: "google_drive",
+    trade_video_external_file_id: null,
+    trade_video_external_file_url: null,
     trade_video_links: [],
   };
 }
@@ -90,6 +219,9 @@ function toPayload(draft: TradeTestDraft) {
     trade_video_file_name: draft.trade_video_file_name,
     trade_video_file_size: draft.trade_video_file_size,
     trade_video_uploaded_at: draft.trade_video_uploaded_at,
+    trade_video_source: draft.trade_video_source,
+    trade_video_external_file_id: draft.trade_video_external_file_id,
+    trade_video_external_file_url: draft.trade_video_external_file_url,
     trade_video_links: draft.trade_video_links.map(({ local_id, ...row }) => row),
   };
 }
@@ -99,13 +231,18 @@ export default function CandidateProfileTradeTestPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
     severity: "success",
   });
 
-  const hasVideo = Boolean(draft.trade_video_file_path?.trim());
+  const hasVideo =
+    draft.trade_video_source === "google_drive"
+      ? Boolean(String(draft.trade_video_external_file_id ?? "").trim() || String(draft.trade_video_external_file_url ?? "").trim())
+      : Boolean(draft.trade_video_file_path?.trim());
   const linkCount = draft.trade_video_links.filter((row) => String(row.url ?? "").trim()).length;
 
   const loadTradeTest = async () => {
@@ -117,6 +254,9 @@ export default function CandidateProfileTradeTestPage() {
         trade_video_file_name: data.trade_video_file_name,
         trade_video_file_size: data.trade_video_file_size,
         trade_video_uploaded_at: data.trade_video_uploaded_at,
+        trade_video_source: (data.trade_video_source as "storage" | "google_drive" | null) ?? "google_drive",
+        trade_video_external_file_id: data.trade_video_external_file_id ?? null,
+        trade_video_external_file_url: data.trade_video_external_file_url ?? null,
         trade_video_links: (data.trade_video_links ?? []).map(normalizeLink),
       });
     } catch (e: any) {
@@ -129,6 +269,25 @@ export default function CandidateProfileTradeTestPage() {
   useEffect(() => {
     void loadTradeTest();
   }, []);
+
+  useEffect(() => {
+    void loadGoogleIdentityScript().catch(() => {
+      // Drive mode still works when a pasted link is provided.
+    });
+  }, []);
+
+  const connectGoogleDrive = async () => {
+    setGoogleLoading(true);
+    try {
+      const token = await requestGoogleAccessToken();
+      setGoogleAccessToken(token);
+      setToast({ open: true, message: "Google Drive connected", severity: "success" });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Google Drive sign-in failed", severity: "error" });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const updateLink = (local_id: string, next: Partial<TradeLinkDraft>) => {
     setDraft((prev) => ({
@@ -164,7 +323,7 @@ export default function CandidateProfileTradeTestPage() {
     }
   };
 
-  const uploadVideo = async (file: File) => {
+  const uploadGoogleDriveVideo = async (file: File) => {
     if (file.size > MAX_VIDEO_BYTES) {
       setToast({
         open: true,
@@ -174,33 +333,46 @@ export default function CandidateProfileTradeTestPage() {
       return;
     }
 
-    setUploading(true);
+    setGoogleLoading(true);
     try {
-      const objectKey = `candidate/trade-test/${Date.now()}-${sanitizeFileName(file.name)}`;
-      const presign = await recruitmentApi.files.presignUpload(objectKey);
-      const put = await fetch(presign.url, { method: "PUT", body: file });
-      if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-
+      if (!googleAccessToken) {
+        throw new Error("Please connect Google Drive first.");
+      }
+      const accessToken = googleAccessToken;
+      const { fileId, webViewLink } = await uploadToGoogleDrive(file, accessToken);
       const nextDraft: TradeTestDraft = {
         ...draft,
-        trade_video_file_path: objectKey,
+        trade_video_source: "google_drive",
+        trade_video_file_path: null,
         trade_video_file_name: file.name,
         trade_video_file_size: file.size,
         trade_video_uploaded_at: new Date().toISOString(),
+        trade_video_external_file_id: fileId,
+        trade_video_external_file_url: webViewLink,
       };
       setDraft(nextDraft);
       await saveTradeTest(nextDraft);
+      setToast({ open: true, message: "Video uploaded to Google Drive and linked to your profile", severity: "success" });
     } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Upload failed", severity: "error" });
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Google Drive upload failed", severity: "error" });
     } finally {
-      setUploading(false);
+      setGoogleLoading(false);
     }
   };
 
   const openVideo = async () => {
-    if (!draft.trade_video_file_path) return;
+    if (!draft.trade_video_file_path && !draft.trade_video_external_file_url && !draft.trade_video_external_file_id) return;
     try {
-      const presign = await recruitmentApi.files.presignDownload(draft.trade_video_file_path);
+      if (draft.trade_video_source === "google_drive") {
+        const url =
+          draft.trade_video_external_file_url ||
+          buildGoogleDriveShareUrl(draft.trade_video_external_file_id) ||
+          draft.trade_video_file_path;
+        if (!url) return;
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      const presign = await recruitmentApi.files.presignDownload(draft.trade_video_file_path!);
       window.open(presign.url, "_blank", "noopener,noreferrer");
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open video", severity: "error" });
@@ -214,6 +386,9 @@ export default function CandidateProfileTradeTestPage() {
       trade_video_file_name: null,
       trade_video_file_size: null,
       trade_video_uploaded_at: null,
+      trade_video_source: "storage",
+      trade_video_external_file_id: null,
+      trade_video_external_file_url: null,
     };
     setDraft(nextDraft);
     await saveTradeTest(nextDraft);
@@ -261,33 +436,75 @@ export default function CandidateProfileTradeTestPage() {
                 <Stack spacing={1.25}>
                   <Typography fontWeight={950}>Trade Video</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Upload only one video file for the trade test.
+                    Upload to Google Drive and store the file ID and share link in SIS.
                   </Typography>
 
                   <Paper variant="outlined" sx={{ borderRadius: 2.5, p: 1.5, backgroundColor: "rgba(255,255,255,0.88)" }}>
                     <Stack spacing={1}>
                       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                        <Typography fontWeight={800}>Current File</Typography>
-                        {hasVideo ? <Chip size="small" label="Saved" color="success" /> : <Chip size="small" label="Empty" variant="outlined" />}
+                        <Typography fontWeight={800}>Google Drive File</Typography>
+                        {hasVideo ? (
+                          <Chip size="small" label="Linked" color="success" />
+                        ) : (
+                          <Chip size="small" label="Empty" variant="outlined" />
+                        )}
                       </Stack>
 
-                      <Typography variant="body2" sx={{ wordBreak: "break-word" }} color={hasVideo ? "text.primary" : "text.secondary"}>
-                        {draft.trade_video_file_name || "No video uploaded yet"}
-                      </Typography>
+                      <TextField
+                        variant="standard"
+                        size="small"
+                        label="Google Drive File ID"
+                        value={draft.trade_video_external_file_id ?? ""}
+                        onChange={(e) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            trade_video_external_file_id: String(e.target.value).trim() || null,
+                          }))
+                        }
+                        fullWidth
+                      />
+                      <TextField
+                        variant="standard"
+                        size="small"
+                        label="Google Drive Share Link"
+                        value={draft.trade_video_external_file_url ?? ""}
+                        onChange={(e) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            trade_video_external_file_url: String(e.target.value).trim() || null,
+                            trade_video_external_file_id: prev.trade_video_external_file_id || extractGoogleDriveFileId(e.target.value),
+                          }))
+                        }
+                        fullWidth
+                      />
                       <Typography variant="caption" color="text.secondary">
-                        {hasVideo ? `Size: ${formatBytes(draft.trade_video_file_size)} • Uploaded: ${draft.trade_video_uploaded_at ?? "—"}` : "Accepted format: video/*"}
+                        Use the Google Drive file ID or share link from the candidate account.
                       </Typography>
+                      <Alert severity="info" sx={{ py: 0.75 }}>
+                        Google Drive only. SIS storage upload is disabled for this page.
+                      </Alert>
 
                       <Stack direction="row" spacing={1} flexWrap="wrap">
-                        <AdButton component="label" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading}>
-                          {hasVideo ? "Replace Video" : "Upload Video"}
+                        {!googleAccessToken ? (
+                          <AdButton variant="outlined" onClick={() => void connectGoogleDrive()} disabled={googleLoading}>
+                            {googleLoading ? "Connecting..." : "Connect Google Drive"}
+                          </AdButton>
+                        ) : null}
+                        {googleAccessToken ? <Chip size="small" color="success" label="Connected" /> : null}
+
+                        <AdButton
+                          component="label"
+                          startIcon={<UploadFileIcon fontSize="small" />}
+                          disabled={googleLoading || loading || !GOOGLE_DRIVE_CLIENT_ID || !googleAccessToken}
+                        >
+                          {googleLoading ? "Uploading..." : "Upload to Drive"}
                           <input
                             type="file"
                             hidden
                             accept="video/*"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) void uploadVideo(file);
+                              if (file) void uploadGoogleDriveVideo(file);
                               e.currentTarget.value = "";
                             }}
                           />
