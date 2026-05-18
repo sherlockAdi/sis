@@ -68,6 +68,9 @@ type CandidateTradeTestRow = {
   trade_video_file_name: string | null;
   trade_video_file_size: number | null;
   trade_video_uploaded_at: string | null;
+  trade_video_source: string | null;
+  trade_video_external_file_id: string | null;
+  trade_video_external_file_url: string | null;
   trade_video_links_json: string | null;
   created_at: string;
   updated_at: string;
@@ -79,6 +82,9 @@ type CandidateTradeTestResponse = {
   trade_video_file_name: string | null;
   trade_video_file_size: number | null;
   trade_video_uploaded_at: string | null;
+  trade_video_source: string;
+  trade_video_external_file_id: string | null;
+  trade_video_external_file_url: string | null;
   trade_video_links: Array<{ id: string; title: string; url: string }>;
   created_at: string;
   updated_at: string;
@@ -89,6 +95,9 @@ type CandidateTradeTestUpdateBody = {
   trade_video_file_name?: string | null;
   trade_video_file_size?: number | null;
   trade_video_uploaded_at?: string | null;
+  trade_video_source?: string | null;
+  trade_video_external_file_id?: string | null;
+  trade_video_external_file_url?: string | null;
   trade_video_links?: CandidateTradeLinkInput[];
 };
 
@@ -164,7 +173,7 @@ function normalizeTradeLinks(value: unknown): Array<{ id: string; title: string;
 
 async function getTradeTestForCandidate(candidate_id: number): Promise<CandidateTradeTestResponse> {
   const [rows] = await pool.query<(RowDataPacket & CandidateTradeTestRow)[]>(
-    `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json, created_at, updated_at
+    `SELECT candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_source, trade_video_external_file_id, trade_video_external_file_url, trade_video_links_json, created_at, updated_at
      FROM REC_T04_candidate_trade_tests
      WHERE candidate_id = :candidate_id
      LIMIT 1`,
@@ -179,6 +188,9 @@ async function getTradeTestForCandidate(candidate_id: number): Promise<Candidate
       trade_video_file_name: null,
       trade_video_file_size: null,
       trade_video_uploaded_at: null,
+      trade_video_source: 'storage',
+      trade_video_external_file_id: null,
+      trade_video_external_file_url: null,
       trade_video_links: [],
       created_at: new Date(0).toISOString(),
       updated_at: new Date(0).toISOString(),
@@ -200,6 +212,9 @@ async function getTradeTestForCandidate(candidate_id: number): Promise<Candidate
     trade_video_file_name: row.trade_video_file_name,
     trade_video_file_size: row.trade_video_file_size === null ? null : Number(row.trade_video_file_size),
     trade_video_uploaded_at: row.trade_video_uploaded_at,
+    trade_video_source: row.trade_video_source ?? 'storage',
+    trade_video_external_file_id: row.trade_video_external_file_id ?? null,
+    trade_video_external_file_url: row.trade_video_external_file_url ?? null,
     trade_video_links,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -210,14 +225,17 @@ async function upsertTradeTestForCandidate(candidate_id: number, body: Candidate
   const links = normalizeTradeLinks(body.trade_video_links ?? []);
   await pool.query<ResultSetHeader>(
     `INSERT INTO REC_T04_candidate_trade_tests
-      (candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_links_json)
+      (candidate_id, trade_video_file_path, trade_video_file_name, trade_video_file_size, trade_video_uploaded_at, trade_video_source, trade_video_external_file_id, trade_video_external_file_url, trade_video_links_json)
      VALUES
-      (:candidate_id, :trade_video_file_path, :trade_video_file_name, :trade_video_file_size, :trade_video_uploaded_at, :trade_video_links_json)
+      (:candidate_id, :trade_video_file_path, :trade_video_file_name, :trade_video_file_size, :trade_video_uploaded_at, :trade_video_source, :trade_video_external_file_id, :trade_video_external_file_url, :trade_video_links_json)
      ON DUPLICATE KEY UPDATE
       trade_video_file_path = VALUES(trade_video_file_path),
       trade_video_file_name = VALUES(trade_video_file_name),
       trade_video_file_size = VALUES(trade_video_file_size),
       trade_video_uploaded_at = VALUES(trade_video_uploaded_at),
+      trade_video_source = VALUES(trade_video_source),
+      trade_video_external_file_id = VALUES(trade_video_external_file_id),
+      trade_video_external_file_url = VALUES(trade_video_external_file_url),
       trade_video_links_json = VALUES(trade_video_links_json)`,
     {
       candidate_id,
@@ -225,6 +243,9 @@ async function upsertTradeTestForCandidate(candidate_id: number, body: Candidate
       trade_video_file_name: toNull(body.trade_video_file_name),
       trade_video_file_size: toNullableNumber(body.trade_video_file_size),
       trade_video_uploaded_at: toMysqlDatetime(body.trade_video_uploaded_at),
+      trade_video_source: toNull(body.trade_video_source) || 'storage',
+      trade_video_external_file_id: toNull(body.trade_video_external_file_id),
+      trade_video_external_file_url: toNull(body.trade_video_external_file_url),
       trade_video_links_json: JSON.stringify(links),
     }
   );

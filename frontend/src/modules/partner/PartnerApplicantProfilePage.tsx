@@ -94,6 +94,10 @@ export default function PartnerApplicantProfilePage() {
 
   const openDoc = async (file_path: string) => {
     try {
+      if (/^https?:\/\//i.test(file_path)) {
+        window.open(file_path, "_blank", "noopener,noreferrer");
+        return;
+      }
       const presign = await recruitmentApi.files.presignDownload(file_path);
       window.open(presign.url, "_blank", "noopener,noreferrer");
     } catch (e: any) {
@@ -150,7 +154,10 @@ export default function PartnerApplicantProfilePage() {
     [activeApplication?.application_id, interviews, candidateId],
   );
   const tradeVideoLinks = tradeTest?.trade_video_links ?? [];
-  const hasTradeVideo = Boolean(tradeTest?.trade_video_file_path?.trim());
+  const hasTradeVideo =
+    tradeTest?.trade_video_source === "google_drive"
+      ? Boolean(String(tradeTest.trade_video_external_file_id ?? "").trim() || String(tradeTest.trade_video_external_file_url ?? "").trim())
+      : Boolean(tradeTest?.trade_video_file_path?.trim());
 
   const journey = useMemo(() => buildJourney(activeApplication, candidateInterviews), [activeApplication, candidateInterviews]);
   const currentJourney = journey.find((step) => step.state === "current") ?? journey[0] ?? null;
@@ -505,7 +512,25 @@ export default function PartnerApplicantProfilePage() {
                     <ProfileField label="File Name" value={tradeTest?.trade_video_file_name} />
                     <ProfileField label="Size" value={tradeTest?.trade_video_file_size ? formatBytes(tradeTest.trade_video_file_size) : "—"} />
                     <ProfileField label="Uploaded At" value={tradeTest?.trade_video_uploaded_at} />
-                    <FileField label="Open Video" value={tradeTest?.trade_video_file_path} onOpen={openDoc} />
+                    <FileField
+                      label="Open Video"
+                      value={
+                        tradeTest?.trade_video_source === "google_drive"
+                          ? tradeTest.trade_video_external_file_url ||
+                            buildGoogleDriveShareUrl(tradeTest.trade_video_external_file_id) ||
+                            tradeTest.trade_video_external_file_id ||
+                            null
+                          : tradeTest?.trade_video_file_path
+                      }
+                      onOpen={openDoc}
+                    />
+                    {tradeTest?.trade_video_source === "google_drive" ? (
+                      <>
+                        <ProfileField label="Source" value="Google Drive" />
+                        <ProfileField label="File ID" value={tradeTest.trade_video_external_file_id} />
+                        <ProfileField label="Share Link" value={tradeTest.trade_video_external_file_url} />
+                      </>
+                    ) : null}
                   </SectionCard>
 
                   <SectionCard title="Trade Video Links">
@@ -626,6 +651,11 @@ function formatBytes(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function buildGoogleDriveShareUrl(fileId: string | null): string | null {
+  const id = String(fileId ?? "").trim();
+  return id ? `https://drive.google.com/file/d/${id}/view?usp=sharing` : null;
 }
 
 type JourneyStepModel = {

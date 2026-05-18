@@ -106,6 +106,9 @@ export type PartnerCandidateTradeTestRow = {
   trade_video_file_name: string | null;
   trade_video_file_size: number | null;
   trade_video_uploaded_at: string | null;
+  trade_video_source: string | null;
+  trade_video_external_file_id: string | null;
+  trade_video_external_file_url: string | null;
   trade_video_links: PartnerCandidateTradeLinkRow[];
   created_at: string;
   updated_at: string;

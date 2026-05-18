@@ -27,8 +27,8 @@ export default function CandidateProfilePage() {
         </Box>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-          {tiles.map((x) => (
-            <Card key={x.to} variant="outlined" sx={{ borderRadius: 4 }}>
+          {tiles.map((x, index) => (
+            <Card key={`${x.to}-${index}`} variant="outlined" sx={{ borderRadius: 4 }}>
               <CardActionArea onClick={() => navigate(x.to)}>
                 <CardContent sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
