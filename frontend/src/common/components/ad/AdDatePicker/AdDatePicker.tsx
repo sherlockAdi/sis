@@ -10,6 +10,7 @@ export type AdDatePickerProps = {
   required?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  variant?: "standard" | "outlined" | "filled";
   onChange?: (value: Dayjs | null) => void;
 };
 
@@ -19,6 +20,7 @@ export function AdDatePicker({
   required = false,
   disabled = false,
   fullWidth = true,
+  variant = "outlined",
   onChange,
 }: AdDatePickerProps) {
   const [selected, setSelected] = useState<Dayjs | null>(value);
@@ -44,6 +46,7 @@ export function AdDatePicker({
             required,
             fullWidth,
             size: "small",
+            variant,
           },
         }}
       />

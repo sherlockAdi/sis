@@ -1,14 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Divider, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Chip,
+  Checkbox,
+  Divider,
+  FormControl,
+  IconButton,
+  InputLabel,
+  ListItemText,
+  ListSubheader,
+  MenuItem,
+  Select,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import CloseIcon from "@mui/icons-material/Close";
 import { useLocation } from "react-router-dom";
 import dayjs, { type Dayjs } from "dayjs";
-import { AdAlertBox, AdButton, AdCard, AdDatePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdDatePicker, AdDropDown, AdGrid, AdModal, AdNotification, AdTextArea, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
-import { deploymentApi, type DeploymentRow, type VisaDetailRow } from "../../common/services/deploymentApi";
+import {
+  deploymentApi,
+  type DeploymentRow,
+  type VisaChecklistMasterRow,
+  type VisaDetailRow,
+} from "../../common/services/deploymentApi";
 import { employeesApi } from "../../common/services/employeesApi";
 import { mastersApi, type VisaType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
@@ -45,6 +68,9 @@ export default function DeploymentManagementPage() {
   const [visaOpen, setVisaOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DeploymentRow | null>(null);
   const [visaForm, setVisaForm] = useState<Partial<VisaDetailRow>>({});
+  const [visaChecklistMaster, setVisaChecklistMaster] = useState<VisaChecklistMasterRow[]>([]);
+  const [visaChecklist, setVisaChecklist] = useState<Record<number, boolean>>({});
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const [visaLoading, setVisaLoading] = useState(false);
   const [employeeOpen, setEmployeeOpen] = useState(false);
   const [employeeLoading, setEmployeeLoading] = useState(false);
@@ -97,6 +123,16 @@ export default function DeploymentManagementPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        setVisaChecklistMaster(await deploymentApi.visaChecklist.master());
+      } catch {
+        setVisaChecklistMaster([]);
+      }
+    })();
+  }, []);
+
   const visaOptions = useMemo(
     () => [{ label: "- Select -", value: "" }].concat(visaTypes.map((v) => ({ label: v.visa_type_name, value: String(v.visa_type_id) }))),
     [visaTypes],
@@ -140,18 +176,7 @@ export default function DeploymentManagementPage() {
                   size="small"
                   disabled={uploading.offer}
                   onClick={async () => {
-                    setActiveRow(r);
-                    setVisaOpen(true);
-                    setVisaLoading(true);
-                    try {
-                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
-                      setVisaForm(details ?? { deployment_id: r.deployment_id });
-                    } catch (e: any) {
-                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load offer details", severity: "error" });
-                      setVisaForm({ deployment_id: r.deployment_id });
-                    } finally {
-                      setVisaLoading(false);
-                    }
+                    await loadVisaRecord(r);
                   }}
                   sx={{ alignSelf: "center" }}
                 >
@@ -164,18 +189,7 @@ export default function DeploymentManagementPage() {
                   size="small"
                   disabled={uploading.ticket}
                   onClick={async () => {
-                    setActiveRow(r);
-                    setVisaOpen(true);
-                    setVisaLoading(true);
-                    try {
-                      const details = await deploymentApi.visaDetails.get(r.deployment_id);
-                      setVisaForm(details ?? { deployment_id: r.deployment_id });
-                    } catch (e: any) {
-                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load ticket details", severity: "error" });
-                      setVisaForm({ deployment_id: r.deployment_id });
-                    } finally {
-                      setVisaLoading(false);
-                    }
+                    await loadVisaRecord(r);
                   }}
                   sx={{ alignSelf: "center" }}
                 >
@@ -239,25 +253,18 @@ export default function DeploymentManagementPage() {
                 </Tooltip>
               ) : null}
               {canApproveVisa ? (
-                <IconButton
-                  aria-label="Mark visa approved"
-                  size="small"
-                  onClick={async () => {
-                    try {
-                      await deploymentApi.setStatus(r.deployment_id, {
-                        status: "Visa Approved",
-                        remarks: r.remarks ?? null,
-                      });
-                      setToast({ open: true, message: "Status changed to Visa Approved", severity: "success" });
-                      refresh();
-                    } catch (e: any) {
-                      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to mark visa approved", severity: "error" });
-                    }
-                  }}
-                  sx={{ alignSelf: "center" }}
-                >
-                  <CheckCircleOutlineIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="Review checklist and approve visa">
+                  <IconButton
+                    aria-label="Review checklist and approve visa"
+                    size="small"
+                    onClick={async () => {
+                      await loadVisaRecord(r, "Review the checklist and approve from the visa details panel.");
+                    }}
+                    sx={{ alignSelf: "center" }}
+                  >
+                    <CheckCircleOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               ) : null}
               {canUploadVisa ? (
                 <Tooltip title="Upload visa details">
@@ -266,19 +273,16 @@ export default function DeploymentManagementPage() {
                     size="small"
                     disabled={uploading.passport || uploading.visa}
                     onClick={async () => {
+                      setVisaLoading(true);
                       try {
-                        setVisaLoading(true);
                         const details = await deploymentApi.visaDetails.get(r.deployment_id);
                         if (!details || details.isaccepted !== 1) {
                           setToast({ open: true, message: "Candidate has not accepted the offer yet.", severity: "warning" });
                           return;
                         }
-                        setActiveRow(r);
-                        setVisaOpen(true);
-                        setVisaForm(details ?? { deployment_id: r.deployment_id });
+                        await loadVisaRecord(r);
                       } catch (e: any) {
                         setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
-                        setVisaForm({ deployment_id: r.deployment_id });
                       } finally {
                         setVisaLoading(false);
                       }
@@ -381,72 +385,170 @@ export default function DeploymentManagementPage() {
     }
   };
 
+  const loadVisaRecord = async (row: DeploymentRow, warningMessage?: string) => {
+    setActiveRow(row);
+    setVisaOpen(true);
+    setVisaLoading(true);
+    try {
+      const details = await deploymentApi.visaDetails.get(row.deployment_id);
+      setVisaForm(details ?? { deployment_id: row.deployment_id });
+      const checklistRows = await deploymentApi.visaChecklist.list(row.deployment_id);
+      setVisaChecklist(
+        checklistRows.reduce<Record<number, boolean>>((acc, item) => {
+          acc[item.checklist_item_id] = Boolean(item.is_checked);
+          return acc;
+        }, {})
+      );
+      if (warningMessage) {
+        setToast({ open: true, message: warningMessage, severity: "info" });
+      }
+    } catch (e: any) {
+      setVisaForm({ deployment_id: row.deployment_id });
+      setVisaChecklist(
+        visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
+          acc[item.checklist_item_id] = false;
+          return acc;
+        }, {})
+      );
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to load visa details", severity: "error" });
+    } finally {
+      setVisaLoading(false);
+    }
+  };
+
+  const requiredChecklistItems = useMemo(() => visaChecklistMaster.filter((item) => item.is_required === 1), [visaChecklistMaster]);
+  const checklistSelectedCount = useMemo(
+    () => visaChecklistMaster.filter((item) => visaChecklist[item.checklist_item_id]).length,
+    [visaChecklistMaster, visaChecklist],
+  );
+  const checklistAllChecked = useMemo(
+    () => visaChecklistMaster.length > 0 && visaChecklistMaster.every((item) => Boolean(visaChecklist[item.checklist_item_id])),
+    [visaChecklistMaster, visaChecklist],
+  );
+  const checklistSelectedValues = useMemo(
+    () => visaChecklistMaster.filter((item) => Boolean(visaChecklist[item.checklist_item_id])).map((item) => String(item.checklist_item_id)),
+    [visaChecklistMaster, visaChecklist],
+  );
+  const checklistComplete = useMemo(
+    () => requiredChecklistItems.length > 0 && requiredChecklistItems.every((item) => visaChecklist[item.checklist_item_id]),
+    [requiredChecklistItems, visaChecklist]
+  );
+
+  const saveCurrentVisaPayload = async (allowApproval = false) => {
+    if (!activeRow) return;
+    if (activeStage === "Visa Processing") {
+      const existingDetails = await deploymentApi.visaDetails.get(activeRow.deployment_id);
+      if (!existingDetails || existingDetails.isaccepted !== 1) {
+        throw new Error("Candidate has not accepted the offer yet.");
+      }
+      const checklistItems = visaChecklistMaster.map((item) => ({
+        checklist_item_id: item.checklist_item_id,
+        is_checked: Boolean(visaChecklist[item.checklist_item_id]),
+      }));
+      await deploymentApi.visaChecklist.upsertMany(activeRow.deployment_id, checklistItems);
+      await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+        visa_type_id: visaForm.visa_type_id ?? null,
+        visa_number: visaForm.visa_number ?? null,
+        issue_date: visaForm.issue_date ?? null,
+        expiry_date: visaForm.expiry_date ?? null,
+        passport_number: visaForm.passport_number ?? null,
+        passport_issue_date: visaForm.passport_issue_date ?? null,
+        passport_expiry_date: visaForm.passport_expiry_date ?? null,
+        sponsor_id: visaForm.sponsor_id ?? null,
+        sponsor_contact: visaForm.sponsor_contact ?? null,
+        passport_file_path: visaForm.passport_file_path ?? null,
+        visa_file_path: visaForm.visa_file_path ?? null,
+        visa_payment_received: visaForm.visa_payment_received ?? null,
+        visa_remarks: visaForm.visa_remarks ?? null,
+        remarks: visaForm.remarks ?? null,
+      });
+      if (allowApproval) {
+        if (!checklistComplete) {
+          throw new Error("Complete every checklist item before approving the visa.");
+        }
+        await deploymentApi.setStatus(activeRow.deployment_id, {
+          status: "Visa Approved",
+          remarks: visaForm.remarks ?? null,
+        });
+      }
+      return;
+    }
+
+    if (activeStage === "Ready") {
+      await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+        offer_date: visaForm.offer_date ?? null,
+        offer_letter_file_path: visaForm.offer_letter_file_path ?? null,
+        offer_payment_received: visaForm.offer_payment_received ?? null,
+        offer_remarks: visaForm.offer_remarks ?? null,
+        remarks: visaForm.remarks ?? null,
+      });
+      await deploymentApi.setStatus(activeRow.deployment_id, {
+        status: "Offered",
+        remarks: visaForm.remarks ?? null,
+      });
+      return;
+    }
+
+    if (activeStage === "Travel Booked") {
+      await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+        ticket_number: visaForm.ticket_number ?? null,
+        booked_date: visaForm.booked_date ?? null,
+        travel_date: visaForm.travel_date ?? null,
+        ticket_file_path: visaForm.ticket_file_path ?? null,
+        ticket_remarks: visaForm.ticket_remarks ?? null,
+        remarks: visaForm.remarks ?? null,
+      });
+      await deploymentApi.setStatus(activeRow.deployment_id, {
+        status: "Ticket Confirmed",
+        remarks: visaForm.remarks ?? null,
+      });
+      return;
+    }
+
+    if (activeStage === "Deployed") {
+      await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
+        remarks: visaForm.remarks ?? null,
+      });
+      await deploymentApi.setStatus(activeRow.deployment_id, {
+        status: "Deployed",
+        remarks: visaForm.remarks ?? null,
+      });
+      return;
+    }
+  };
+
   const saveVisaDetails = async () => {
     if (!activeRow) return;
     try {
-      if (activeStage === "Ready") {
-        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
-          offer_date: visaForm.offer_date ?? null,
-          offer_letter_file_path: visaForm.offer_letter_file_path ?? null,
-          offer_payment_received: visaForm.offer_payment_received ?? null,
-          offer_remarks: visaForm.offer_remarks ?? null,
-          remarks: visaForm.remarks ?? null,
-        });
-        await deploymentApi.setStatus(activeRow.deployment_id, {
-          status: "Offered",
-          remarks: visaForm.remarks ?? null,
-        });
-        setToast({ open: true, message: "Offer details saved", severity: "success" });
-      } else if (activeStage === "Travel Booked") {
-        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
-          ticket_number: visaForm.ticket_number ?? null,
-          booked_date: visaForm.booked_date ?? null,
-          travel_date: visaForm.travel_date ?? null,
-          ticket_file_path: visaForm.ticket_file_path ?? null,
-          ticket_remarks: visaForm.ticket_remarks ?? null,
-          remarks: visaForm.remarks ?? null,
-        });
-        await deploymentApi.setStatus(activeRow.deployment_id, {
-          status: "Ticket Confirmed",
-          remarks: visaForm.remarks ?? null,
-        });
-        setToast({ open: true, message: "Ticket details saved", severity: "success" });
-      } else if (activeStage === "Deployed") {
-        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
-          remarks: visaForm.remarks ?? null,
-        });
-        await deploymentApi.setStatus(activeRow.deployment_id, {
-          status: "Deployed",
-          remarks: visaForm.remarks ?? null,
-        });
-        setToast({ open: true, message: "Deployment details saved", severity: "success" });
-      } else {
-        const existingDetails = await deploymentApi.visaDetails.get(activeRow.deployment_id);
-        if (!existingDetails || existingDetails.isaccepted !== 1) {
-          throw new Error("Candidate has not accepted the offer yet.");
-        }
-        await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
-          visa_type_id: visaForm.visa_type_id ?? null,
-          visa_number: visaForm.visa_number ?? null,
-          issue_date: visaForm.issue_date ?? null,
-          expiry_date: visaForm.expiry_date ?? null,
-          passport_number: visaForm.passport_number ?? null,
-          passport_issue_date: visaForm.passport_issue_date ?? null,
-          passport_expiry_date: visaForm.passport_expiry_date ?? null,
-          sponsor_id: visaForm.sponsor_id ?? null,
-          sponsor_contact: visaForm.sponsor_contact ?? null,
-          passport_file_path: visaForm.passport_file_path ?? null,
-          visa_file_path: visaForm.visa_file_path ?? null,
-          visa_payment_received: visaForm.visa_payment_received ?? null,
-          visa_remarks: visaForm.visa_remarks ?? null,
-          remarks: visaForm.remarks ?? null,
-        });
-        setToast({ open: true, message: "Visa details saved", severity: "success" });
-      }
+      await saveCurrentVisaPayload(false);
+      setToast({
+        open: true,
+        message:
+          activeStage === "Ready"
+            ? "Offer details saved"
+            : activeStage === "Travel Booked"
+              ? "Ticket details saved"
+              : activeStage === "Deployed"
+                ? "Deployment details saved"
+                : "Visa details saved",
+        severity: "success",
+      });
       setVisaOpen(false);
       refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to save details", severity: "error" });
+    }
+  };
+
+  const approveVisa = async () => {
+    if (!activeRow) return;
+    try {
+      await saveCurrentVisaPayload(true);
+      setToast({ open: true, message: "Status changed to Visa Approved", severity: "success" });
+      setVisaOpen(false);
+      refresh();
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? (e as Error)?.message ?? "Failed to approve visa", severity: "error" });
     }
   };
 
@@ -619,69 +721,196 @@ export default function DeploymentManagementPage() {
                   </Stack>
                 </Box>
               ) : (
-                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3 }}>
-                  <Typography fontWeight={900} sx={{ mb: 1 }}>
-                    Visa Processing
-                  </Typography>
-                  <Stack spacing={1.25}>
+                <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3, bgcolor: "rgba(255,255,255,0.72)" }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.25 }} spacing={1}>
+                    <Typography fontWeight={900}>Visa Processing</Typography>
+                    <Chip size="small" label={checklistComplete ? "Checklist complete" : `${checklistSelectedCount}/${visaChecklistMaster.length || 0} checked`} color={checklistComplete ? "success" : "default"} />
+                  </Stack>
+                  <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
                     <AdDropDown
                       label="Visa Type"
                       options={visaOptions}
                       value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
+                      variant="standard"
                       onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
                     />
+                    <AdDropDown
+                      label="Payment Received"
+                      variant="standard"
+                      options={[
+                        { label: "No", value: "0" },
+                        { label: "Yes", value: "1" },
+                      ]}
+                      value={String(visaForm.visa_payment_received ?? 0)}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_payment_received: Number(v) }))}
+                    />
+                    <AdDatePicker
+                      label="Visa Issue Date"
+                      variant="standard"
+                      value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdDatePicker
+                      label="Visa Expiry Date"
+                      variant="standard"
+                      value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdTextBox
+                      label="Passport Number"
+                      variant="standard"
+                      value={visaForm.passport_number ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))}
+                    />
+                    <AdTextBox
+                      label="Sponsor ID"
+                      variant="standard"
+                      value={visaForm.sponsor_id ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))}
+                    />
+                    <AdTextBox
+                      label="Sponsor Contact"
+                      variant="standard"
+                      value={visaForm.sponsor_contact ?? ""}
+                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))}
+                    />
+                    <AdDatePicker
+                      label="Passport Issue Date"
+                      variant="standard"
+                      value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                    <AdDatePicker
+                      label="Passport Expiry Date"
+                      variant="standard"
+                      value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
+                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                    />
+                  </Box>
+                  <Box sx={{ mt: 1 }}>
                     <AdTextArea label="Visa Remarks" minRows={2} value={visaForm.visa_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, visa_remarks: v }))} />
-                    <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-                      <AdDatePicker
-                        label="Visa Issue Date"
-                        value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
-                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                      />
-                      <AdDatePicker
-                        label="Visa Expiry Date"
-                        value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
-                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                      />
-                      <AdTextArea label="Passport Number" minRows={1} value={visaForm.passport_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))} />
-                      <AdTextArea label="Sponsor ID" minRows={1} value={visaForm.sponsor_id ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))} />
-                      <AdTextArea label="Sponsor Contact" minRows={1} value={visaForm.sponsor_contact ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))} />
-                      <AdDropDown
-                        label="Payment Received"
-                        options={[
-                          { label: "No", value: "0" },
-                          { label: "Yes", value: "1" },
-                        ]}
-                        value={String(visaForm.visa_payment_received ?? 0)}
-                        onChange={(v) => setVisaForm((f) => ({ ...f, visa_payment_received: Number(v) }))}
-                      />
-                      <AdDatePicker
-                        label="Passport Issue Date"
-                        value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
-                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                      />
-                      <AdDatePicker
-                        label="Passport Expiry Date"
-                        value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
-                        onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                      />
+                  </Box>
+                  <Box sx={{ mt: 1 }}>
+                    <FormControl fullWidth size="small" variant="standard">
+                      <InputLabel>Visa Acknowledgement Checklist</InputLabel>
+                      <Select<string[]>
+                        multiple
+                        open={checklistOpen && visaChecklistMaster.length > 0}
+                        onOpen={() => setChecklistOpen(true)}
+                        onClose={() => setChecklistOpen(false)}
+                        value={checklistSelectedValues}
+                        label="Visa Acknowledgement Checklist"
+                        renderValue={() => `Checklist (${checklistSelectedCount}/${visaChecklistMaster.length || 0})`}
+                        onChange={(event) => {
+                          const nextSelected = event.target.value as string[];
+                          const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
+                            acc[item.checklist_item_id] = nextSelected.includes(String(item.checklist_item_id));
+                            return acc;
+                          }, {});
+                          setVisaChecklist(next);
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { maxHeight: 340, minWidth: 420 },
+                          },
+                        }}
+                      >
+                        <ListSubheader
+                          sx={{
+                            position: "sticky",
+                            top: 0,
+                            zIndex: 1,
+                            bgcolor: "background.paper",
+                            py: 1,
+                            borderBottom: "1px solid rgba(226,232,240,0.9)",
+                          }}
+                        >
+                          <Stack spacing={0.75}>
+                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                              <Stack spacing={0.15}>
+                                <Typography variant="subtitle2" fontWeight={900}>
+                                  Visa Acknowledgement Checklist
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Mark each document as verified before approving the visa.
+                                </Typography>
+                              </Stack>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setChecklistOpen(false);
+                                }}
+                                aria-label="Close checklist"
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Checkbox
+                                size="small"
+                                checked={checklistAllChecked}
+                                indeterminate={!checklistAllChecked && checklistSelectedCount > 0}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
+                                    acc[item.checklist_item_id] = checked;
+                                    return acc;
+                                  }, {});
+                                  setVisaChecklist(next);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <Typography variant="body2" fontWeight={700}>
+                                All checklist items ({checklistSelectedCount}/{visaChecklistMaster.length || 0})
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </ListSubheader>
+                        {visaChecklistMaster.map((item) => (
+                          <MenuItem key={item.checklist_item_id} value={String(item.checklist_item_id)}>
+                            <Checkbox size="small" checked={Boolean(visaChecklist[item.checklist_item_id])} />
+                            <ListItemText primary={item.checklist_item_name} />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box sx={{ mt: 1.25, display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                    <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Quick note
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        Keep the checklist checked before approval. This is the final verification gate.
+                      </Typography>
                     </Box>
-                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport || !activeRow}>
-                        Upload Passport
-                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
-                      </AdButton>
-                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
-                        View Passport
-                      </AdButton>
-                      <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
-                        Upload Visa
-                        <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
-                      </AdButton>
-                      <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
-                        View Visa
-                      </AdButton>
-                    </Stack>
-                  </Stack>
+                    <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Status
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {checklistComplete ? "Ready to approve" : "Awaiting checklist completion"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ mt: 1.25, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport || !activeRow}>
+                      Upload Passport
+                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
+                    </AdButton>
+                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
+                      View Passport
+                    </AdButton>
+                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
+                      Upload Visa
+                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
+                    </AdButton>
+                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
+                      View Visa
+                    </AdButton>
+                  </Box>
                 </Box>
               )}
 
@@ -700,9 +929,20 @@ export default function DeploymentManagementPage() {
             <AdButton variant="text" onClick={() => setVisaOpen(false)}>
               Close
             </AdButton>
-            <AdButton onClick={saveVisaDetails}>
-              {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : "Save Visa Details"}
-            </AdButton>
+            {activeStage === "Visa Processing" ? (
+              <AdButton variant="outlined" onClick={saveVisaDetails}>
+                Save Visa Details
+              </AdButton>
+            ) : null}
+            {activeStage === "Visa Processing" ? (
+              <AdButton onClick={approveVisa} disabled={!checklistComplete}>
+                Approve Visa
+              </AdButton>
+            ) : (
+              <AdButton onClick={saveVisaDetails}>
+                {activeStage === "Ready" ? "Save Offer" : activeStage === "Travel Booked" ? "Save Ticket" : "Save Visa Details"}
+              </AdButton>
+            )}
           </Stack>
         </Stack>
       </AdModal>

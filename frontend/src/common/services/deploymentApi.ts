@@ -50,6 +50,7 @@ export type VisaDetailRow = {
   visa_file_path: string | null;
   visa_payment_received?: number | null;
   visa_remarks?: string | null;
+  checklist_complete?: number | null;
   ticket_number?: string | null;
   booked_date?: string | null;
   travel_date?: string | null;
@@ -58,6 +59,29 @@ export type VisaDetailRow = {
   remarks: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type VisaChecklistMasterRow = {
+  checklist_item_id: number;
+  checklist_item_code: string;
+  checklist_item_name: string;
+  sort_order: number;
+  is_required: number;
+  status: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VisaChecklistStatusRow = {
+  checklist_item_id: number;
+  checklist_item_code: string;
+  checklist_item_name: string;
+  sort_order: number;
+  is_required: number;
+  is_checked: number;
+  visa_checklist_status_id: number | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 export type CandidateVisaDetailsUpsertInput = {
@@ -76,6 +100,19 @@ export const deploymentApi = {
     apiFetch<{ updated: true }>(`/deployment/${deployment_id}/status`, { method: "PUT", body: JSON.stringify(input) }),
   history: (deployment_id: number) =>
     apiFetch<DeploymentHistoryRow[]>(`/deployment/${deployment_id}/history`, { method: "GET" }),
+  visaChecklist: {
+    master: () => apiFetch<VisaChecklistMasterRow[]>(`/deployment/visa-checklist/master`, { method: "GET" }),
+    list: (deployment_id: number) =>
+      apiFetch<VisaChecklistStatusRow[]>(`/deployment/${deployment_id}/visa-checklist`, { method: "GET" }),
+    upsertMany: (
+      deployment_id: number,
+      items: Array<{ checklist_item_id: number; is_checked: boolean }>
+    ) =>
+      apiFetch<{ updated: true }>(`/deployment/${deployment_id}/visa-checklist`, {
+        method: "PUT",
+        body: JSON.stringify({ items }),
+      }),
+  },
   visaDetails: {
     get: (deployment_id: number) =>
       apiFetch<VisaDetailRow | null>(`/deployment/${deployment_id}/visa-details`, { method: "GET" }),

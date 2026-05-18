@@ -94,7 +94,8 @@ VALUES
   ('Candidate Management', 'ADM_REC_CAND', @m_recruitment, '/recruitment/candidates', 'people', 12, TRUE),
   ('Candidate List', 'ADM_REC_CAND_LIST', @m_recruitment, '/recruitment/candidates', 'people', 13, TRUE),
   ('Screening & Interviews', 'ADM_REC_SCREEN', @m_recruitment, '/recruitment/screening-interviews', 'video_call', 14, TRUE),
-  ('Applications', 'ADM_REC_APPS', @m_recruitment, '/recruitment/applications', 'receipt_long', 15, TRUE)
+  ('Applications', 'ADM_REC_APPS', @m_recruitment, '/recruitment/applications', 'receipt_long', 15, TRUE),
+  ('Lead Candidates', 'ADM_REC_LEAD_CAND', @m_recruitment, '/recruitment/lead-candidates', 'verified_user', 16, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),
@@ -252,7 +253,8 @@ VALUES
   ('Menu Management', 'ADM_SET_MENUS', @m_settings, '/admin/menu-management', 'settings', 118, TRUE),
   ('Languages', 'ADM_SET_LANGUAGES', @m_settings, '/masters/recruitment/languages', 'language', 119, TRUE),
   ('Education', 'ADM_SET_EDUCATION', @m_settings, '/settings/education', 'school', 120, TRUE),
-  ('Skills', 'ADM_SET_SKILLS', @m_settings, '/settings/skills', 'handyman', 121, TRUE)
+  ('Skills', 'ADM_SET_SKILLS', @m_settings, '/settings/skills', 'handyman', 121, TRUE),
+  ('Visa Checklist Master', 'ADM_SET_VISA_CHECKLIST', @m_settings, '/masters/deployment/visa-checklists', 'fact_check', 122, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

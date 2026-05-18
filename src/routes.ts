@@ -36,6 +36,8 @@ import { MastersJobController } from './controllers/masters/MastersJobController
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { MastersDocumentsController } from './controllers/masters/MastersDocumentsController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MastersDeploymentController } from './controllers/masters/MastersDeploymentController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LocationStatesController } from './controllers/locationmaster/LocationStatesController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LocationCountriesController } from './controllers/locationmaster/LocationCountriesController';
@@ -502,6 +504,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"document_name":{"dataType":"string"},"is_required":{"dataType":"boolean"},"status":{"dataType":"boolean"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VisaChecklistMasterItem": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"is_required":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"sort_order":{"dataType":"double","required":true},"checklist_item_name":{"dataType":"string","required":true},"checklist_item_code":{"dataType":"string","required":true},"checklist_item_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial__checklist_item_code-string--checklist_item_name-string--sort_order-number--is_required-boolean--status-boolean__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"checklist_item_code":{"dataType":"string"},"checklist_item_name":{"dataType":"string"},"sort_order":{"dataType":"double"},"is_required":{"dataType":"boolean"},"status":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "State": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"created_at":{"dataType":"string","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":[0]},{"dataType":"enum","enums":[1]}],"required":true},"state_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"state_name":{"dataType":"string","required":true},"country_name":{"dataType":"string","required":true},"country_id":{"dataType":"double","required":true},"state_id":{"dataType":"double","required":true}},"validators":{}},
@@ -639,7 +651,17 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "VisaDetailRow": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"travel_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"booked_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_contact":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_id":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_type_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"isaccepted":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_letter_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"deployment_id":{"dataType":"double","required":true},"ticket_booking_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_processing_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_detail_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"travel_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"booked_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"ticket_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"checklist_complete":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_contact":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sponsor_id":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"passport_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"expiry_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"issue_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_number":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_type_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_remarks":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_payment_received":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"isaccepted":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_letter_file_path":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"offer_date":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"deployment_id":{"dataType":"double","required":true},"ticket_booking_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"visa_processing_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"offer_detail_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VisaChecklistMasterRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"string","required":true},"created_at":{"dataType":"string","required":true},"status":{"dataType":"double","required":true},"is_required":{"dataType":"double","required":true},"sort_order":{"dataType":"double","required":true},"checklist_item_name":{"dataType":"string","required":true},"checklist_item_code":{"dataType":"string","required":true},"checklist_item_id":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VisaChecklistStatusRow": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updated_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"created_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"visa_checklist_status_id":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"is_checked":{"dataType":"double","required":true},"is_required":{"dataType":"double","required":true},"sort_order":{"dataType":"double","required":true},"checklist_item_name":{"dataType":"string","required":true},"checklist_item_code":{"dataType":"string","required":true},"checklist_item_id":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "DashboardTone": {
@@ -4469,6 +4491,131 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMastersDeploymentController_listVisaChecklists: Record<string, TsoaRoute.ParameterSchema> = {
+                include_inactive: {"in":"query","name":"include_inactive","dataType":"boolean"},
+        };
+        app.get('/masters/deployment/visa-checklists',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController.prototype.listVisaChecklists)),
+
+            async function MastersDeploymentController_listVisaChecklists(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMastersDeploymentController_listVisaChecklists, request, response });
+
+                const controller = new MastersDeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'listVisaChecklists',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMastersDeploymentController_createVisaChecklist: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"boolean"},"is_required":{"dataType":"boolean"},"sort_order":{"dataType":"double"},"checklist_item_name":{"dataType":"string","required":true},"checklist_item_code":{"dataType":"string","required":true}}},
+        };
+        app.post('/masters/deployment/visa-checklists',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController.prototype.createVisaChecklist)),
+
+            async function MastersDeploymentController_createVisaChecklist(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMastersDeploymentController_createVisaChecklist, request, response });
+
+                const controller = new MastersDeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'createVisaChecklist',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMastersDeploymentController_updateVisaChecklist: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"Partial__checklist_item_code-string--checklist_item_name-string--sort_order-number--is_required-boolean--status-boolean__"},
+        };
+        app.put('/masters/deployment/visa-checklists/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController.prototype.updateVisaChecklist)),
+
+            async function MastersDeploymentController_updateVisaChecklist(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMastersDeploymentController_updateVisaChecklist, request, response });
+
+                const controller = new MastersDeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'updateVisaChecklist',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMastersDeploymentController_disableVisaChecklist: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.delete('/masters/deployment/visa-checklists/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(MastersDeploymentController.prototype.disableVisaChecklist)),
+
+            async function MastersDeploymentController_disableVisaChecklist(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMastersDeploymentController_disableVisaChecklist, request, response });
+
+                const controller = new MastersDeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'disableVisaChecklist',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLocationStatesController_list: Record<string, TsoaRoute.ParameterSchema> = {
                 country_id: {"in":"query","name":"country_id","dataType":"double"},
                 include_inactive: {"in":"query","name":"include_inactive","dataType":"boolean"},
@@ -5630,6 +5777,100 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'visaDetails',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDeploymentController_visaChecklistMaster: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/deployment/visa-checklist/master',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController.prototype.visaChecklistMaster)),
+
+            async function DeploymentController_visaChecklistMaster(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDeploymentController_visaChecklistMaster, request, response });
+
+                const controller = new DeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'visaChecklistMaster',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDeploymentController_visaChecklist: Record<string, TsoaRoute.ParameterSchema> = {
+                deploymentId: {"in":"path","name":"deploymentId","required":true,"dataType":"double"},
+        };
+        app.get('/deployment/:deploymentId/visa-checklist',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController.prototype.visaChecklist)),
+
+            async function DeploymentController_visaChecklist(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDeploymentController_visaChecklist, request, response });
+
+                const controller = new DeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'visaChecklist',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsDeploymentController_upsertVisaChecklist: Record<string, TsoaRoute.ParameterSchema> = {
+                deploymentId: {"in":"path","name":"deploymentId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"items":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"is_checked":{"dataType":"boolean"},"checklist_item_id":{"dataType":"double","required":true}}}}}},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.put('/deployment/:deploymentId/visa-checklist',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController)),
+            ...(fetchMiddlewares<RequestHandler>(DeploymentController.prototype.upsertVisaChecklist)),
+
+            async function DeploymentController_upsertVisaChecklist(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsDeploymentController_upsertVisaChecklist, request, response });
+
+                const controller = new DeploymentController();
+
+              await templateService.apiHandler({
+                methodName: 'upsertVisaChecklist',
                 controller,
                 response,
                 next,

@@ -54,6 +54,7 @@ type VisaDetailRow = {
   visa_file_path: string | null;
   visa_payment_received: number | null;
   visa_remarks: string | null;
+  checklist_complete: number | null;
   ticket_number: string | null;
   booked_date: string | null;
   travel_date: string | null;
@@ -62,6 +63,29 @@ type VisaDetailRow = {
   remarks: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type VisaChecklistMasterRow = {
+  checklist_item_id: number;
+  checklist_item_code: string;
+  checklist_item_name: string;
+  sort_order: number;
+  is_required: number;
+  status: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type VisaChecklistStatusRow = {
+  checklist_item_id: number;
+  checklist_item_code: string;
+  checklist_item_name: string;
+  sort_order: number;
+  is_required: number;
+  is_checked: number;
+  visa_checklist_status_id: number | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 @Route('deployment')
@@ -212,6 +236,18 @@ export class DeploymentController extends Controller {
     );
     const before = beforeRows[0];
 
+    if (status === 'Visa Approved') {
+      const checklistRows = await callProc<RowDataPacket & VisaChecklistStatusRow>(
+        `CALL sp_dep_visa_checklist_status('LIST_BY_DEPLOYMENT', :deployment_id, NULL, NULL, NULL)`,
+        { deployment_id: deploymentId }
+      );
+      const requiredRows = checklistRows.filter((row) => row.is_required === 1);
+      const allComplete = requiredRows.length > 0 && requiredRows.every((row) => row.is_checked === 1);
+      if (!allComplete) {
+        throw httpError(400, 'Complete the visa acknowledgement checklist before approving visa');
+      }
+    }
+
     await callProc(
       `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, :visa_type_id, :remarks, :user_id)`,
       {
@@ -251,6 +287,51 @@ export class DeploymentController extends Controller {
       { deployment_id: deploymentId }
     );
     return rows[0] ?? null;
+  }
+
+  @Get('visa-checklist/master')
+  @Security('jwt')
+  public async visaChecklistMaster(): Promise<VisaChecklistMasterRow[]> {
+    return callProc<RowDataPacket & VisaChecklistMasterRow>(
+      `CALL sp_dep_visa_checklist_master('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
+    );
+  }
+
+  @Get('{deploymentId}/visa-checklist')
+  @Security('jwt')
+  public async visaChecklist(@Path() deploymentId: number): Promise<VisaChecklistStatusRow[]> {
+    return callProc<RowDataPacket & VisaChecklistStatusRow>(
+      `CALL sp_dep_visa_checklist_status('LIST_BY_DEPLOYMENT', :deployment_id, NULL, NULL, NULL)`,
+      { deployment_id: deploymentId }
+    );
+  }
+
+  @Put('{deploymentId}/visa-checklist')
+  @Security('jwt')
+  public async upsertVisaChecklist(
+    @Path() deploymentId: number,
+    @Body() body: { items?: Array<{ checklist_item_id: number; is_checked?: boolean }> },
+    @Request() req: any
+  ): Promise<{ updated: true }> {
+    const user = (req as any).user as { user_id?: number } | undefined;
+    if (!user?.user_id) throw httpError(401, 'Unauthorized');
+
+    const items = Array.isArray(body?.items) ? body.items : [];
+    for (const item of items) {
+      const checklist_item_id = Number(item?.checklist_item_id);
+      if (!checklist_item_id) continue;
+      await callProc(
+        `CALL sp_dep_visa_checklist_status('UPSERT', :deployment_id, :checklist_item_id, :is_checked, :user_id)`,
+        {
+          deployment_id: deploymentId,
+          checklist_item_id,
+          is_checked: item.is_checked ? 1 : 0,
+          user_id: user.user_id,
+        }
+      );
+    }
+
+    return { updated: true };
   }
 
   @Put('{deploymentId}/visa-details')
