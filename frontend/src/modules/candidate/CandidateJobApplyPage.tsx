@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Alert, Box, Chip, Container, Divider, Stack, Typography } from "@mui/material";
-import { AdButton, AdCard, AdCheckBox, AdNotification, AdRichTextContent } from "../../common/ad";
+import { AdButton, AdCard, AdFilePreviewDialog, AdNotification, AdRichTextContent } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow, type CandidateApplicationRow } from "../../common/services/candidateApi";
 import { jobsApi, type JobDetail } from "../../common/services/jobsApi";
@@ -58,6 +58,7 @@ function isVerifiedCandidate(profile: Awaited<ReturnType<typeof candidateApi.pro
 
 export default function CandidateJobApplyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { jobId } = useParams();
   const id = Number(jobId);
 
@@ -81,9 +82,12 @@ export default function CandidateJobApplyPage() {
 
   const [docs, setDocs] = useState<CandidateApplicationDocRow[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
-
-  const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [preview, setPreview] = useState<{ open: boolean; title: string; filePath: string | null }>({
+    open: false,
+    title: "",
+    filePath: null,
+  });
 
   const resolvedDocs = useMemo(() => {
     const profilePathMap: Array<[string[], string | null | undefined]> = [
@@ -123,10 +127,9 @@ export default function CandidateJobApplyPage() {
     if (!applicationId) return "Start application to continue.";
     if (docsLoading) return "Loading documents...";
     if (missingDocNames.length) return `Upload all required documents: ${missingDocNames.join(", ")}.`;
-    if (!consent) return "Consent is required.";
     if (String(application?.status ?? "").toLowerCase() === "applied") return "You already applied for this job.";
     return null;
-  }, [application?.status, applicationId, candidateVerified, consent, docsLoading, missingDocNames, profile, profileComplete, profileLoading]);
+  }, [application?.status, applicationId, candidateVerified, docsLoading, missingDocNames, profile, profileComplete, profileLoading]);
 
   const loadJob = async () => {
     if (!Number.isFinite(id) || id <= 0) return;
@@ -231,14 +234,9 @@ export default function CandidateJobApplyPage() {
     }
   };
 
-  const openDoc = async (doc: CandidateApplicationDocRow) => {
+  const openDoc = (doc: CandidateApplicationDocRow) => {
     if (!doc.file_path) return;
-    try {
-      const presign = await recruitmentApi.files.presignDownload(doc.file_path);
-      window.open(presign.url, "_blank", "noopener,noreferrer");
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
-    }
+    setPreview({ open: true, title: doc.document_name, filePath: doc.file_path });
   };
 
   const submit = async () => {
@@ -271,6 +269,12 @@ export default function CandidateJobApplyPage() {
     <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
       <Stack spacing={2.5}>
         <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+        <AdFilePreviewDialog
+          open={preview.open}
+          title={preview.title}
+          filePath={preview.filePath}
+          onClose={() => setPreview({ open: false, title: "", filePath: null })}
+        />
 
         <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between">
           <Box>
@@ -285,6 +289,16 @@ export default function CandidateJobApplyPage() {
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
             {application?.status ? <Chip size="small" label={`Status: ${application.status}`} /> : null}
             {applicationId ? <Chip size="small" label={`App ID: ${applicationId}`} /> : null}
+            <AdButton
+              variant="text"
+              onClick={() =>
+                navigate("/portal/candidate/profile/settings", {
+                  state: { returnTo: `${location.pathname}${location.search}` },
+                })
+              }
+            >
+              Update Profile
+            </AdButton>
             <AdButton variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate("/portal/candidate/jobs")}>
               Back to Jobs
             </AdButton>
@@ -437,16 +451,19 @@ export default function CandidateJobApplyPage() {
                 {applicationId ? "Refresh" : appLoading ? "Starting..." : "Start Application"}
               </AdButton>
               <AdButton variant="contained" disabled={Boolean(applyDisabledReason) || submitting} onClick={submit}>
-                {submitting ? "Applying..." : "Apply (with consent)"}
+                {submitting ? "Applying..." : "Apply"}
+              </AdButton>
+              <AdButton
+                variant="text"
+                onClick={() =>
+                  navigate("/portal/candidate/profile/settings", {
+                    state: { returnTo: `${location.pathname}${location.search}` },
+                  })
+                }
+              >
+                Update Profile
               </AdButton>
             </Stack>
-
-            <AdCheckBox
-              label="I confirm the above information and documents are correct, and I consent to submit this application."
-              checked={consent}
-              onChange={setConsent}
-              disabled={!applicationId || docsLoading}
-            />
 
             {applyDisabledReason && applicationId ? <Alert severity="info">{applyDisabledReason}</Alert> : null}
           </Stack>

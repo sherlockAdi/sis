@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Card, CardContent, Chip, Container, Divider, Stack, TextField, Typography } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { AdButton, AdDropDown, AdNotification, AdSearchableDropDown, AdSearchableDropDownMulti, AdTextBox } from "../../common/ad";
+import { AdButton, AdDropDown, AdFilePreviewDialog, AdNotification, AdPhoneField, AdSearchableDropDown, AdSearchableDropDownMulti, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi } from "../../common/services/candidateApi";
 import { mastersApi, type Education, type JobCategory, type Language, type Skill } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
-import { listCountries, listStates, listCities, type Country, type StateRow, type CityRow } from "../../common/services/locationApi";
+import { getIndiaCountryId, listCountries, listStates, listCities, lookupIndianPincode, type Country, type StateRow, type CityRow } from "../../common/services/locationApi";
 import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
 
 type CandidateProfileForm = {
@@ -146,7 +147,13 @@ function normalizeDateInput(value?: string | null): string {
   return trimmed.split(/[T\s]/)[0];
 }
 
+function sameText(a: string, b: string): boolean {
+  return String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
+}
+
 export default function CandidateProfileSettingsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -158,6 +165,11 @@ export default function CandidateProfileSettingsPage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CandidateProfileForm>(emptyForm);
+  const [preview, setPreview] = useState<{ open: boolean; title: string; filePath: string | null }>({
+    open: false,
+    title: "",
+    filePath: null,
+  });
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -170,6 +182,12 @@ export default function CandidateProfileSettingsPage() {
       try {
         const rows = await listCountries(true);
         if (alive) setCountries(rows);
+        if (alive) {
+          const indiaId = getIndiaCountryId(rows);
+          if (indiaId) {
+            setForm((current) => (current.country_id ? current : { ...current, country_id: String(indiaId) }));
+          }
+        }
       } catch {
         if (alive) setCountries([]);
       }
@@ -315,9 +333,33 @@ export default function CandidateProfileSettingsPage() {
     setForm((f) => ({ ...f, [field]: key } as CandidateProfileForm));
   };
 
-  const viewProfileFile = async (filePath: string) => {
-    const presign = await recruitmentApi.files.presignDownload(filePath);
-    window.open(presign.url, "_blank", "noopener,noreferrer");
+  const applyPincodeLookup = async (rawPin: string) => {
+    const lookup = await lookupIndianPincode(rawPin);
+    if (!lookup) return;
+
+    const indiaId = getIndiaCountryId(countries);
+    if (!indiaId) return;
+    if (form.country_id && Number(form.country_id) !== indiaId) return;
+
+    const stateRows = states.length ? states : await listStates(indiaId, true);
+    const stateMatch = stateRows.find((row) => sameText(row.state_name, lookup.state));
+    if (!stateMatch) return;
+
+    const cityRows = cities.length ? cities : await listCities(stateMatch.state_id, true);
+    const cityMatch =
+      cityRows.find((row) => sameText(row.city_name, lookup.district)) ??
+      cityRows.find((row) => sameText(row.city_name, lookup.officeName));
+
+    setForm((current) => ({
+      ...current,
+      country_id: String(indiaId),
+      state_id: String(stateMatch.state_id),
+      city_id: cityMatch ? String(cityMatch.city_id) : "",
+    }));
+  };
+
+  const viewProfileFile = (filePath: string) => {
+    setPreview({ open: true, title: "Profile Document Preview", filePath });
   };
 
   const save = async () => {
@@ -356,6 +398,11 @@ export default function CandidateProfileSettingsPage() {
         languages_known: serializeJsonList(form.languages_known),
       });
       setToast({ open: true, message: "Profile saved", severity: "success" });
+      const returnTo = String((location.state as any)?.returnTo ?? "").trim();
+      if (returnTo) {
+        navigate(returnTo, { replace: true });
+        return;
+      }
       const latest = await candidateApi.profile.me();
       setForm(mapProfile(latest));
     } catch (e: any) {
@@ -370,6 +417,12 @@ export default function CandidateProfileSettingsPage() {
     <Container maxWidth="lg" sx={{ py: { xs: 1, md: 1.5 } }}>
       <Stack spacing={1.5}>
         <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+        <AdFilePreviewDialog
+          open={preview.open}
+          title={preview.title}
+          filePath={preview.filePath}
+          onClose={() => setPreview({ open: false, title: "", filePath: null })}
+        />
 
         {error ? <Alert severity="error">{error}</Alert> : null}
         {loading ? <Alert severity="info">Loading profile...</Alert> : null}
@@ -396,7 +449,7 @@ export default function CandidateProfileSettingsPage() {
                   <Chip size="small" label={profileComplete ? "Complete" : "Incomplete"} color={profileComplete ? "success" : "warning"} />
                   <Chip
                     size="small"
-                    label={form.is_verified ? "Verified" : "Pending Approval"}
+                    label={form.is_verified ? "Verified" : "Verification pending"}
                     color={form.is_verified ? "success" : "warning"}
                   />
                   <AdButton variant="contained" onClick={save} disabled={saving || loading}>
@@ -410,7 +463,7 @@ export default function CandidateProfileSettingsPage() {
               <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, alignItems: "start" }}>
                 <AdTextBox variant="standard" size="small" label="First Name" value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
                 <AdTextBox variant="standard" size="small" label="Last Name" value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
-                <AdTextBox variant="standard" size="small" label="Mobile" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                <AdPhoneField value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
                 <AdTextBox variant="standard" size="small" label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
                 <AdTextBox variant="standard" size="small" label="Passport Number" value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
                 <AdSearchableDropDown variant="standard" label="Country" options={countryOptions} value={form.country_id} onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))} />
@@ -431,7 +484,16 @@ export default function CandidateProfileSettingsPage() {
                 <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
                 <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
                 <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
-                <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
+                <AdTextBox
+                  variant="standard"
+                  size="small"
+                  label="Pincode"
+                  value={form.pincode}
+                  onChange={(v) => setForm((f) => ({ ...f, pincode: v }))}
+                  onBlur={() => {
+                    void applyPincodeLookup(form.pincode);
+                  }}
+                />
                 <TextField
                   variant="standard"
                   size="small"
@@ -564,7 +626,7 @@ export default function CandidateProfileSettingsPage() {
                             View
                           </AdButton>
                           <Button variant="outlined" component="label" startIcon={<UploadFileIcon />}>
-                            Replace
+                            Update
                             <input
                               type="file"
                               hidden

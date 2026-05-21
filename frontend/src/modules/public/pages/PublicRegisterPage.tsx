@@ -17,10 +17,13 @@ import {
   listPublicCities,
   listPublicCountries,
   listPublicStates,
+  lookupIndianPincode,
   type CityRow,
   type Country,
   type StateRow,
 } from "../../../common/services/locationApi";
+import { AdPhoneField } from "../../../common/ad";
+import { getIndiaCountryId } from "../../../common/services/locationApi";
 
 type Form = {
   first_name: string;
@@ -100,6 +103,12 @@ export default function PublicRegisterPage() {
       try {
         const rows = await listPublicCountries();
         if (alive) setCountries(rows);
+        if (alive) {
+          const indiaId = getIndiaCountryId(rows);
+          if (indiaId) {
+            setForm((current) => (current.country_id ? current : { ...current, country_id: indiaId }));
+          }
+        }
       } catch {
         if (alive) setCountries([]);
       }
@@ -174,7 +183,30 @@ export default function PublicRegisterPage() {
     return null;
   };
 
-  const normalizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10);
+  const applyPincodeLookup = async (rawPin: string) => {
+    const lookup = await lookupIndianPincode(rawPin);
+    if (!lookup) return;
+
+    const indiaId = getIndiaCountryId(countries);
+    if (!indiaId) return;
+    if (form.country_id !== "" && form.country_id !== indiaId) return;
+
+    const stateRows = states.length ? states : await listPublicStates(indiaId);
+    const stateMatch = stateRows.find((row) => String(row.state_name ?? "").trim().toLowerCase() === lookup.state.trim().toLowerCase());
+    if (!stateMatch) return;
+
+    const cityRows = cities.length ? cities : await listPublicCities(stateMatch.state_id);
+    const cityMatch =
+      cityRows.find((row) => String(row.city_name ?? "").trim().toLowerCase() === lookup.district.trim().toLowerCase()) ??
+      cityRows.find((row) => String(row.city_name ?? "").trim().toLowerCase() === lookup.officeName.trim().toLowerCase());
+
+    setForm((current) => ({
+      ...current,
+      country_id: indiaId,
+      state_id: stateMatch.state_id,
+      city_id: cityMatch?.city_id ?? "",
+    }));
+  };
 
   const submit = async () => {
     setError(null);
@@ -270,20 +302,15 @@ export default function PublicRegisterPage() {
                 <TextField label="Last Name" value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} fullWidth />
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-                <TextField
+                <AdPhoneField
                   label="Mobile"
-                  type="tel"
                   value={form.phone}
-                  onChange={(e) => {
-                    const value = normalizePhone(e.target.value);
+                  onChange={(value) => {
                     setForm((f) => ({ ...f, phone: value }));
                     setFieldErrors((errs) => ({ ...errs, phone: value && PHONE_RE.test(value) ? undefined : errs.phone }));
                   }}
-                  onBlur={() => setFieldErrors((errs) => ({ ...errs, phone: validateField("phone", form.phone) ?? undefined }))}
                   error={Boolean(fieldErrors.phone)}
                   helperText={fieldErrors.phone}
-                  inputProps={{ inputMode: "numeric", maxLength: 10, pattern: "\\d{10}" }}
-                  fullWidth
                 />
                 <TextField
                   label="Email"
@@ -363,6 +390,15 @@ export default function PublicRegisterPage() {
                   ))}
                 </TextField>
               </Stack>
+              <TextField
+                label="Pincode"
+                value={form.pincode}
+                onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))}
+                onBlur={() => {
+                  void applyPincodeLookup(form.pincode);
+                }}
+                fullWidth
+              />
             </Stack>
 
             <Alert severity="info">

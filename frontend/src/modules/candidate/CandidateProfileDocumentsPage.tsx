@@ -1,10 +1,9 @@
 import { Box, Container, Stack, Typography } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useEffect, useState } from "react";
-import { AdAlertBox, AdButton, AdCard, AdGrid, AdNotification } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdFilePreviewDialog, AdGrid, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { candidateApi, type CandidateApplicationDocRow } from "../../common/services/candidateApi";
-import { recruitmentApi } from "../../common/services/recruitmentApi";
 
 type UnifiedDocumentRow = {
   id: string;
@@ -22,6 +21,11 @@ export default function CandidateProfileDocumentsPage() {
   const [rows, setRows] = useState<UnifiedDocumentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ open: boolean; title: string; filePath: string | null }>({
+    open: false,
+    title: "",
+    filePath: null,
+  });
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: any }>({
     open: false,
     message: "",
@@ -97,19 +101,20 @@ export default function CandidateProfileDocumentsPage() {
     })();
   }, []);
 
-  const openDoc = async (file_path: string) => {
-    try {
-      const presign = await recruitmentApi.files.presignDownload(file_path);
-      window.open(presign.url, "_blank", "noopener,noreferrer");
-    } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
-    }
+  const openDoc = (file_path: string) => {
+    setPreview({ open: true, title: "Document Preview", filePath: file_path });
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 1, md: 2 } }}>
       <Stack spacing={2.5}>
         <AdNotification open={toast.open} message={toast.message} severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} />
+        <AdFilePreviewDialog
+          open={preview.open}
+          title={preview.title}
+          filePath={preview.filePath}
+          onClose={() => setPreview({ open: false, title: "", filePath: null })}
+        />
         <Box>
           <Typography variant="h5" fontWeight={950} sx={{ letterSpacing: -0.4 }}>
             My Documents

@@ -448,6 +448,7 @@ export default function RecruitmentCandidatesPage({
         </Typography>
       )}
 
+      {loading ? <AdAlertBox severity="info" title="Loading" message="Loading candidates and verification status..." /> : null}
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
@@ -493,7 +494,7 @@ export default function RecruitmentCandidatesPage({
                 <Chip size="small" label={`Status: ${selectedCandidateResolved.status ?? "—"}`} />
                 <Chip
                   size="small"
-                  label={isVerifiedCandidate(selectedCandidateResolved) ? "Verified" : "Pending Approval"}
+                  label={isVerifiedCandidate(selectedCandidateResolved) ? "Verified" : "Verification pending"}
                   color={isVerifiedCandidate(selectedCandidateResolved) ? "success" : "warning"}
                 />
                 <Chip size="small" label={selectedProfileComplete ? "Profile Complete" : "Needs Attention"} color={selectedProfileComplete ? "success" : "default"} />

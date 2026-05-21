@@ -64,7 +64,7 @@ export function AdRichTextEditor({
   return (
     <Box width={fullWidth ? "100%" : "auto"}>
       {label ? (
-        <Typography variant="body2" fontWeight={500} mb={0.5}>
+        <Typography variant="body2" fontWeight={800} mb={0.5}>
           {label}
           {required && " *"}
         </Typography>

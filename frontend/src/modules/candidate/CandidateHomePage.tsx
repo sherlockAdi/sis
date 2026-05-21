@@ -407,7 +407,7 @@ export default function CandidateHomePage() {
                     />
                     <Chip
                       size="small"
-                      label={isVerifiedCandidate(profile) ? "Verified" : "Pending Approval"}
+                      label={isVerifiedCandidate(profile) ? "Verified" : "Verification pending"}
                       color={isVerifiedCandidate(profile) ? "success" : "warning"}
                       sx={{ mt: 0.6, height: 22, fontWeight: 800 }}
                     />
@@ -470,7 +470,7 @@ export default function CandidateHomePage() {
                             ? "You can apply now"
                             : !profileComplete
                               ? "Complete profile before applying"
-                              : "Awaiting admin verification"
+                              : "Verification pending"
                         }
                       </Typography>
                     </Box>

@@ -2,6 +2,8 @@ export { default as AdThemeProvider } from "./AdThemeProvider";
 export { default as AdAppShell } from "./AdAppShell";
 export { default as AdStatCard } from "./AdStatCard";
 export { AdTextBox } from "../components/form/AdTextBox";
+export { AdFilePreviewDialog } from "../components/ad/AdFilePreviewDialog";
+export { AdPhoneField } from "../components/ad/AdPhoneField";
 export { default as Ad3DBackground } from "./Ad3DBackground";
 export { default as SisLogo } from "./SisLogo";
 export { AdButton } from "../components/ad/AdButton";
