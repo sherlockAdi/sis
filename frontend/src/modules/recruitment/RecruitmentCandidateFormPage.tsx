@@ -10,12 +10,13 @@ import {
   AdDatePicker,
   AdDropDown,
   AdNotification,
+  AdPhoneField,
   AdSearchableDropDown,
   AdTextBox,
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { recruitmentApi, type CandidateRow } from "../../common/services/recruitmentApi";
-import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { getIndiaCountryId, listCities, listCountries, listStates, lookupIndianPincode, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
 
 type Form = {
   candidate_id?: number;
@@ -170,6 +171,10 @@ function toNull(value: string): string | null {
   return v ? v : null;
 }
 
+function sameText(a: string, b: string): boolean {
+  return String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
+}
+
 function fileExt(name: string): string {
   const idx = name.lastIndexOf(".");
   return idx >= 0 ? name.slice(idx).toLowerCase() : "";
@@ -240,12 +245,19 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
   useEffect(() => {
     (async () => {
       try {
-        setCountries(await listCountries(true));
+        const rows = await listCountries(true);
+        setCountries(rows);
+        if (mode === "create") {
+          const indiaId = getIndiaCountryId(rows);
+          if (indiaId) {
+            setForm((current) => (current.country_id ? current : { ...current, country_id: String(indiaId) }));
+          }
+        }
       } catch {
         setCountries([]);
       }
     })();
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== "edit" || !candidateId) return;
@@ -292,6 +304,31 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
       }
     })();
   }, [form.state_id]);
+
+  const applyPincodeLookup = async (rawPin: string) => {
+    const lookup = await lookupIndianPincode(rawPin);
+    if (!lookup) return;
+
+    const indiaId = getIndiaCountryId(countries);
+    if (!indiaId) return;
+    if (form.country_id && Number(form.country_id) !== indiaId) return;
+
+    const stateRows = states.length ? states : await listStates(indiaId, true);
+    const stateMatch = stateRows.find((row) => sameText(row.state_name, lookup.state));
+    if (!stateMatch) return;
+
+    const cityRows = cities.length ? cities : await listCities(stateMatch.state_id, true);
+    const cityMatch =
+      cityRows.find((row) => sameText(row.city_name, lookup.district)) ??
+      cityRows.find((row) => sameText(row.city_name, lookup.officeName));
+
+    setForm((current) => ({
+      ...current,
+      country_id: String(indiaId),
+      state_id: String(stateMatch.state_id),
+      city_id: cityMatch ? String(cityMatch.city_id) : "",
+    }));
+  };
 
   const countryOptions = useMemo(
     () => countries.map((c) => ({ label: c.country_name, value: String(c.country_id) })),
@@ -523,7 +560,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                   {form.candidate_code ? <Chip size="small" label={`Code: ${form.candidate_code}`} /> : null}
                   <Chip size="small" label={profileComplete ? "Complete" : "Incomplete"} color={profileComplete ? "success" : "warning"} />
-                  <Chip size="small" label={form.is_verified ? "Verified" : "Pending Approval"} color={form.is_verified ? "success" : "warning"} />
+                  <Chip size="small" label={form.is_verified ? "Verified" : "Verification pending"} color={form.is_verified ? "success" : "warning"} />
                 </Stack>
 
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -538,7 +575,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
               <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, alignItems: "start" }}>
                 <AdTextBox variant="standard" size="small" label="First Name" required value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
                 <AdTextBox variant="standard" size="small" label="Last Name" required value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
-                <AdTextBox variant="standard" size="small" label="Mobile" required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                <AdPhoneField required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
                 <AdTextBox variant="standard" size="small" label="Email" required type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
                 <AdTextBox variant="standard" size="small" label="Passport Number" required value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
                 <AdSearchableDropDown
@@ -620,7 +657,16 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                     minRows={2}
                   />
                 </Box>
-                <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
+                <AdTextBox
+                  variant="standard"
+                  size="small"
+                  label="Pincode"
+                  value={form.pincode}
+                  onChange={(v) => setForm((f) => ({ ...f, pincode: v }))}
+                  onBlur={() => {
+                    void applyPincodeLookup(form.pincode);
+                  }}
+                />
                 <AdTextBox variant="standard" size="small" label="Education" value={form.education} onChange={(v) => setForm((f) => ({ ...f, education: v }))} />
                 <AdTextBox variant="standard" size="small" label="Skills" value={form.skills} onChange={(v) => setForm((f) => ({ ...f, skills: v }))} />
                 <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
@@ -709,7 +755,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                             View
                           </AdButton>
                           <Button variant="outlined" component="label" startIcon={<UploadFileIcon />}>
-                            {filePath ? "Replace" : "Upload"}
+                            {filePath ? "Update" : "Upload"}
                             <input
                               type="file"
                               hidden

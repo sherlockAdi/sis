@@ -239,6 +239,7 @@ export default function AppRoutes() {
           path="/admin/notification-templates"
           element={<Navigate to="/portal/admin/notification-templates" replace />}
         />
+        <Route path="/portal/admin" element={<Navigate to="/portal/admin/menu-management" replace />} />
         <Route path="/jobs-preview" element={<Navigate to="/portal/jobs-preview" replace />} />
         <Route
           path="/recruitment/applications"

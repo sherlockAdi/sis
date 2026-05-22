@@ -209,7 +209,7 @@ export default function NotificationTemplatesPage() {
               Notification Templates
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Edit the email and message templates used by candidate, employer, partner, associate, and admin workflows.
+              Audit and refine the email and message templates used by candidate, employer, partner, associate, and admin workflows.
             </Typography>
           </Box>
           <AdButton startIcon={<AddIcon />} onClick={() => { setForm(emptyForm()); setModalOpen(true); }}>

@@ -304,7 +304,7 @@ export default function EmployeeAttendancePage() {
   );
 
   const policyOptions = useMemo(
-    () => (summary?.leave_policies ?? []).map((p) => ({ label: `${p.leave_name} (${p.leave_code})`, value: String(p.leave_policy_id) })),
+    () => (summary?.leave_policies ?? []).map((p) => ({ label: p.leave_name, value: String(p.leave_policy_id) })),
     [summary?.leave_policies],
   );
 

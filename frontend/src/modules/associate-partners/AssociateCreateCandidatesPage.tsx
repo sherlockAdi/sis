@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, Card, CardContent, Chip, Container, Divider, Stack, TextField, Typography } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { AdButton, AdDropDown, AdNotification, AdSearchableDropDown, AdSearchableDropDownMulti, AdTextBox } from "../../common/ad";
+import { AdButton, AdDropDown, AdNotification, AdPhoneField, AdSearchableDropDown, AdSearchableDropDownMulti, AdTextBox } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { associatePortalApi } from "../../common/services/associatePortalApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { mastersApi, type Education, type JobCategory, type Language, type Skill } from "../../common/services/mastersApi";
-import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { getIndiaCountryId, listCities, listCountries, listStates, lookupIndianPincode, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
 import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
 
 type Form = {
@@ -96,12 +96,17 @@ export default function AssociateCreateCandidatesPage() {
   useEffect(() => {
     (async () => {
       try {
-        setCountries(await listCountries(true));
+        const rows = await listCountries(true);
+        setCountries(rows);
+        const indiaId = getIndiaCountryId(rows);
+        if (indiaId) {
+          setForm((current) => (current.country_id ? current : { ...current, country_id: String(indiaId) }));
+        }
       } catch {
         setCountries([]);
       }
     })();
-  }, []);
+  }, [form.country_id]);
 
   useEffect(() => {
     let alive = true;
@@ -159,6 +164,33 @@ export default function AssociateCreateCandidatesPage() {
       }
     })();
   }, [form.state_id]);
+
+  const sameText = (a: string, b: string) => String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
+
+  const applyPincodeLookup = async (rawPin: string) => {
+    const lookup = await lookupIndianPincode(rawPin);
+    if (!lookup) return;
+
+    const indiaId = getIndiaCountryId(countries);
+    if (!indiaId) return;
+    if (form.country_id && Number(form.country_id) !== indiaId) return;
+
+    const stateRows = states.length ? states : await listStates(indiaId, true);
+    const stateMatch = stateRows.find((row) => sameText(row.state_name, lookup.state));
+    if (!stateMatch) return;
+
+    const cityRows = cities.length ? cities : await listCities(stateMatch.state_id, true);
+    const cityMatch =
+      cityRows.find((row) => sameText(row.city_name, lookup.district)) ??
+      cityRows.find((row) => sameText(row.city_name, lookup.officeName));
+
+    setForm((current) => ({
+      ...current,
+      country_id: String(indiaId),
+      state_id: String(stateMatch.state_id),
+      city_id: cityMatch ? String(cityMatch.city_id) : "",
+    }));
+  };
 
   const countryOptions = useMemo(() => countries.map((c) => ({ label: c.country_name, value: String(c.country_id) })), [countries]);
   const stateOptions = useMemo(() => states.map((s) => ({ label: s.state_name, value: String(s.state_id) })), [states]);
@@ -279,7 +311,7 @@ export default function AssociateCreateCandidatesPage() {
             <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, alignItems: "start" }}>
               <AdTextBox variant="standard" size="small" label="First Name" value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
               <AdTextBox variant="standard" size="small" label="Last Name" value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
-              <AdTextBox variant="standard" size="small" label="Reference Mobile" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+              <AdPhoneField label="Reference Mobile" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
               <AdTextBox variant="standard" size="small" label="Reference Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
               <AdTextBox variant="standard" size="small" label="Passport Number" value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
               <AdSearchableDropDown variant="standard" label="Country" options={countryOptions} value={form.country_id} onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))} />
@@ -300,7 +332,16 @@ export default function AssociateCreateCandidatesPage() {
               <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
               <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
               <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
-              <AdTextBox variant="standard" size="small" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Pincode"
+                value={form.pincode}
+                onChange={(v) => setForm((f) => ({ ...f, pincode: v }))}
+                onBlur={() => {
+                  void applyPincodeLookup(form.pincode);
+                }}
+              />
               <TextField
                 variant="standard"
                 size="small"

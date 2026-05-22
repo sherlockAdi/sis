@@ -104,3 +104,42 @@ export async function updateCity(city_id: number, input: Partial<{ state_id: num
 export async function disableCity(city_id: number) {
   return apiFetch(`/location/cities/${city_id}`, { method: "DELETE" });
 }
+
+export function getIndiaCountryId(countries: Country[]): number | undefined {
+  return countries.find((country) => {
+    const name = String(country.country_name ?? "").trim().toLowerCase();
+    const code = String(country.country_code ?? "").trim().toUpperCase();
+    const iso = String(country.iso_code ?? "").trim().toUpperCase();
+    return name === "india" || code === "IN" || iso === "IN";
+  })?.country_id;
+}
+
+export type IndianPincodeLookup = {
+  pincode: string;
+  country: string;
+  state: string;
+  district: string;
+  officeName: string;
+};
+
+export async function lookupIndianPincode(pincode: string): Promise<IndianPincodeLookup | null> {
+  const pin = String(pincode ?? "").trim();
+  if (!/^\d{6}$/.test(pin)) return null;
+
+  const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+  if (!response.ok) return null;
+
+  const payload = await response.json().catch(() => null);
+  const entry = Array.isArray(payload) ? payload[0] : payload;
+  const office = Array.isArray(entry?.PostOffice) ? entry.PostOffice[0] : null;
+  const status = String(entry?.Status ?? "").trim().toLowerCase();
+  if (!office || status !== "success") return null;
+
+  return {
+    pincode: pin,
+    country: String(office.Country ?? "India").trim() || "India",
+    state: String(office.State ?? "").trim(),
+    district: String(office.District ?? "").trim(),
+    officeName: String(office.Name ?? "").trim(),
+  };
+}
