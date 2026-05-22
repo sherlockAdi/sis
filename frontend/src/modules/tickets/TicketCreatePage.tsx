@@ -177,8 +177,9 @@ export default function TicketCreatePage() {
         attachment_file_name: attachmentFileName,
       });
 
-      setToast({ open: true, message: `Ticket ${created.ticket_code} created`, severity: "success" });
-      navigate(withPortalBase("/helpdesk/open"));
+      navigate(withPortalBase("/helpdesk/open"), {
+        state: { flashMessage: `Ticket ${created.ticket_code} created`, flashSeverity: "success" },
+      });
     } catch (e) {
       setToast({
         open: true,
@@ -259,47 +260,6 @@ export default function TicketCreatePage() {
                 onChange={(value) => setForm((prev) => ({ ...prev, description: String(value) }))}
               />
             </Box>
-          </Box>
-
-          <Divider />
-
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
-            <Box>
-              <Typography variant="subtitle2" fontWeight={900}>
-                Optional Links
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Connect this token to a job, deployment, candidate, or employee.
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              display: "grid",
-              gap: 1.25,
-              gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
-            }}
-          >
-            <AdSearchableDropDown
-              variant="standard"
-              label="Job ID"
-              value={form.related_job_id}
-              options={openJobs.map((job) => ({
-                label: `${job.job_code ?? `Job #${job.job_id}`} - ${job.job_title}`,
-                value: job.job_id,
-              }))}
-              helperText="Only open jobs are shown here."
-              onChange={(value) => setForm((prev) => ({ ...prev, related_job_id: String(value) }))}
-            />
-            <AdTextBox
-              variant="standard"
-              label="Deployment ID"
-              type="number"
-              size="small"
-              value={form.related_deployment_id}
-              onChange={(value) => setForm((prev) => ({ ...prev, related_deployment_id: String(value) }))}
-            />
           </Box>
 
           <Box

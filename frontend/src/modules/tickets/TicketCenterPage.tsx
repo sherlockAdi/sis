@@ -189,6 +189,16 @@ export default function TicketCenterPage() {
   }, [params.ticketId]);
 
   useEffect(() => {
+    const state = location.state as { flashMessage?: string; flashSeverity?: ToastState["severity"] } | null;
+    if (!state?.flashMessage) return;
+    setToast({
+      open: true,
+      message: state.flashMessage,
+      severity: state.flashSeverity ?? "success",
+    });
+  }, [location.state]);
+
+  useEffect(() => {
     if (isEscalationsPage) return;
     if (selectedTicketId) void loadDetail(selectedTicketId);
     else setDetail(null);
@@ -473,14 +483,6 @@ export default function TicketCenterPage() {
                   options={priorityOptions}
                   onChange={(value) => setForm((prev) => ({ ...prev, priority: String(value) }))}
                 />
-                <Divider />
-                <Typography variant="subtitle2" fontWeight={900}>
-                  Optional Links
-                </Typography>
-                <AdTextBox label="Job ID" type="number" value={form.related_job_id} onChange={(value) => setForm((prev) => ({ ...prev, related_job_id: String(value) }))} />
-                <AdTextBox label="Deployment ID" type="number" value={form.related_deployment_id} onChange={(value) => setForm((prev) => ({ ...prev, related_deployment_id: String(value) }))} />
-                <AdTextBox label="Candidate ID" type="number" value={form.related_candidate_id} onChange={(value) => setForm((prev) => ({ ...prev, related_candidate_id: String(value) }))} />
-                <AdTextBox label="Employee ID" type="number" value={form.related_employee_id} onChange={(value) => setForm((prev) => ({ ...prev, related_employee_id: String(value) }))} />
               </Stack>
 
               <Stack direction="row" spacing={1} justifyContent="flex-end">
