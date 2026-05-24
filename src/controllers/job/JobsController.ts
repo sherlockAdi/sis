@@ -38,6 +38,7 @@ type JobRow = {
   min_age?: number | null;
   max_age?: number | null;
   gender_requirement?: string | null;
+  trade_test_required?: 0 | 1 | boolean | null;
   created_by: number | null;
   created_at: string;
 };
@@ -99,6 +100,7 @@ type JobUpsertBody = {
   min_age?: number | null;
   max_age?: number | null;
   gender_requirement?: string | null;
+  trade_test_required?: boolean | null;
   language_ids?: number[];
 
   requirements?: string[];
@@ -121,7 +123,7 @@ async function getPartnerContext(user_id: number): Promise<{ partner_id: number 
 
 async function assertJobOwnedByPartner(job_id: number, partner_id: number): Promise<void> {
   const rows = await callProc<RowDataPacket & JobRow>(
-    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
     { job_id }
   );
   const job = rows[0];
@@ -131,7 +133,7 @@ async function assertJobOwnedByPartner(job_id: number, partner_id: number): Prom
 
 async function getJobById(job_id: number): Promise<JobRow> {
   const rows = await callProc<RowDataPacket & JobRow>(
-    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
     { job_id }
   );
   const job = rows[0];
@@ -158,12 +160,12 @@ export class JobsController extends Controller {
     if (ctx.is_partner_role && !ctx.partner_id) throw httpError(403, 'Partner profile not found');
     if (ctx.partner_id) {
       return callProc<RowDataPacket & JobRow>(
-        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { partner_id: ctx.partner_id }
       );
     }
     return callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
+      `CALL sp_job_jobs('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
     );
   }
 
@@ -180,7 +182,7 @@ export class JobsController extends Controller {
     languages: JobLanguage[];
   }> {
     const jobRows = await callProc<RowDataPacket & JobRow>(
-      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('GET', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     const job = jobRows[0];
@@ -242,7 +244,7 @@ export class JobsController extends Controller {
     const resolvedStatus = ctx.partner_id ? 'Draft' : (body.status ?? null);
 
     const rows = await callProc<RowDataPacket & { job_id: number }>(
-      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :skills, :min_experience, :min_age, :max_age, :gender_requirement, :created_by, NULL)`,
+      `CALL sp_job_jobs('CREATE', NULL, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :skills, :min_experience, :min_age, :max_age, :gender_requirement, :trade_test_required, :created_by, NULL)`,
       {
         job_code: null,
         job_title: body.job_title,
@@ -265,6 +267,7 @@ export class JobsController extends Controller {
         min_age: typeof body.min_age === 'number' ? body.min_age : null,
         max_age: typeof body.max_age === 'number' ? body.max_age : null,
         gender_requirement: body.gender_requirement ?? null,
+        trade_test_required: typeof body.trade_test_required === 'boolean' ? body.trade_test_required : false,
         created_by: user.user_id,
       }
     );
@@ -358,7 +361,7 @@ export class JobsController extends Controller {
     const resolvedStatus = ctx.partner_id ? (existingJob?.status ?? 'Draft') : (body.status ?? null);
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :skills, :min_experience, :min_age, :max_age, :gender_requirement, NULL, NULL)`,
+      `CALL sp_job_jobs('UPDATE', :job_id, :job_code, :job_title, :category_id, :country_id, :contract_duration_id, :vacancy, :salary_min, :salary_max, :job_description, :status, :partner_id, :employment_type_id, :work_mode_id, :currency_id, :compensation_text, :min_education, :skills, :min_experience, :min_age, :max_age, :gender_requirement, :trade_test_required, NULL, NULL)`,
       {
         job_id: jobId,
         job_code: body.job_code ?? null,
@@ -382,6 +385,7 @@ export class JobsController extends Controller {
         min_age: typeof body.min_age === 'number' ? body.min_age : null,
         max_age: typeof body.max_age === 'number' ? body.max_age : null,
         gender_requirement: body.gender_requirement ?? null,
+        trade_test_required: typeof body.trade_test_required === 'boolean' ? body.trade_test_required : null,
       }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');
@@ -486,7 +490,7 @@ export class JobsController extends Controller {
     if (!body?.status?.trim()) throw httpError(400, 'status is required');
 
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :changed_by, :remarks)`,
+      `CALL sp_job_jobs('SET_STATUS', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :status, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :changed_by, :remarks)`,
       {
         job_id: jobId,
         status: body.status,
@@ -508,7 +512,7 @@ export class JobsController extends Controller {
       if (ctx.partner_id) await assertJobOwnedByPartner(jobId, ctx.partner_id);
     }
     const rows = await callProc<RowDataPacket & { affected_rows: number }>(
-      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_job_jobs('DELETE', :job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { job_id: jobId }
     );
     if ((rows[0]?.affected_rows ?? 0) === 0) throw httpError(404, 'Job not found');

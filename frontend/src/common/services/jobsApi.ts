@@ -31,6 +31,7 @@ export type JobListRow = {
   min_age?: number | null;
   max_age?: number | null;
   gender_requirement?: string | null;
+  trade_test_required?: boolean | null;
   created_by: number | null;
   created_at: string;
 };
@@ -65,6 +66,7 @@ export type JobDetail = {
     min_age?: number | null;
     max_age?: number | null;
     gender_requirement?: string | null;
+    trade_test_required?: boolean | null;
   };
   requirements: Array<{ requirement_id: number; job_id: number; requirement: string }>;
   benefits: Array<{ benefit_id: number; job_id: number; benefit: string }>;
@@ -117,6 +119,7 @@ export type JobUpsert = {
   min_age?: number | null;
   max_age?: number | null;
   gender_requirement?: string | null;
+  trade_test_required?: boolean | null;
   language_ids?: number[];
   requirements?: string[];
   benefits?: string[];

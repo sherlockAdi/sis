@@ -10,10 +10,12 @@ type AssociatePartnerRow = {
   associate_partner_code: string | null;
   associate_partner_name: string;
   alt_associate_partner_name: string | null;
+  alt_email?: string | null;
   primary_contact: string | null;
   alternate_contact: string | null;
   email: string | null;
   organisation_name: string | null;
+  other_info?: string | null;
   address1: string | null;
   address2: string | null;
   pin: string | null;
@@ -97,10 +99,12 @@ export class AssociatePartnersController extends Controller {
       associate_partner_code?: string | null;
       associate_partner_name: string;
       alt_associate_partner_name?: string | null;
+      alt_email?: string | null;
       primary_contact?: string | null;
       alternate_contact?: string | null;
       email?: string | null;
       organisation_name?: string | null;
+      other_info?: string | null;
       address1?: string | null;
       address2?: string | null;
       pin?: string | null;
@@ -134,10 +138,12 @@ export class AssociatePartnersController extends Controller {
         associate_partner_code: associate_partner_code || null,
         associate_partner_name,
         alt_associate_partner_name: body.alt_associate_partner_name ?? null,
+        alt_email: body.alt_email ?? null,
         primary_contact: body.primary_contact ?? null,
         alternate_contact: body.alternate_contact ?? null,
         email: body.email ?? null,
         organisation_name: body.organisation_name ?? null,
+        other_info: body.other_info ?? null,
         address1: body.address1 ?? null,
         address2: body.address2 ?? null,
         pin: body.pin ?? null,
@@ -234,10 +240,12 @@ export class AssociatePartnersController extends Controller {
       associate_partner_code?: string | null;
       associate_partner_name?: string | null;
       alt_associate_partner_name?: string | null;
+      alt_email?: string | null;
       primary_contact?: string | null;
       alternate_contact?: string | null;
       email?: string | null;
       organisation_name?: string | null;
+      other_info?: string | null;
       address1?: string | null;
       address2?: string | null;
       pin?: string | null;
@@ -255,10 +263,12 @@ export class AssociatePartnersController extends Controller {
         associate_partner_code: String(body.associate_partner_code ?? '').trim() || null,
         associate_partner_name: body.associate_partner_name ?? null,
         alt_associate_partner_name: body.alt_associate_partner_name ?? null,
+        alt_email: body.alt_email ?? null,
         primary_contact: body.primary_contact ?? null,
         alternate_contact: body.alternate_contact ?? null,
         email: body.email ?? null,
         organisation_name: body.organisation_name ?? null,
+        other_info: body.other_info ?? null,
         address1: body.address1 ?? null,
         address2: body.address2 ?? null,
         pin: body.pin ?? null,

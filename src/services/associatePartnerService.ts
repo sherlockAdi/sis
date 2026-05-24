@@ -6,10 +6,12 @@ export type AssociatePartnerRow = {
   associate_partner_id: number;
   associate_partner_code: string | null;
   associate_partner_name: string;
+  alt_email: string | null;
   primary_contact: string | null;
   alternate_contact: string | null;
   email: string | null;
   organisation_name: string | null;
+  other_info: string | null;
   address1: string | null;
   address2: string | null;
   pin: string | null;
@@ -25,7 +27,7 @@ export type AssociatePartnerRow = {
 
 export async function getAssociatePartnerByUserId(user_id: number): Promise<AssociatePartnerRow | null> {
   const rows = await callProc<RowDataPacket & AssociatePartnerRow>(
-    `CALL sp_associate_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL)`,
+    `CALL sp_associate_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL, NULL)`,
     { user_id }
   );
   return rows[0] ?? null;
@@ -43,7 +45,9 @@ function buildAssociatePartnerBootstrap(profile: {
   return {
     associate_partner_name: displayName || profile.username,
     primary_contact: profile.phone || profile.username,
+    alt_email: null,
     email: profile.email ?? null,
+    other_info: null,
     user_id: profile.user_id,
   };
 }

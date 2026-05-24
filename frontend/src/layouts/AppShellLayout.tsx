@@ -814,6 +814,7 @@ export default function AppShellLayout() {
         disableMobileDrawer={isCandidate || isPartner || isAssociate}
         currentPath={location.pathname}
         userName={me?.username ?? "User"}
+        role= {me?.role_code ?? ""}
         userEmail={me?.email ?? ""}
       >
         <Outlet />

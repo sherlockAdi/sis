@@ -7,7 +7,6 @@ import {
   AdCard,
   AdNotification,
   AdSearchableDropDown,
-  AdTextArea,
   AdTextBox,
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
@@ -19,6 +18,7 @@ type Form = {
   partner_code: string;
   partner_name: string;
   contact_name: string;
+  alt_email: string;
   phone: string;
   email: string;
   address: string;
@@ -45,6 +45,7 @@ const emptyForm: Form = {
   partner_code: "",
   partner_name: "",
   contact_name: "",
+  alt_email: "",
   phone: "",
   email: "",
   address: "",
@@ -72,6 +73,7 @@ function mapPartnerForm(partner: Awaited<ReturnType<typeof partnersApi.get>>): F
     partner_code: partner.partner_code ?? "",
     partner_name: partner.partner_name ?? "",
     contact_name: partner.contact_name ?? "",
+    alt_email: partner.alt_email ?? "",
     phone: partner.phone ?? "",
     email: partner.email ?? "",
     address: partner.address ?? "",
@@ -191,8 +193,8 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
     [],
   );
   const canSave = useMemo(
-    () => Boolean(form.partner_name.trim()),
-    [form.partner_name],
+    () => Boolean(form.partner_name.trim() && form.organisation_name.trim()),
+    [form.organisation_name, form.partner_name],
   );
 
   const savePartner = async () => {
@@ -202,6 +204,7 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         partner_code: form.partner_code.trim() || null,
         partner_name: form.partner_name.trim(),
         contact_name: form.contact_name.trim() || null,
+        alt_email: form.alt_email.trim() || null,
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
         address: form.address.trim() || null,
@@ -220,6 +223,7 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
         status: form.status,
       };
       if (!payload.partner_name) throw new Error("Employer name is required");
+      if (!payload.organisation_name) throw new Error("Organisation is required");
 
       if (form.partner_id) {
         await partnersApi.update(form.partner_id, payload);
@@ -269,7 +273,7 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
             Loading employer details...
           </Typography>
         ) : (
-          <Stack spacing={1.5}>
+            <Stack spacing={1.5}>
             <Box
               sx={{
                 display: "grid",
@@ -300,13 +304,41 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
                 onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
                 disabled={!form.state_id}
               />
-              <AdTextBox variant="standard" size="small" label="Employer Name / Contact Person" required value={form.partner_name} onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))} />
-              <AdTextBox variant="standard" size="small" label="Alternative Employee Name" value={form.alt_partner_name} onChange={(v) => setForm((f) => ({ ...f, alt_partner_name: v }))} />
-              <AdTextBox variant="standard" size="small" label="Contact Person" value={form.contact_name} onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))} />
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Employer Contact (Primary)"
+                label="Organisation"
+                required
+                value={form.organisation_name}
+                onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="CR/License Number"
+                value={form.cr_licence_number}
+                onChange={(v) => setForm((f) => ({ ...f, cr_licence_number: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Employer Name"
+                required
+                value={form.partner_name}
+                onChange={(v) => setForm((f) => ({ ...f, partner_name: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Employer Email"
+                type="email"
+                value={form.email}
+                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Employer Mobile Number"
                 value={form.phone}
                 onChange={(v) => setForm((f) => ({ ...f, phone: digitsOnly(v) }))}
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
@@ -314,27 +346,33 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Employer Contact (Alternate)"
+                label="Alternate Contact Person"
+                value={form.contact_name}
+                onChange={(v) => setForm((f) => ({ ...f, contact_name: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Alternate Contact Person Email"
+                type="email"
+                value={form.alt_email}
+                onChange={(v) => setForm((f) => ({ ...f, alt_email: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Alternate Contact Person Mobile Number"
                 value={form.alt_phone}
                 onChange={(v) => setForm((f) => ({ ...f, alt_phone: digitsOnly(v) }))}
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               />
-              <AdTextBox variant="standard" size="small" label="Employer Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-              <AdSearchableDropDown
-                variant="standard"
-                label="Status"
-                options={statusOptions}
-                value={form.status ? "1" : "0"}
-                onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
-              />
-              <AdTextBox variant="standard" size="small" label="Organisation Name / Company" value={form.organisation_name} onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))} />
-              <AdTextBox variant="standard" size="small" label="CR/Licence Number" value={form.cr_licence_number} onChange={(v) => setForm((f) => ({ ...f, cr_licence_number: v }))} />
-              <AdTextBox variant="standard" size="small" label="Website" value={form.website} onChange={(v) => setForm((f) => ({ ...f, website: v }))} />
+              <AdTextBox variant="standard" size="small" label="Address 1" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} />
+              <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
               <Box sx={{ maxWidth: { xs: "100%", md: 220 } }}>
                 <AdTextBox
                   variant="standard"
                   size="small"
-                  label="Pin"
+                  label="Pincode"
                   value={form.pin}
                   onChange={(v) => setForm((f) => ({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) }))}
                   maxLength={6}
@@ -344,23 +382,25 @@ export default function PartnerFormPage({ mode }: { mode: "create" | "edit" }) {
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Landline with Country Code"
+                label="Landline"
                 value={form.landline}
                 onChange={(v) => setForm((f) => ({ ...f, landline: v }))}
               />
-              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 3" } }}>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: 1,
-                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
-                  }}
-                >
-                  <AdTextArea minRows={2} maxRows={3} label="Address 1" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} />
-                  <AdTextArea minRows={2} maxRows={3} label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
-                  <AdTextArea minRows={2} maxRows={3} label="Other Info" value={form.other_info} onChange={(v) => setForm((f) => ({ ...f, other_info: v }))} />
-                </Box>
-              </Box>
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Website"
+                value={form.website}
+                onChange={(v) => setForm((f) => ({ ...f, website: v }))}
+              />
+              <AdTextBox variant="standard" size="small" label="Other Info" value={form.other_info} onChange={(v) => setForm((f) => ({ ...f, other_info: v }))} />
+              <AdSearchableDropDown
+                variant="standard"
+                label="Status"
+                options={statusOptions}
+                value={form.status ? "1" : "0"}
+                onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
+              />
             </Box>
 
             {form.partner_id ? (
