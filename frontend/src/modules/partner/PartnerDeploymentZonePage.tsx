@@ -153,6 +153,11 @@ export default function PartnerDeploymentZonePage() {
           Track ready, visa, travel, and deployed candidates for your jobs.
         </Typography>
       </Stack>
+      <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>
+        <AdButton variant="outlined" onClick={() => navigate("/portal/partner/deployment-zone/trade-tests")}>
+          Trade Tests
+        </AdButton>
+      </Stack>
 
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 

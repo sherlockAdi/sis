@@ -13,6 +13,7 @@ type PartnerApplicationRow = {
   job_id: number;
   job_title: string;
   job_code: string | null;
+  trade_test_required?: 0 | 1 | boolean | null;
   application_date: string | null;
   status: string | null;
 };
