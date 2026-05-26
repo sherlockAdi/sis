@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.1
 
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -28,7 +28,7 @@ jobs:
             git reset --hard origin/main
 
             npm run build
-            
+
             cd frontend
 
             npm run build
