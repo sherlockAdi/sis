@@ -52,6 +52,7 @@ export type ApplicationRow = {
   job_id: number;
   job_title: string;
   job_code: string | null;
+  trade_test_required?: boolean | 0 | 1 | null;
   application_date: string | null;
   status: string | null;
 };

@@ -789,7 +789,7 @@ export class DashboardController extends Controller {
     const { date_from, date_to } = monthRange(now.getFullYear(), now.getMonth() + 1);
     const [jobs, applications, interviews] = await Promise.all([
       callProc<RowDataPacket & PartnerJobRow>(
-        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+        `CALL sp_job_jobs('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { partner_id: partner.partner_id }
       ),
       callProc<RowDataPacket & PartnerApplicationRow>(

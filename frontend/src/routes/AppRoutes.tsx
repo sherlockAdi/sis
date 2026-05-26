@@ -76,6 +76,7 @@ import PartnerProfilePage from "../modules/partner/PartnerProfilePage";
 import PartnerApplicantProfilePage from "../modules/partner/PartnerApplicantProfilePage";
 import PartnerInterviewsPage from "../modules/partner/PartnerInterviewsPage";
 import PartnerDeploymentZonePage from "../modules/partner/PartnerDeploymentZonePage";
+import PartnerTradeTestsPage from "../modules/partner/PartnerTradeTestsPage";
 import PartnerFinalSelectedPage from "../modules/partner/PartnerFinalSelectedPage";
 import TicketCenterPage from "../modules/tickets/TicketCenterPage";
 import TicketDetailPage from "../modules/tickets/TicketDetailPage";
@@ -85,6 +86,7 @@ import TicketStatusPage from "../modules/tickets/TicketStatusPage";
 import PartnersPage from "../modules/partners/PartnersPage";
 import CompaniesPage from "../modules/company/CompaniesPage";
 import DeploymentManagementPage from "../modules/deployment/DeploymentManagementPage";
+import TradeTestSubmissionsPage from "../modules/trade-test/TradeTestSubmissionsPage";
 import PublicLayout from "../modules/public/layout/PublicLayout";
 import PublicHomePage from "../modules/public/pages/PublicHomePage";
 import PublicAboutPage from "../modules/public/pages/PublicAboutPage";
@@ -357,6 +359,7 @@ export default function AppRoutes() {
               path="partner/deployment-zone"
               element={<PartnerDeploymentZonePage />}
             />
+            <Route path="partner/deployment-zone/trade-tests" element={<PartnerTradeTestsPage />} />
             <Route
               path="partner/reports"
               element={
@@ -398,8 +401,9 @@ export default function AppRoutes() {
               path="recruitment/screening-interviews"
               element={<RecruitmentScreeningInterviewsPage />}
             />
-            <Route path="trade-test" element={<PlaceholderPage title="Trade Test & Assessment" />} />
-            <Route path="trade-test/*" element={<PlaceholderPage title="Trade Test & Assessment" />} />
+            <Route path="trade-test" element={<Navigate to="/portal/trade-test/submissions" replace />} />
+            <Route path="trade-test/submissions" element={<TradeTestSubmissionsPage />} />
+            <Route path="trade-test/*" element={<TradeTestSubmissionsPage />} />
 
             <Route path="training" element={<PlaceholderPage title="Training & LMS" />} />
             <Route path="training/*" element={<PlaceholderPage title="Training & LMS" />} />

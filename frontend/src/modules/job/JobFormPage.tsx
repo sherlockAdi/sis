@@ -36,6 +36,7 @@ import { richTextHasContent, sanitizeRichTextHtml } from "../../common/utils/ric
 
 type Form = {
   job_id?: number;
+  job_code: string;
   job_title: string;
   category_id: string;
   contract_duration_id: string;
@@ -59,6 +60,7 @@ type Form = {
   max_age: string;
   gender_requirement: string;
   language_ids: string[];
+  trade_test_required: boolean;
   benefitsText: string;
   documents: Record<number, { include: boolean; is_required: boolean }>;
   job_specific_documents: Array<{ id?: number; document_name: string; is_required: boolean }>;
@@ -276,6 +278,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
   const [partners, setPartners] = useState<PartnerRow[]>([]);
 
   const [form, setForm] = useState<Form>({
+    job_code: "",
     job_title: "",
     category_id: "",
     contract_duration_id: "",
@@ -299,6 +302,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
     max_age: "",
     gender_requirement: "",
     language_ids: [],
+    trade_test_required: false,
     benefitsText: "",
     documents: {},
     job_specific_documents: [],
@@ -361,6 +365,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
 
         setForm({
           job_id: d.job.job_id,
+          job_code: d.job.job_code ?? "",
           job_title: d.job.job_title ?? "",
           category_id: d.job.category_id ? String(d.job.category_id) : "",
           contract_duration_id: d.job.contract_duration_id ? String(d.job.contract_duration_id) : "",
@@ -384,6 +389,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
           max_age: d.job.max_age != null ? String(d.job.max_age) : "",
           gender_requirement: d.job.gender_requirement ?? "",
           language_ids: (d.languages ?? []).map((l: any) => String(l.language_id)),
+          trade_test_required: Boolean(d.job.trade_test_required),
           benefitsText: (globalBen ?? []).join("\n"),
           documents: docMap,
           job_specific_documents: (d.job_specific_documents ?? []).map((doc: any) => ({
@@ -552,7 +558,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
       const jobDescription = sanitizeRichTextHtml(form.job_description).trim();
 
       const payload = {
-        job_code: null,
+        job_code: form.job_code.trim() || undefined,
         job_title: form.job_title.trim(),
         category_id: form.category_id ? Number(form.category_id) : null,
         country_id: form.country_id ? Number(form.country_id) : null,
@@ -573,6 +579,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
         min_age: form.min_age ? Number(form.min_age) : null,
         max_age: form.max_age ? Number(form.max_age) : null,
         gender_requirement: form.gender_requirement.trim() || null,
+        trade_test_required: form.trade_test_required,
         language_ids: form.language_ids.map((id) => Number(id)).filter((id) => Number.isFinite(id)),
         documents: Object.entries(form.documents)
           .filter(([, v]) => v.include)
@@ -636,23 +643,43 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
               }}
             >
-              <AdTextBox
+              <AdSearchableDropDown
                 variant="standard"
-                label="Job Title"
-                required
-                size="small"
-                value={form.job_title}
-                error={fieldErrors.job_title}
-                onChange={(v) => setForm((f) => ({ ...f, job_title: v }))}
+                label="Country"
+                options={countryOptions}
+                value={form.country_id}
+                error={Boolean(fieldErrors.country_id)}
+                helperText={fieldErrors.country_id}
+                onChange={(v) => setForm((f) => ({ ...f, country_id: v, state_id: "", city_id: "" }))}
               />
-              <AdDropDown
+              <AdSearchableDropDown
                 variant="standard"
-                label="Status"
-                options={statusOptions}
-                value={form.status}
-                onChange={(v) => setForm((f) => ({ ...f, status: v }))}
-                disabled={isPartner}
+                label="State"
+                options={stateOptions}
+                value={form.state_id}
+                error={Boolean(fieldErrors.state_id)}
+                helperText={fieldErrors.state_id}
+                onChange={(v) => setForm((f) => ({ ...f, state_id: v, city_id: "" }))}
               />
+              <AdSearchableDropDown
+                variant="standard"
+                label="City"
+                options={cityOptions}
+                value={form.city_id}
+                error={Boolean(fieldErrors.city_id)}
+                helperText={fieldErrors.city_id}
+                onChange={(v) => setForm((f) => ({ ...f, city_id: v }))}
+              />
+              {!isPartner ? (
+                <AdSearchableDropDown
+                  variant="standard"
+                  label="Employer (optional)"
+                  options={partnerOptions}
+                  value={form.partner_id}
+                  error={false}
+                  onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}
+                />
+              ) : null}
               <AdSearchableDropDown
                 variant="standard"
                 label="Category"
@@ -661,6 +688,15 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 error={Boolean(fieldErrors.category_id)}
                 helperText={fieldErrors.category_id}
                 onChange={(v) => setForm((f) => ({ ...f, category_id: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                label="Job Title"
+                required
+                size="small"
+                value={form.job_title}
+                error={fieldErrors.job_title}
+                onChange={(v) => setForm((f) => ({ ...f, job_title: v }))}
               />
               <AdSearchableDropDown
                 variant="standard"
@@ -688,43 +724,6 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
                 error={Boolean(fieldErrors.work_mode_id)}
                 helperText={fieldErrors.work_mode_id}
                 onChange={(v) => setForm((f) => ({ ...f, work_mode_id: v }))}
-              />
-              {!isPartner ? (
-                <AdSearchableDropDown
-                  variant="standard"
-                  label="Employer (optional)"
-                  options={partnerOptions}
-                  value={form.partner_id}
-                  error={false}
-                  onChange={(v) => setForm((f) => ({ ...f, partner_id: v }))}
-                />
-              ) : null}
-              <AdSearchableDropDown
-                variant="standard"
-                label="Country"
-                options={countryOptions}
-                value={form.country_id}
-                error={Boolean(fieldErrors.country_id)}
-                helperText={fieldErrors.country_id}
-                onChange={(v) => setForm((f) => ({ ...f, country_id: v, state_id: "", city_id: "" }))}
-              />
-              <AdSearchableDropDown
-                variant="standard"
-                label="State"
-                options={stateOptions}
-                value={form.state_id}
-                error={Boolean(fieldErrors.state_id)}
-                helperText={fieldErrors.state_id}
-                onChange={(v) => setForm((f) => ({ ...f, state_id: v, city_id: "" }))}
-              />
-              <AdSearchableDropDown
-                variant="standard"
-                label="City"
-                options={cityOptions}
-                value={form.city_id}
-                error={Boolean(fieldErrors.city_id)}
-                helperText={fieldErrors.city_id}
-                onChange={(v) => setForm((f) => ({ ...f, city_id: v }))}
               />
             </Box>
 
@@ -870,7 +869,7 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
               </Box>
             </Box>
 
-              <AdRichTextEditor
+            <AdRichTextEditor
               label="Compensation Details"
               required
               minHeight={160}
@@ -1005,14 +1004,41 @@ export default function JobFormPage({ mode }: { mode: "create" | "edit" }) {
 
             <Divider />
 
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                alignItems: "center",
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.trade_test_required}
+                    onChange={(_, checked) => setForm((f) => ({ ...f, trade_test_required: checked }))}
+                  />
+                }
+                label="Trade Test Required"
+              />
+              <AdDropDown
+                variant="standard"
+                label="Status"
+                options={statusOptions}
+                value={form.status}
+                onChange={(v) => setForm((f) => ({ ...f, status: v }))}
+                disabled={isPartner}
+              />
+            </Box>
+
             <Stack direction="row" justifyContent="flex-end" spacing={1}>
-            <AdButton variant="text" onClick={() => navigate(-1)}>
-              Cancel
-            </AdButton>
-            <AdButton onClick={save} disabled={saving || loading || !canSave}>
-              {saving ? "Saving..." : "Save Job"}
-            </AdButton>
-          </Stack>
+              <AdButton variant="text" onClick={() => navigate(-1)}>
+                Cancel
+              </AdButton>
+              <AdButton onClick={save} disabled={saving || loading || !canSave}>
+                {saving ? "Saving..." : "Save Job"}
+              </AdButton>
+            </Stack>
           </Stack>
         )}
       </AdCard>

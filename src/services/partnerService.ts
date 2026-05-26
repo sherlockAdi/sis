@@ -6,6 +6,7 @@ export type PartnerRow = {
   partner_code: string | null;
   partner_name: string;
   contact_name: string | null;
+  alt_email: string | null;
   phone: string | null;
   email: string | null;
   address: string | null;

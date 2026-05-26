@@ -5,10 +5,12 @@ export type AssociatePartnerRow = {
   associate_partner_code: string | null;
   associate_partner_name: string;
   alt_associate_partner_name: string | null;
+  alt_email: string | null;
   primary_contact: string | null;
   alternate_contact: string | null;
   email: string | null;
   organisation_name: string | null;
+  other_info: string | null;
   address1: string | null;
   address2: string | null;
   pin: string | null;
@@ -35,10 +37,12 @@ export const associatePartnersApi = {
     associate_partner_code?: string | null;
     associate_partner_name: string;
     alt_associate_partner_name?: string | null;
+    alt_email?: string | null;
     primary_contact?: string | null;
     alternate_contact?: string | null;
     email?: string | null;
     organisation_name?: string | null;
+    other_info?: string | null;
     address1?: string | null;
     address2?: string | null;
     pin?: string | null;
@@ -66,10 +70,12 @@ export const associatePartnersApi = {
       associate_partner_code: string | null;
       associate_partner_name: string;
       alt_associate_partner_name: string | null;
+      alt_email: string | null;
       primary_contact: string | null;
       alternate_contact: string | null;
       email: string | null;
       organisation_name: string | null;
+      other_info: string | null;
       address1: string | null;
       address2: string | null;
       pin: string | null;

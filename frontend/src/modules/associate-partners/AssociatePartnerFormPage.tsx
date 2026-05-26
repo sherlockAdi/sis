@@ -7,7 +7,6 @@ import {
   AdCard,
   AdNotification,
   AdSearchableDropDown,
-  AdTextArea,
   AdTextBox,
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
@@ -19,10 +18,12 @@ type Form = {
   associate_partner_code: string;
   associate_partner_name: string;
   alt_associate_partner_name: string;
+  alt_email: string;
   primary_contact: string;
   alternate_contact: string;
   email: string;
   organisation_name: string;
+  other_info: string;
   address1: string;
   address2: string;
   pin: string;
@@ -41,10 +42,12 @@ const emptyForm: Form = {
   associate_partner_code: "",
   associate_partner_name: "",
   alt_associate_partner_name: "",
+  alt_email: "",
   primary_contact: "",
   alternate_contact: "",
   email: "",
   organisation_name: "",
+  other_info: "",
   address1: "",
   address2: "",
   pin: "",
@@ -64,10 +67,12 @@ function mapForm(row: Awaited<ReturnType<typeof associatePartnersApi.get>>): For
     associate_partner_code: row.associate_partner_code ?? "",
     associate_partner_name: row.associate_partner_name ?? "",
     alt_associate_partner_name: row.alt_associate_partner_name ?? "",
+    alt_email: row.alt_email ?? "",
     primary_contact: row.primary_contact ?? "",
     alternate_contact: row.alternate_contact ?? "",
     email: row.email ?? "",
     organisation_name: row.organisation_name ?? "",
+    other_info: row.other_info ?? "",
     address1: row.address1 ?? "",
     address2: row.address2 ?? "",
     pin: row.pin ?? "",
@@ -187,10 +192,12 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
         associate_partner_code: form.associate_partner_code.trim() || null,
         associate_partner_name: form.associate_partner_name.trim(),
         alt_associate_partner_name: form.alt_associate_partner_name.trim() || null,
+        alt_email: form.alt_email.trim() || null,
         primary_contact: form.primary_contact.trim() || null,
         alternate_contact: form.alternate_contact.trim() || null,
         email: form.email.trim() || null,
         organisation_name: form.organisation_name.trim() || null,
+        other_info: form.other_info.trim() || null,
         address1: form.address1.trim() || null,
         address2: form.address2.trim() || null,
         pin: form.pin.trim() || null,
@@ -250,7 +257,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
             Loading...
           </Typography>
         ) : (
-          <Stack spacing={1.5}>
+            <Stack spacing={1.5}>
             <Box
               sx={{
                 display: "grid",
@@ -297,10 +304,9 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Associate Partner Code"
-                value={form.associate_partner_code}
-                onChange={(v) => setForm((f) => ({ ...f, associate_partner_code: v }))}
-                helperText="Unique identifier"
+                label="Organization"
+                value={form.organisation_name}
+                onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
               />
               <AdTextBox
                 variant="standard"
@@ -313,45 +319,73 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Alternative Associate Partner Name"
+                label="Associate Partner Email"
+                type="email"
+                value={form.email}
+                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Mobile Number"
+                value={form.primary_contact}
+                onChange={(v) => setForm((f) => ({ ...f, primary_contact: digitsOnly10(v) }))}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
+              />
+              <AdTextBox
+                variant="standard"
+                size="small"
+                label="Alternate Contact Person"
                 value={form.alt_associate_partner_name}
                 onChange={(v) => setForm((f) => ({ ...f, alt_associate_partner_name: v }))}
               />
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Primary Contact"
-                value={form.primary_contact}
-                onChange={(v) => setForm((f) => ({ ...f, primary_contact: digitsOnly10(v) }))}
-                helperText="Phone number"
-                inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
+                label="Alternate Contact Person Email"
+                type="email"
+                value={form.alt_email}
+                onChange={(v) => setForm((f) => ({ ...f, alt_email: v }))}
               />
               <AdTextBox
                 variant="standard"
                 size="small"
-                label="Alternate Contact"
+                label="Alternate Contact Person Mobile Number"
                 value={form.alternate_contact}
                 onChange={(v) => setForm((f) => ({ ...f, alternate_contact: digitsOnly10(v) }))}
-                helperText="Phone number"
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
               />
-              <AdTextBox
-                variant="standard"
-                size="small"
-                label="Email"
-                type="email"
-                value={form.email}
-                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
-                helperText="Valid email format"
-              />
-              <AdTextBox
-                variant="standard"
-                size="small"
-                label="Organisation Name"
-                value={form.organisation_name}
-                onChange={(v) => setForm((f) => ({ ...f, organisation_name: v }))}
-                helperText="Optional"
-              />
+              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 3" } }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 1,
+                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                  }}
+                >
+                  <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
+                  <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
+                  <Box sx={{ maxWidth: { xs: "100%", md: 220 } }}>
+                    <AdTextBox
+                      variant="standard"
+                      size="small"
+                      label="PINCODE"
+                      value={form.pin}
+                      onChange={(v) => setForm((f) => ({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) }))}
+                      maxLength={6}
+                      pattern={/^\d{6}$/}
+                    />
+                  </Box>
+                  <AdTextBox
+                    variant="standard"
+                    size="small"
+                    label="Landline with Country Code"
+                    value={form.landline}
+                    onChange={(v) => setForm((f) => ({ ...f, landline: v }))}
+                  />
+                  <AdTextBox variant="standard" size="small" label="Other Info" value={form.other_info} onChange={(v) => setForm((f) => ({ ...f, other_info: v }))} />
+                </Box>
+              </Box>
               <AdSearchableDropDown
                 variant="standard"
                 label="Status"
@@ -359,49 +393,6 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
                 value={form.status ? "1" : "0"}
                 onChange={(v) => setForm((f) => ({ ...f, status: String(v) === "1" }))}
               />
-              <Box sx={{ maxWidth: { xs: "100%", md: 220 } }}>
-                <AdTextBox
-                  variant="standard"
-                  size="small"
-                  label="Pin"
-                  value={form.pin}
-                  onChange={(v) => setForm((f) => ({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) }))}
-                  maxLength={6}
-                  pattern={/^\d{6}$/}
-                />
-              </Box>
-              <AdTextBox
-                variant="standard"
-                size="small"
-                label="Landline with Country Code"
-                value={form.landline}
-                onChange={(v) => setForm((f) => ({ ...f, landline: v }))}
-              />
-              <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 3" } }}>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: 1,
-                    gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
-                  }}
-                >
-                  <AdTextArea
-                    minRows={2}
-                    maxRows={3}
-                    label="Address 1"
-                    value={form.address1}
-                    onChange={(v) => setForm((f) => ({ ...f, address1: v }))}
-                  />
-                  <AdTextArea
-                    minRows={2}
-                    maxRows={3}
-                    label="Address 2"
-                    value={form.address2}
-                    onChange={(v) => setForm((f) => ({ ...f, address2: v }))}
-                    helperText="Optional"
-                  />
-                </Box>
-              </Box>
             </Box>
 
             {form.associate_partner_id ? (

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS JOB_T01_jobs (
     min_age INT DEFAULT NULL,
     max_age INT DEFAULT NULL,
     gender_requirement VARCHAR(50),
+    trade_test_required BOOLEAN DEFAULT FALSE,
 
     status VARCHAR(50) DEFAULT 'Open',
 
@@ -216,6 +217,7 @@ CREATE PROCEDURE sp_job_jobs(
   IN p_min_age INT,
   IN p_max_age INT,
   IN p_gender_requirement VARCHAR(50),
+  IN p_trade_test_required BOOLEAN,
   IN p_created_by INT,
   IN p_remarks VARCHAR(255)
 )
@@ -251,6 +253,7 @@ BEGIN
       j.min_age,
       j.max_age,
       j.gender_requirement,
+      j.trade_test_required,
       j.status,
       j.created_by,
       j.created_at
@@ -305,6 +308,7 @@ BEGIN
       j.min_age,
       j.max_age,
       j.gender_requirement,
+      j.trade_test_required,
       j.status,
       j.created_by,
       j.created_at
@@ -362,6 +366,7 @@ BEGIN
       j.min_age,
       j.max_age,
       j.gender_requirement,
+      j.trade_test_required,
       j.status,
       j.created_by,
       j.created_at
@@ -391,12 +396,12 @@ BEGIN
       job_code, job_title, category_id, country_id, contract_duration_id,
       vacancy, salary_min, salary_max, job_description, partner_id, employment_type_id,
       work_mode_id, currency_id, compensation_text, min_education, skills, min_experience,
-      min_age, max_age, gender_requirement, status, created_by
+      min_age, max_age, gender_requirement, trade_test_required, status, created_by
     ) VALUES (
       NULLIF(p_job_code, ''), p_job_title, p_category_id, p_country_id, p_contract_duration_id,
       p_vacancy, p_salary_min, p_salary_max, p_job_description, p_partner_id, p_employment_type_id,
       p_work_mode_id, p_currency_id, p_compensation_text, p_min_education, p_skills, p_min_experience,
-      p_min_age, p_max_age, p_gender_requirement, COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
+      p_min_age, p_max_age, p_gender_requirement, COALESCE(p_trade_test_required, FALSE), COALESCE(NULLIF(p_status,''), 'Open'), p_created_by
     );
 
     SET @new_job_id := LAST_INSERT_ID();
@@ -435,6 +440,7 @@ BEGIN
       min_age = COALESCE(p_min_age, min_age),
       max_age = COALESCE(p_max_age, max_age),
       gender_requirement = COALESCE(p_gender_requirement, gender_requirement),
+      trade_test_required = COALESCE(p_trade_test_required, trade_test_required),
       status = COALESCE(NULLIF(p_status,''), status)
     WHERE job_id = p_job_id;
     SELECT ROW_COUNT() AS affected_rows;

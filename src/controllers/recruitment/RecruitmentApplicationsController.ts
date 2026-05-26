@@ -13,6 +13,7 @@ type ApplicationRow = {
   job_id: number;
   job_title: string;
   job_code: string | null;
+  trade_test_required?: 0 | 1 | boolean | null;
   application_date: string | null;
   status: string | null;
 };
@@ -53,6 +54,14 @@ function applicationStatusMeta(status: string | null | undefined): {
       subjectSuffix: 'Interview scheduled',
       summary: 'An interview has been scheduled for your application.',
       nextSteps: ['Review the interview details in the portal.', 'Be ready with your documents and availability.'],
+    };
+  }
+  if (s.includes('trade')) {
+    return {
+      headline: 'Trade test required',
+      subjectSuffix: 'Trade test',
+      summary: 'Your application has moved to the trade test stage.',
+      nextSteps: ['Check the portal for trade test instructions and uploaded files.', 'Complete the trade test review before deployment.'],
     };
   }
   if (s.includes('shortlist')) {

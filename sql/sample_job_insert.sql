@@ -57,6 +57,7 @@ CALL sp_job_jobs(
   2200.00,
   'We are hiring Security Guards for UAE sites (commercial + residential).\n\nResponsibilities:\n- Access control & visitor management\n- Patrols and incident reporting\n- CCTV monitoring and coordination with site supervisor\n\nEligibility:\n- Minimum 2 years experience\n- Basic English communication\n- Physically fit; willing to work in shifts\n\nProcess: Apply → Screening → Interview → Medical → Visa → Deployment.',
   'Open',
+  FALSE,
   1,
   NULL,
   NULL
@@ -109,7 +110,7 @@ CALL sp_job_documents('CREATE', NULL, @job_id, @doc_eid, FALSE);
 COMMIT;
 
 -- Quick verification (optional)
--- CALL sp_job_jobs('GET', @job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+-- CALL sp_job_jobs('GET', @job_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 -- CALL sp_job_locations('LIST_BY_JOB', NULL, @job_id, NULL, NULL, NULL, NULL, NULL, NULL);
 -- CALL sp_job_requirements('LIST_BY_JOB', NULL, @job_id, NULL, NULL);
 -- CALL sp_job_benefits('LIST_BY_JOB', NULL, @job_id, NULL, NULL);

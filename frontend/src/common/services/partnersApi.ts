@@ -5,6 +5,7 @@ export type PartnerRow = {
   partner_code: string | null;
   partner_name: string;
   contact_name: string | null;
+  alt_email: string | null;
   phone: string | null;
   email: string | null;
   address: string | null;
@@ -40,6 +41,7 @@ export type PartnerApplicationRow = {
   job_id: number;
   job_title: string;
   job_code: string | null;
+  trade_test_required?: boolean | 0 | 1 | null;
   application_date: string | null;
   status: string | null;
 };
@@ -122,6 +124,7 @@ export const partnersApi = {
     partner_code?: string | null;
     partner_name: string;
     contact_name?: string | null;
+    alt_email?: string | null;
     phone?: string | null;
     email?: string | null;
     address?: string | null;

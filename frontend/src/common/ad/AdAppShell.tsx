@@ -61,7 +61,9 @@ type AdAppShellProps = {
   currentPath?: string;
   /** Optional user info displayed in the drawer footer. */
   userName?: string;
+  role?: string;
   userEmail?: string;
+
   /** Optional footer action; defaults to no-op. */
   onSettingsClick?: () => void;
 };
@@ -159,6 +161,7 @@ export default function AdAppShell({
   children,
   currentPath,
   userName,
+  role,
   userEmail,
   onSettingsClick,
 }: AdAppShellProps) {
@@ -214,9 +217,17 @@ export default function AdAppShell({
     >
       <DrawerHeader sx={{ justifyContent: effectiveOpen ? "space-between" : "center", px: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          {/* <Box sx={{ display: "flex", alignItems: "center" }}>
             <SisLogo height={80} />
-          </Box>
+          </Box> */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: effectiveOpen ? "block" : "none", fontWeight: 700 }}
+          >
+            {title}
+          </Typography>
+
         </Stack>
 
         {isMdUp && effectiveOpen && (
@@ -229,13 +240,7 @@ export default function AdAppShell({
       <Divider />
 
       <Box sx={{ px: effectiveOpen ? 2 : 1, py: 1.5 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: effectiveOpen ? "block" : "none", fontWeight: 700 }}
-        >
-          {title}
-        </Typography>
+       
         <Typography
           variant="caption"
           color="text.secondary"
@@ -417,83 +422,12 @@ export default function AdAppShell({
 
       <Divider />
 
-      <Box sx={{ p: 1.5 }}>
-        {effectiveOpen ? (
-          <Stack
-            direction="row"
-            spacing={1.5}
-            alignItems="center"
-            sx={{
-              p: 1.25,
-              borderRadius: 3,
-              border: "1px solid rgba(2,6,23,0.08)",
-              bgcolor: "rgba(2,6,23,0.02)",
-              overflow: "hidden",
-            }}
-          >
-            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
-              {(userName ?? "U").slice(0, 2).toUpperCase()}
-            </Avatar>
-            <Box sx={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-              <Typography
-                variant="body2"
-                fontWeight={900}
-                noWrap
-                sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-              >
-                {userName ?? "User"}
-              </Typography>
-              {userEmail ? (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  noWrap
-                  sx={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}
-                >
-                  {userEmail}
-                </Typography>
-              ) : null}
-            </Box>
-            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        ) : (
-          <Stack
-            spacing={1}
-            alignItems="center"
-            sx={{
-              p: 1,
-              borderRadius: 3,
-              border: "1px solid rgba(2,6,23,0.08)",
-              bgcolor: "rgba(2,6,23,0.02)",
-            }}
-          >
-            <Avatar sx={{ bgcolor: "rgba(216,27,96,0.14)", color: "#d81b60", fontWeight: 900 }}>
-              {(userName ?? "U").slice(0, 2).toUpperCase()}
-            </Avatar>
-            <IconButton aria-label="settings" onClick={settingsHandler} size="small">
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        )}
-
-        {isMdUp && (
-          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
-            <Chip
-              size="small"
-              label={effectiveOpen ? "Collapse" : "Expand"}
-              onClick={() => setOpen((v) => !v)}
-              variant="outlined"
-            />
-          </Stack>
-        )}
-      </Box>
+      
     </Box>
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f6f6f8", overflowX: "hidden", maxWidth: "100%" }}>
+    <Box sx={{ display: "flex",bgcolor: "#f6f6f8", overflowX: "hidden", maxWidth: "100%" }}>
       <CssBaseline />
       <AppBar position="fixed" open={isMdUp ? open : false} color="inherit" elevation={0}>
         <Toolbar sx={{ borderBottom: "1px solid rgba(2, 6, 23, 0.08)" }}>
@@ -511,8 +445,33 @@ export default function AdAppShell({
               <MenuIcon />
             </IconButton>
           ) : null}
-          <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
-            <SisLogo height={72} />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              mr: 2,
+              gap: 0.25,
+              overflow: "hidden",
+            }}
+          >
+            {/* <SisLogo height={72} /> */}
+            <Typography
+              variant="body2"
+              fontWeight={900}
+              noWrap
+              sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {userName ?? "User"}
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={900}
+              noWrap
+              sx={{ color: "rgba(0,0,0,0.7)", overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {role ?? "User"}
+            </Typography>
           </Box>
           {topBarCenter ? (
             <Box sx={{ display: { xs: "none", md: "block" }, flex: 1, minWidth: 0 }}>

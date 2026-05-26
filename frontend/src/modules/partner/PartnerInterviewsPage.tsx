@@ -30,7 +30,10 @@ type PartnerInterviewRow = {
   remarks: string | null;
 };
 
-type PartnerApplicationLite = Pick<PartnerApplicationRow, "application_id" | "candidate_id" | "job_id" | "candidate_name" | "job_title" | "status" | "application_date">;
+type PartnerApplicationLite = Pick<
+  PartnerApplicationRow,
+  "application_id" | "candidate_id" | "job_id" | "candidate_name" | "job_title" | "status" | "application_date" | "trade_test_required"
+>;
 
 type PartnerInterviewDisplayRow = {
   id: number;
@@ -157,6 +160,15 @@ export default function PartnerInterviewsPage() {
 
   const markReadyForDeployment = async (application_id: number) => {
     try {
+      const application = apps.find((row) => Number(row.application_id) === Number(application_id));
+      const needsTradeTest = Boolean(application?.trade_test_required);
+      if (needsTradeTest) {
+        await recruitmentApi.applications.updateStatus(application_id, "Trade Test");
+        setToast({ open: true, message: "Sent for trade test review", severity: "success" });
+        await Promise.all([refresh(), refreshApplications()]);
+        return;
+      }
+
       const existing = await deploymentApi.getByApplication(application_id);
       if (existing?.deployment_id) {
         await deploymentApi.setStatus(existing.deployment_id, { status: "Ready" });

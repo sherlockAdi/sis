@@ -21,6 +21,7 @@ type PartnerRow = {
   city_name?: string | null;
   alt_partner_name?: string | null;
   alt_phone?: string | null;
+  alt_email?: string | null;
   organisation_name?: string | null;
   address2?: string | null;
   pin?: string | null;
@@ -85,6 +86,7 @@ export class PartnersController extends Controller {
       city_id?: number | null;
       alt_partner_name?: string | null;
       alt_phone?: string | null;
+      alt_email?: string | null;
       organisation_name?: string | null;
       address2?: string | null;
       pin?: string | null;
@@ -116,6 +118,7 @@ export class PartnersController extends Controller {
         city_id: typeof body.city_id === 'number' ? body.city_id : null,
         alt_partner_name: body.alt_partner_name ?? null,
         alt_phone: body.alt_phone ?? null,
+        alt_email: body.alt_email ?? null,
         organisation_name: body.organisation_name ?? null,
         address2: body.address2 ?? null,
         pin: body.pin ?? null,
@@ -234,6 +237,7 @@ export class PartnersController extends Controller {
       city_id?: number | null;
       alt_partner_name?: string | null;
       alt_phone?: string | null;
+      alt_email?: string | null;
       organisation_name?: string | null;
       address2?: string | null;
       pin?: string | null;
@@ -259,6 +263,7 @@ export class PartnersController extends Controller {
         city_id: typeof body.city_id === 'number' ? body.city_id : null,
         alt_partner_name: body.alt_partner_name ?? null,
         alt_phone: body.alt_phone ?? null,
+        alt_email: body.alt_email ?? null,
         organisation_name: body.organisation_name ?? null,
         address2: body.address2 ?? null,
         pin: body.pin ?? null,
