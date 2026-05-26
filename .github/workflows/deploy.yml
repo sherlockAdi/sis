@@ -27,7 +27,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-             npm run build
+            npm run build
+            
             cd frontend
 
             npm run build
