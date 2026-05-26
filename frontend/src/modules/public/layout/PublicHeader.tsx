@@ -79,9 +79,9 @@ export default function PublicHeader() {
             flexWrap: "wrap",
           }}
         >
-          {/* <Typography variant="caption" sx={{ opacity: 0.88, fontWeight: 700, letterSpacing: 0.4, lineHeight: 1.2 }}>
+          <Typography variant="caption" sx={{ opacity: 0.88, fontWeight: 700, letterSpacing: 0.4, lineHeight: 1.2 }}>
             Global recruitment, job discovery, and workforce deployment
-          </Typography> */}
+          </Typography>
           <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: "wrap" }}>
             <Button
               size="small"
