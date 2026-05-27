@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -108,6 +108,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
   const [states, setStates] = useState<StateRow[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
   const [form, setForm] = useState<Form>(emptyForm);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -186,6 +187,8 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
   const canSave = useMemo(() => Boolean(form.associate_partner_name.trim()), [form.associate_partner_name]);
 
   const saveAssociatePartner = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       const payload = {
@@ -227,6 +230,7 @@ export default function AssociatePartnerFormPage({ mode }: { mode: "create" | "e
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? "Save failed", severity: "error" });
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

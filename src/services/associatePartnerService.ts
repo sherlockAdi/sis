@@ -27,7 +27,7 @@ export type AssociatePartnerRow = {
 
 export async function getAssociatePartnerByUserId(user_id: number): Promise<AssociatePartnerRow | null> {
   const rows = await callProc<RowDataPacket & AssociatePartnerRow>(
-    `CALL sp_associate_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL, NULL)`,
+    `CALL sp_associate_partners('GET_BY_USER', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL)`,
     { user_id }
   );
   return rows[0] ?? null;

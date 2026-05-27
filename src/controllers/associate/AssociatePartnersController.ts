@@ -194,7 +194,7 @@ export class AssociatePartnersController extends Controller {
 
       if (user_id) {
         await callProc(
-          `CALL sp_associate_partners('SET_USER', :associate_partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+          `CALL sp_associate_partners('SET_USER', :associate_partner_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, :user_id, NULL, NULL, NULL, NULL, NULL)`,
           {
             associate_partner_id,
             user_id,
