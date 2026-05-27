@@ -147,11 +147,11 @@ export default function EmployeeLeaveBalancePage() {
       </Box>
 
       <AdCard title="Leave Balances" animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={(summary?.leave_balances ?? []).map((r: LeaveBalanceRow) => ({ id: r.leave_balance_id, ...r }))} columns={leaveBalanceColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={(summary?.leave_balances ?? []).map((r: LeaveBalanceRow) => ({ id: r.leave_balance_id, ...r }))} columns={leaveBalanceColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdCard title="Leave Policies" animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={(summary?.leave_policies ?? []).map((r: LeavePolicyRow) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={(summary?.leave_policies ?? []).map((r: LeavePolicyRow) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdCard title="Leave History" animate={false} contentSx={{ p: 0 }}>
@@ -159,7 +159,6 @@ export default function EmployeeLeaveBalancePage() {
           rows={(summary?.leave_requests ?? []).map((r: LeaveRequestRow) => ({ id: r.leave_request_id, ...r }))}
           columns={historyColumns as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           autoHeight
         />

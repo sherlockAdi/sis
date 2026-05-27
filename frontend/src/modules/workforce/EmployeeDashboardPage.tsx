@@ -441,8 +441,6 @@ export default function EmployeeDashboardPage() {
                 valueFormatter: (value) => fmtTime(value),
               },
             ]}
-            showToolbar={false}
-            showExport={false}
             disableColumnMenu
             sx={{
               border: 0,

@@ -261,7 +261,6 @@ function ProfileDashboard({ data }: { data: any }) {
             { field: "menu_order", headerName: "Order", width: 90 },
           ]}
           showToolbar
-          showExport={false}
           disableColumnMenu
           sx={{
             border: "1px solid rgba(2,6,23,0.08)",
@@ -513,8 +512,6 @@ function CandidateDashboard({ me }: { me: any }) {
                 ),
               },
             ]}
-            showToolbar={false}
-            showExport={false}
             disableColumnMenu
             sx={{ border: 0, borderRadius: 0 }}
           />

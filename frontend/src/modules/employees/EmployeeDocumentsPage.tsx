@@ -186,7 +186,6 @@ export default function EmployeeDocumentsPage() {
                 },
               ] as any}
               loading={loading}
-              showExport={false}
               disableColumnMenu
             />
           </Stack>

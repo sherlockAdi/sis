@@ -247,7 +247,7 @@ export default function WeeklyOffPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={weeklyOffs.map((r) => ({ id: r.weekly_off_rule_id, ...r }))} columns={weeklyColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={weeklyOffs.map((r) => ({ id: r.weekly_off_rule_id, ...r }))} columns={weeklyColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdModal

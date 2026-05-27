@@ -171,7 +171,6 @@ export default function CountriesPage() {
           rows={rows.map((r) => ({ id: r.country_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           sx={{ borderRadius: 2, backgroundColor: "rgba(255,255,255,0.92)" }}
         />

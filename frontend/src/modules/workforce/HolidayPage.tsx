@@ -258,7 +258,7 @@ export default function HolidayPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={holidays.map((r) => ({ id: r.holiday_id, ...r }))} columns={holidayColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={holidays.map((r) => ({ id: r.holiday_id, ...r }))} columns={holidayColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdModal

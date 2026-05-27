@@ -166,7 +166,7 @@ export default function AttendanceLogsPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.attendance_id, ...r }))} columns={columns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={rows.map((r) => ({ id: r.attendance_id, ...r }))} columns={columns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
     </Stack>
   );

@@ -251,7 +251,7 @@ export default function LeavePolicyPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={leavePolicies.map((r) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={leavePolicies.map((r) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdModal

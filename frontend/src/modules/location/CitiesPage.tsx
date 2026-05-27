@@ -190,7 +190,6 @@ export default function CitiesPage() {
           rows={rows.map((r) => ({ id: r.city_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           sx={{ borderRadius: 2, backgroundColor: "rgba(255,255,255,0.92)" }}
         />

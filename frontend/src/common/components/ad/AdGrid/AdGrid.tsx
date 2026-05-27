@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Box, Button, Divider, Stack } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -60,6 +60,90 @@ function downloadBlob(blob: Blob, fileName: string) {
   a.click();
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function isDateLikeColumn(column: GridColDef) {
+  const key = `${column.field} ${column.headerName ?? ""}`.toLowerCase();
+  return (
+    column.type === "date" ||
+    column.type === "dateTime" ||
+    /\bdob\b/.test(key) ||
+    /\bdue\s*date\b/.test(key) ||
+    /(^|_)date($|_)/.test(column.field.toLowerCase()) ||
+    /_at$/.test(column.field.toLowerCase()) ||
+    /expiry|expired/.test(key)
+  );
+}
+
+function formatDateDdMmYyyy(value: unknown) {
+  if (value === null || value === undefined || value === "") return "";
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const dd = String(value.getDate()).padStart(2, "0");
+    const mm = String(value.getMonth() + 1).padStart(2, "0");
+    const yyyy = String(value.getFullYear());
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return "";
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/);
+  if (isoMatch) return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+
+  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s.*)?$/);
+  if (slashMatch) {
+    return `${slashMatch[1].padStart(2, "0")}/${slashMatch[2].padStart(2, "0")}/${slashMatch[3]}`;
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const dd = String(parsed.getDate()).padStart(2, "0");
+    const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+    const yyyy = String(parsed.getFullYear());
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  return raw;
+}
+
+function withDefaultDateFormat<Row extends GridValidRowModel>(columns?: readonly GridColDef<Row>[]) {
+  return columns?.map((column) => {
+    if (!isDateLikeColumn(column)) return column;
+    return {
+      ...column,
+      valueFormatter: (value: unknown) => formatDateDdMmYyyy(value),
+    };
+  });
+}
+
+function isActionColumn(column: GridColDef) {
+  const key = `${column.field} ${column.headerName ?? ""}`.toLowerCase();
+  return column.type === "actions" || key.includes("action") || column.field.startsWith("__actions");
+}
+
+function appendClassName(existing: GridColDef["cellClassName"], className: string): GridColDef["cellClassName"] {
+  if (!existing) return className;
+  if (typeof existing === "string") return `${existing} ${className}`;
+  return (params) => `${existing(params)} ${className}`.trim();
+}
+
+function withStickyActionColumns<Row extends GridValidRowModel>(columns?: readonly GridColDef<Row>[]) {
+  if (!columns) return columns;
+  const enhanced = columns.map((column) => {
+    if (!isActionColumn(column)) return column;
+    return {
+      ...column,
+      sortable: false,
+      filterable: false,
+      disableExport: true,
+      disableColumnMenu: true,
+      headerClassName: `${column.headerClassName ?? ""} ad-grid-actions-sticky`.trim(),
+      cellClassName: appendClassName(column.cellClassName, "ad-grid-actions-sticky"),
+    };
+  });
+
+  return [...enhanced.filter((column) => !isActionColumn(column)), ...enhanced.filter(isActionColumn)];
 }
 
 function AdGridToolbar({
@@ -246,12 +330,13 @@ export function AdGrid<Row extends GridValidRowModel = any>({
   pagination = true,
   hideFooterPagination,
   pageSizeOptions = [10, 25, 50, 100],
+  columnBufferPx,
   autoHeight = true,
   sx,
   showToolbar = true,
   showExport = true,
-  exportFileName = "Chikitsak-Grid",
-  pdfBrandingText = "Chikitshak",
+  exportFileName = "SIS-Grid",
+  pdfBrandingText = "SIS Global Connect",
   pdfTitle,
   apiRef: apiRefProp,
   slots: slotsProp,
@@ -262,6 +347,14 @@ export function AdGrid<Row extends GridValidRowModel = any>({
   const apiRef = (apiRefProp ?? internalApiRef) as MutableRefObject<GridApiCommunity | null>;
 
   const resolvedHideFooterPagination = hideFooterPagination ?? !pagination;
+  const resolvedShowExport = showToolbar ? true : showExport;
+  const columns = useMemo(() => withStickyActionColumns(withDefaultDateFormat(rest.columns)), [rest.columns]);
+  const hasStickyActionColumn = useMemo(() => Boolean(columns?.some(isActionColumn)), [columns]);
+
+  useEffect(() => {
+    if (!hasStickyActionColumn) return;
+    (apiRef.current as any)?.unstable_setColumnVirtualization?.(false);
+  }, [apiRef, hasStickyActionColumn]);
 
   const slots = useMemo(() => {
     if (!showToolbar) return slotsProp;
@@ -276,13 +369,13 @@ export function AdGrid<Row extends GridValidRowModel = any>({
       ...slotPropsProp,
       toolbar: {
         apiRef,
-        showExport,
+        showExport: resolvedShowExport,
         exportFileName,
         pdfBrandingText,
         pdfTitle,
       } satisfies AdGridToolbarProps,
     };
-  }, [apiRef, exportFileName, pdfBrandingText, pdfTitle, showExport, showToolbar, slotPropsProp, slotsProp?.toolbar]);
+  }, [apiRef, exportFileName, pdfBrandingText, pdfTitle, resolvedShowExport, showToolbar, slotPropsProp, slotsProp?.toolbar]);
 
   return (
     <Box
@@ -303,8 +396,29 @@ export function AdGrid<Row extends GridValidRowModel = any>({
         pagination={pagination}
         hideFooterPagination={resolvedHideFooterPagination}
         pageSizeOptions={pageSizeOptions}
+        columnBufferPx={hasStickyActionColumn ? 10000 : columnBufferPx}
         autoHeight={autoHeight}
-        sx={[{ border: 0, height: autoHeight ? undefined : "100%" }, sx]}
+        columns={columns}
+        sx={[
+          {
+            border: 0,
+            height: autoHeight ? undefined : "100%",
+            "& .ad-grid-actions-sticky": {
+              position: "sticky !important",
+              right: "0 !important",
+              zIndex: 3,
+              backgroundColor: "background.paper",
+              borderLeft: "1px solid",
+              borderColor: "divider",
+              boxShadow: "-8px 0 10px -10px rgba(15, 23, 42, 0.5)",
+            },
+            "& .MuiDataGrid-columnHeader.ad-grid-actions-sticky": {
+              zIndex: 4,
+              backgroundColor: "background.paper",
+            },
+          },
+          sx,
+        ]}
         apiRef={apiRef}
         slots={slots}
         slotProps={slotProps}

@@ -78,7 +78,7 @@ export default function ContractDurationsPage() {
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.duration_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdGrid rows={rows.map((r) => ({ id: r.duration_id, ...r }))} columns={cols as any} loading={loading} disableColumnMenu />
       </AdCard>
       <AdModal open={modalOpen} onClose={() => setModalOpen(false)} title={form.duration_id ? "Edit Contract Duration" : "Add Contract Duration"} actions={
         <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>

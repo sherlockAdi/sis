@@ -231,7 +231,6 @@ export default function NotificationTemplatesPage() {
               rows={filteredRows.map((row) => ({ id: row.template_id, ...row }))}
               columns={cols as any}
               loading={loading}
-              showExport={false}
               disableColumnMenu
               autoHeight
             />

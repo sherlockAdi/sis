@@ -483,7 +483,6 @@ export default function PartnerApplicantProfilePage() {
                     },
                   ] as any}
                   loading={loading}
-                  showExport={false}
                   disableColumnMenu
                 />
               </Stack>

@@ -379,7 +379,6 @@ export default function RecruitmentScreeningInterviewsPage() {
             ] as any
           }
           loading={scheduledLoading}
-          showExport={false}
           disableColumnMenu
           columnVisibilityModel={scheduledVisibility as any}
           sx={{ minWidth: 0 }}

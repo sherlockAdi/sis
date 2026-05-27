@@ -614,7 +614,6 @@ export default function DeploymentManagementPage() {
           rows={visibleRows.map((r) => ({ id: r.deployment_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           columnVisibilityModel={visibility as any}
           sx={{ minWidth: 0 }}

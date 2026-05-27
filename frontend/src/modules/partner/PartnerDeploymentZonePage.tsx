@@ -193,7 +193,6 @@ export default function PartnerDeploymentZonePage() {
           rows={visibleRows.map((r) => ({ id: r.deployment_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           sx={{ minWidth: 0 }}
         />

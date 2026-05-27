@@ -151,7 +151,6 @@ export default function CandidateApplicationsPage() {
           columns={cols as any}
           loading={loading}
           showToolbar
-          showExport={false}
           disableColumnMenu
           onRowClick={(p: any) => navigate(`/portal/candidate/applications/${p.row.application_id}`)}
           sx={{ minHeight: 420 }}

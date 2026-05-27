@@ -245,7 +245,7 @@ export default function OfficeLocationsPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={offices.map((r) => ({ id: r.office_location_id, ...r }))} columns={officeColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={offices.map((r) => ({ id: r.office_location_id, ...r }))} columns={officeColumns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdModal

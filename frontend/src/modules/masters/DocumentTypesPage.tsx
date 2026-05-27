@@ -75,7 +75,7 @@ export default function DocumentTypesPage() {
       </Stack>
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)" }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.document_type_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdGrid rows={rows.map((r) => ({ id: r.document_type_id, ...r }))} columns={cols as any} loading={loading} disableColumnMenu />
       </AdCard>
       <AdModal open={modalOpen} onClose={() => setModalOpen(false)} title={form.document_type_id ? "Edit Document Type" : "Add Document Type"} actions={
         <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: "100%" }}>

@@ -171,7 +171,6 @@ export default function TicketListPage() {
             rows={filteredTickets.map((r) => ({ id: r.ticket_id, ...r }))}
             columns={columns as any}
             loading={loading}
-            showExport={false}
             disableColumnMenu
             autoHeight
             pageSizeOptions={[10, 20, 50]}

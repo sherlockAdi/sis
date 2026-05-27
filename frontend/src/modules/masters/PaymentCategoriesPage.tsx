@@ -159,7 +159,6 @@ export default function PaymentCategoriesPage() {
           rows={rows.map((r) => ({ id: r.payment_category_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
         />
       </AdCard>

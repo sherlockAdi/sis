@@ -245,7 +245,6 @@ export default function TradeTestRecordsPage({ scope, editable, title, subtitle 
           rows={rows.map((r) => ({ id: r.application_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           sx={{ minWidth: 0 }}
         />

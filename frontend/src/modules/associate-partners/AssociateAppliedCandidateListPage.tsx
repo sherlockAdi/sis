@@ -202,7 +202,6 @@ export default function AssociateAppliedCandidateListPage() {
             rows={filteredRows.map((r) => ({ id: r.application_id, ...r }))}
             columns={columns as any}
             loading={loading}
-            showExport={false}
             disableColumnMenu
             sx={{ minWidth: 0 }}
           />

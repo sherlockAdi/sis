@@ -468,11 +468,11 @@ export default function EmployeeAttendancePage() {
           </AdCard>
 
           <AdCard title="Leave Balances" animate={false} contentSx={{ p: 0 }}>
-            <AdGrid rows={(summary?.leave_balances ?? []).map((r) => ({ id: r.leave_balance_id, ...r }))} columns={leaveBalanceColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+            <AdGrid rows={(summary?.leave_balances ?? []).map((r) => ({ id: r.leave_balance_id, ...r }))} columns={leaveBalanceColumns as any} loading={loading} disableColumnMenu autoHeight />
           </AdCard>
 
           <AdCard title="Leave Requests" animate={false} contentSx={{ p: 0 }}>
-            <AdGrid rows={(summary?.leave_requests ?? []).map((r) => ({ id: r.leave_request_id, ...r }))} columns={requestColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+            <AdGrid rows={(summary?.leave_requests ?? []).map((r) => ({ id: r.leave_request_id, ...r }))} columns={requestColumns as any} loading={loading} disableColumnMenu autoHeight />
           </AdCard>
         </Stack>
       )}
@@ -504,7 +504,6 @@ export default function EmployeeAttendancePage() {
               rows={(monthlyReport?.summary ?? []).map((r) => ({ id: r.employee_id, ...r }))}
               columns={monthlySummaryColumns as any}
               loading={reportLoading}
-              showExport={false}
               disableColumnMenu
               autoHeight
             />
@@ -515,7 +514,6 @@ export default function EmployeeAttendancePage() {
               rows={(monthlyReport?.attendance ?? []).map((r) => ({ id: r.attendance_id, ...r }))}
               columns={monthlyAttendanceColumns as any}
               loading={reportLoading}
-              showExport={false}
               disableColumnMenu
               autoHeight
             />

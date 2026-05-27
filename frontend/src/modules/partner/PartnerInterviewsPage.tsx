@@ -433,7 +433,6 @@ export default function PartnerInterviewsPage() {
           rows={filteredRows}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           columnVisibilityModel={visibility as any}
           sx={{ minWidth: 0 }}

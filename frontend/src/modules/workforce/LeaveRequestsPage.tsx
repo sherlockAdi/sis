@@ -293,7 +293,7 @@ export default function LeaveRequestsPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} contentSx={{ p: 0 }}>
-        <AdGrid rows={filteredRequests.map((r) => ({ id: r.leave_request_id, ...r }))} columns={columns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+        <AdGrid rows={filteredRequests.map((r) => ({ id: r.leave_request_id, ...r }))} columns={columns as any} loading={loading} disableColumnMenu autoHeight />
       </AdCard>
 
       <AdModal

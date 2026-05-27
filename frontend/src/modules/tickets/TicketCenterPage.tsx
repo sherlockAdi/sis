@@ -400,7 +400,6 @@ export default function TicketCenterPage() {
               rows={filteredTickets.map((r) => ({ id: r.ticket_id, ...r }))}
               columns={escalationColumns as any}
               loading={loading}
-              showExport={false}
               disableColumnMenu
               autoHeight
               pageSizeOptions={[10, 20, 50]}
@@ -529,7 +528,6 @@ export default function TicketCenterPage() {
                     rows={filteredTickets.map((r) => ({ id: r.ticket_id, ...r }))}
                     columns={columns as any}
                     loading={loading}
-                    showExport={false}
                     disableColumnMenu
                     autoHeight
                     pageSizeOptions={[10, 20, 50]}

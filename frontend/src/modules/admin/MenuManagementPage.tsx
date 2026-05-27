@@ -708,7 +708,6 @@ export default function MenuManagementPage() {
                 rows={roles.map((r) => ({ id: r.role_id, ...r }))}
                 columns={roleCols as any}
                 loading={loadingRoles}
-                showExport={false}
                 disableColumnMenu
               />
             </Stack>
@@ -740,7 +739,6 @@ export default function MenuManagementPage() {
                 rows={menus.map((m) => ({ id: m.menu_id, ...m }))}
                 columns={menuCols as any}
                 loading={loadingMenus}
-                showExport={false}
                 disableColumnMenu
               />
             </Stack>
@@ -776,7 +774,6 @@ export default function MenuManagementPage() {
                   rows={permissionsRows}
                   columns={permCols as any}
                   loading={permLoading}
-                  showExport={false}
                   disableColumnMenu
                   getRowHeight={() => 44}
                 />

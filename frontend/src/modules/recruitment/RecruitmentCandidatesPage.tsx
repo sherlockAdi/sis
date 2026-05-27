@@ -456,7 +456,6 @@ export default function RecruitmentCandidatesPage({
           rows={filteredRows.map((r) => ({ id: r.candidate_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           height={560}
           defaultPageSize={10}

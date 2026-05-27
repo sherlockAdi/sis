@@ -156,7 +156,6 @@ export default function CandidateProfileDocumentsPage() {
                 },
               ] as any}
               loading={loading}
-              showExport={false}
               disableColumnMenu
             />
           </Stack>

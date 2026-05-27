@@ -114,7 +114,6 @@ export default function PartnerJobMandatesPage() {
           rows={rows.map((r) => ({ id: r.job_id, ...r }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           columnVisibilityModel={jobVisibility as any}
           sx={{ minWidth: 0 }}

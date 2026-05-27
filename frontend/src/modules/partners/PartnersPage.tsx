@@ -122,7 +122,7 @@ export default function PartnersPage() {
       {error && <AdAlertBox severity="error" title="Error" message={error} />}
 
       <AdCard animate={false} sx={{ backgroundColor: "rgba(255,255,255,0.72)", minWidth: 0 }} contentSx={{ p: 2 }}>
-        <AdGrid rows={rows.map((r) => ({ id: r.partner_id, ...r }))} columns={cols as any} loading={loading} showExport={false} disableColumnMenu />
+        <AdGrid rows={rows.map((r) => ({ id: r.partner_id, ...r }))} columns={cols as any} loading={loading} disableColumnMenu />
       </AdCard>
     </Stack>
   );

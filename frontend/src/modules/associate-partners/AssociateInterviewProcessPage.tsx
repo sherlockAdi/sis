@@ -164,7 +164,6 @@ export default function AssociateInterviewProcessPage() {
             rows={filteredRows.map((r) => ({ id: r.interview_id, ...r }))}
             columns={columns as any}
             loading={loading}
-            showExport={false}
             disableColumnMenu
             sx={{ minWidth: 0 }}
           />

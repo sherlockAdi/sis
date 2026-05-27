@@ -99,7 +99,6 @@ export default function PartnerFinalSelectedPage() {
           rows={rows.map((row) => ({ id: row.employee_id, ...row }))}
           columns={cols as any}
           loading={loading}
-          showExport={false}
           disableColumnMenu
           sx={{ minWidth: 0 }}
         />

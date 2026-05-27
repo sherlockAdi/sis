@@ -592,7 +592,7 @@ export default function WorkforceManagementPage() {
           animate={false}
           contentSx={{ p: 0 }}
         >
-          <AdGrid rows={policies.map((r) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+          <AdGrid rows={policies.map((r) => ({ id: r.leave_policy_id, ...r }))} columns={policyColumns as any} loading={loading} disableColumnMenu autoHeight />
         </AdCard>
       )}
 
@@ -604,7 +604,7 @@ export default function WorkforceManagementPage() {
           animate={false}
           contentSx={{ p: 0 }}
         >
-          <AdGrid rows={holidays.map((r) => ({ id: r.holiday_id, ...r }))} columns={holidayColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+          <AdGrid rows={holidays.map((r) => ({ id: r.holiday_id, ...r }))} columns={holidayColumns as any} loading={loading} disableColumnMenu autoHeight />
         </AdCard>
       )}
 
@@ -616,7 +616,7 @@ export default function WorkforceManagementPage() {
           animate={false}
           contentSx={{ p: 0 }}
         >
-          <AdGrid rows={weeklyOffs.map((r) => ({ id: r.weekly_off_rule_id, ...r }))} columns={weeklyColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+          <AdGrid rows={weeklyOffs.map((r) => ({ id: r.weekly_off_rule_id, ...r }))} columns={weeklyColumns as any} loading={loading} disableColumnMenu autoHeight />
         </AdCard>
       )}
 
@@ -628,13 +628,13 @@ export default function WorkforceManagementPage() {
           animate={false}
           contentSx={{ p: 0 }}
         >
-          <AdGrid rows={offices.map((r) => ({ id: r.office_location_id, ...r }))} columns={officeColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+          <AdGrid rows={offices.map((r) => ({ id: r.office_location_id, ...r }))} columns={officeColumns as any} loading={loading} disableColumnMenu autoHeight />
         </AdCard>
       )}
 
       {tab === 4 && (
         <AdCard title="Attendance Logs" subtitle="Check-in/out history with employer and geo status" animate={false} contentSx={{ p: 0 }}>
-          <AdGrid rows={attendance.map((r) => ({ id: r.attendance_id, ...r }))} columns={attendanceColumns as any} loading={loading} showExport={false} disableColumnMenu autoHeight />
+          <AdGrid rows={attendance.map((r) => ({ id: r.attendance_id, ...r }))} columns={attendanceColumns as any} loading={loading} disableColumnMenu autoHeight />
         </AdCard>
       )}
 
@@ -672,11 +672,11 @@ export default function WorkforceManagementPage() {
             animate={false}
             contentSx={{ p: 0 }}
           >
-              <AdGrid rows={monthlySummary.map((r) => ({ id: r.employee_id, ...r }))} columns={monthlyColumns as any} loading={monthlyLoading} showExport={false} disableColumnMenu autoHeight />
+              <AdGrid rows={monthlySummary.map((r) => ({ id: r.employee_id, ...r }))} columns={monthlyColumns as any} loading={monthlyLoading} disableColumnMenu autoHeight />
           </AdCard>
 
           <AdCard title="Monthly Attendance Rows" subtitle={`${reportRange.date_from} to ${reportRange.date_to}`} animate={false} contentSx={{ p: 0 }}>
-            <AdGrid rows={monthlyAttendance.map((r) => ({ id: r.attendance_id, ...r }))} columns={attendanceColumns as any} loading={monthlyLoading} showExport={false} disableColumnMenu autoHeight />
+            <AdGrid rows={monthlyAttendance.map((r) => ({ id: r.attendance_id, ...r }))} columns={attendanceColumns as any} loading={monthlyLoading} disableColumnMenu autoHeight />
           </AdCard>
         </Stack>
       )}

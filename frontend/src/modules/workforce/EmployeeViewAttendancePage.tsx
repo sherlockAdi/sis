@@ -159,7 +159,6 @@ export default function EmployeeViewAttendancePage() {
             { field: "remarks", headerName: "Remarks", flex: 1, minWidth: 220 },
           ] as any}
           loading={reportLoading || loading}
-          showExport={false}
           disableColumnMenu
           autoHeight
         />
