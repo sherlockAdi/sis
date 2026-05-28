@@ -149,6 +149,104 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" 
   ],
 }));
 
+function sidebarPalette(role?: string) {
+  const normalized = String(role ?? "").trim().toUpperCase();
+
+  if (normalized === "CANDIDATE") {
+    return {
+      bg: "#eff6ff",
+      gradient: "linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%)",
+      border: "rgba(37, 99, 235, 0.16)",
+      selectedBg: "rgba(37, 99, 235, 0.14)",
+      selectedHoverBg: "rgba(37, 99, 235, 0.18)",
+      childSelectedBg: "rgba(14, 165, 233, 0.14)",
+      accent: "#2563eb",
+      childAccent: "#0284c7",
+      hoverBg: "rgba(37, 99, 235, 0.08)",
+      heading: "rgba(30, 64, 175, 0.62)",
+      icon: "rgba(30, 64, 175, 0.78)",
+    };
+  }
+
+  if (normalized === "SOURCING" || normalized === "PARTNER") {
+    return {
+      bg: "#fff7ed",
+      gradient: "linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%)",
+      border: "rgba(234, 88, 12, 0.16)",
+      selectedBg: "rgba(234, 88, 12, 0.14)",
+      selectedHoverBg: "rgba(234, 88, 12, 0.18)",
+      childSelectedBg: "rgba(245, 158, 11, 0.14)",
+      accent: "#ea580c",
+      childAccent: "#d97706",
+      hoverBg: "rgba(234, 88, 12, 0.08)",
+      heading: "rgba(154, 52, 18, 0.62)",
+      icon: "rgba(154, 52, 18, 0.78)",
+    };
+  }
+
+  if (normalized === "ASSOCIATE") {
+    return {
+      bg: "#f5f3ff",
+      gradient: "linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%)",
+      border: "rgba(124, 58, 237, 0.16)",
+      selectedBg: "rgba(124, 58, 237, 0.14)",
+      selectedHoverBg: "rgba(124, 58, 237, 0.18)",
+      childSelectedBg: "rgba(139, 92, 246, 0.14)",
+      accent: "#7c3aed",
+      childAccent: "#8b5cf6",
+      hoverBg: "rgba(124, 58, 237, 0.08)",
+      heading: "rgba(91, 33, 182, 0.62)",
+      icon: "rgba(91, 33, 182, 0.78)",
+    };
+  }
+
+  if (normalized === "EMPLOYER" || normalized === "CUSTOMER") {
+    return {
+      bg: "#ecfdf5",
+      gradient: "linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%)",
+      border: "rgba(5, 150, 105, 0.16)",
+      selectedBg: "rgba(5, 150, 105, 0.14)",
+      selectedHoverBg: "rgba(5, 150, 105, 0.18)",
+      childSelectedBg: "rgba(16, 185, 129, 0.14)",
+      accent: "#059669",
+      childAccent: "#10b981",
+      hoverBg: "rgba(5, 150, 105, 0.08)",
+      heading: "rgba(6, 95, 70, 0.62)",
+      icon: "rgba(6, 95, 70, 0.78)",
+    };
+  }
+
+  if (normalized === "EMPLOYEE") {
+    return {
+      bg: "#f0fdfa",
+      gradient: "linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%)",
+      border: "rgba(13, 148, 136, 0.16)",
+      selectedBg: "rgba(13, 148, 136, 0.14)",
+      selectedHoverBg: "rgba(13, 148, 136, 0.18)",
+      childSelectedBg: "rgba(20, 184, 166, 0.14)",
+      accent: "#0d9488",
+      childAccent: "#14b8a6",
+      hoverBg: "rgba(13, 148, 136, 0.08)",
+      heading: "rgba(17, 94, 89, 0.62)",
+      icon: "rgba(17, 94, 89, 0.78)",
+    };
+  }
+
+  return {
+    bg: "#fff1f2",
+    gradient: "linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%)",
+    border: "rgba(225, 29, 72, 0.16)",
+    selectedBg: "rgba(225, 29, 72, 0.14)",
+    selectedHoverBg: "rgba(225, 29, 72, 0.18)",
+    childSelectedBg: "rgba(59, 130, 246, 0.14)",
+    accent: "#e11d48",
+    childAccent: "#3b82f6",
+    hoverBg: "rgba(225, 29, 72, 0.08)",
+    heading: "rgba(159, 18, 57, 0.62)",
+    icon: "rgba(159, 18, 57, 0.78)",
+  };
+}
+
 export default function AdAppShell({
   title = "SIS Global Workforce Solutions",
   // subtitle = "Enterprise Human Resource Management",
@@ -173,6 +271,7 @@ export default function AdAppShell({
   const [open, setOpen] = React.useState(true);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
+  const palette = React.useMemo(() => sidebarPalette(role), [role]);
 
   const effectiveOpen = isMdUp ? open : mobileOpen;
   const fallbackIcon = <DashboardIcon fontSize="small" />;
@@ -209,10 +308,9 @@ export default function AdAppShell({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#ffffff",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
-        borderRight: "1px solid rgba(2, 6, 23, 0.08)",
+        bgcolor: palette.bg,
+        background: palette.gradient,
+        borderRight: `1px solid ${palette.border}`,
       }}
     >
       <DrawerHeader sx={{ justifyContent: effectiveOpen ? "space-between" : "center", px: 2 }}>
@@ -222,8 +320,7 @@ export default function AdAppShell({
           </Box> */}
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ display: effectiveOpen ? "block" : "none", fontWeight: 700 }}
+            sx={{ display: effectiveOpen ? "block" : "none", fontWeight: 800, color: palette.heading }}
           >
             {title}
           </Typography>
@@ -254,7 +351,7 @@ export default function AdAppShell({
         {!navSections?.length ? (
           <Typography
             variant="overline"
-            sx={{ fontWeight: 900, color: "rgba(2,6,23,0.55)", letterSpacing: 1.2 }}
+            sx={{ fontWeight: 900, color: palette.heading, letterSpacing: 1.2 }}
           >
             Main Menu
           </Typography>
@@ -268,7 +365,7 @@ export default function AdAppShell({
               <Box sx={{ px: 1.5, pt: 0.5, pb: 0.75 }}>
                 <Typography
                   variant="overline"
-                  sx={{ fontWeight: 950, color: "rgba(2,6,23,0.45)", letterSpacing: 1.25 }}
+                  sx={{ fontWeight: 950, color: palette.heading, letterSpacing: 1.25 }}
                 >
                   {section.heading}
                 </Typography>
@@ -304,11 +401,11 @@ export default function AdAppShell({
                           my: 0.25,
                           position: "relative",
                           "&.Mui-selected": {
-                            bgcolor: "rgba(216,27,96,0.10)",
+                            bgcolor: palette.selectedBg,
                             color: "#0f172a",
                           },
                           "&.Mui-selected:hover": {
-                            bgcolor: "rgba(216,27,96,0.12)",
+                            bgcolor: palette.selectedHoverBg,
                           },
                           ...(effectiveOpen
                             ? {
@@ -320,12 +417,12 @@ export default function AdAppShell({
                                   bottom: 10,
                                   width: 3,
                                   borderRadius: 999,
-                                  bgcolor: "#d81b60",
+                                  bgcolor: palette.accent,
                                 },
                               }
                             : {}),
                           "&:hover": {
-                            bgcolor: "rgba(2,6,23,0.05)",
+                            bgcolor: palette.hoverBg,
                           },
                         },
                         effectiveOpen ? { justifyContent: "initial" } : { justifyContent: "center", px: 1.25 },
@@ -335,7 +432,7 @@ export default function AdAppShell({
                         sx={[
                           { minWidth: 0, justifyContent: "center" },
                           effectiveOpen ? { mr: 2 } : { mr: 0 },
-                          selected ? { color: "#d81b60" } : { color: "rgba(2,6,23,0.72)" },
+                          selected ? { color: palette.accent } : { color: palette.icon },
                         ]}
                       >
                         {item.icon ?? fallbackIcon}
@@ -377,7 +474,7 @@ export default function AdAppShell({
                                 my: 0.25,
                                 position: "relative",
                                 "&.Mui-selected": {
-                                  bgcolor: "rgba(59,130,246,0.10)",
+                                  bgcolor: palette.childSelectedBg,
                                 },
                                 "&.Mui-selected::before": {
                                   content: '""',
@@ -387,7 +484,7 @@ export default function AdAppShell({
                                   bottom: 10,
                                   width: 3,
                                   borderRadius: 999,
-                                  bgcolor: "#3b82f6",
+                                  bgcolor: palette.childAccent,
                                 },
                               }}
                             >

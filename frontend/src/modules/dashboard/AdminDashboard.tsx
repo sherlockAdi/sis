@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
   Box,
+  Button,
   Chip,
+  LinearProgress,
   Stack,
   Typography,
 } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import DashboardCustomizeOutlinedIcon from "@mui/icons-material/DashboardCustomizeOutlined";
+import FlightTakeoffOutlinedIcon from "@mui/icons-material/FlightTakeoffOutlined";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
@@ -12,7 +24,8 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
-import { AdAlertBox, AdCard } from "../../common/ad";
+import { useNavigate } from "react-router-dom";
+import { AdAlertBox, AdButton, AdCard } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { dashboardApi, type DashboardCard, type DashboardResponse } from "../../common/services/dashboardApi";
 
@@ -32,7 +45,19 @@ function formatK(value: number): string {
   return String(value ?? 0);
 }
 
-function MetricCard({ card }: { card: DashboardCard }) {
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+function pct(value: number, total: number) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
+}
+
+function MetricCard({ card, to, helper, onOpen }: { card: DashboardCard; to?: string; helper?: string; onOpen?: (to: string) => void }) {
   const tone = TONE_MAP[card.tone];
   const valueColor =
     card.key === "absent_today"
@@ -45,6 +70,96 @@ function MetricCard({ card }: { card: DashboardCard }) {
             ? "#8b5e34"
             : "#111827";
   return (
+    <Box
+      role={to ? "button" : undefined}
+      tabIndex={to ? 0 : undefined}
+      onClick={() => to && onOpen?.(to)}
+      onKeyDown={(event) => {
+        if (to && (event.key === "Enter" || event.key === " ")) onOpen?.(to);
+      }}
+      sx={{ height: "100%", cursor: to ? "pointer" : "default", outline: "none" }}
+    >
+      <AdCard
+        animate={false}
+        sx={{
+          backgroundColor: "#fff",
+          border: `1px solid ${tone.bg}`,
+          borderRadius: 0,
+          boxShadow: "none",
+          minHeight: 118,
+          transition: "transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease",
+          "&:hover": to
+            ? {
+                transform: "translateY(-2px)",
+                boxShadow: "0 10px 24px rgba(15,23,42,0.10)",
+                borderColor: tone.fg,
+              }
+            : undefined,
+        }}
+        contentSx={{ p: 1.5, height: "100%" }}
+      >
+        <Stack spacing={0.75} sx={{ height: "100%" }}>
+          <Stack direction="row" spacing={1} alignItems="flex-start">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#6b7280",
+                fontWeight: 900,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+                lineHeight: 1.15,
+                flex: 1,
+                minHeight: 28,
+              }}
+            >
+              {card.label}
+            </Typography>
+            {to ? <ArrowForwardIcon sx={{ fontSize: 17, color: tone.fg }} /> : null}
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="flex-end" sx={{ flex: 1 }}>
+            <Typography variant="h3" sx={{ fontWeight: 900, lineHeight: 0.95, color: "#111827", letterSpacing: 0 }}>
+              {formatK(card.value)}
+            </Typography>
+            <Stack spacing={0.25} sx={{ pb: 0.4, minWidth: 0 }}>
+              <Typography variant="body2" sx={{ color: valueColor, fontWeight: 800, lineHeight: 1 }}>
+                {card.trend}
+              </Typography>
+              {helper ? (
+                <Typography variant="caption" sx={{ color: "#6b7280", fontWeight: 700, lineHeight: 1.1 }}>
+                  {helper}
+                </Typography>
+              ) : null}
+            </Stack>
+          </Stack>
+        </Stack>
+      </AdCard>
+    </Box>
+  );
+}
+
+function InsightCard({
+  label,
+  value,
+  detail,
+  progress,
+  tone,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  progress: number;
+  tone: "green" | "blue" | "red" | "amber";
+  onClick: () => void;
+}) {
+  const color = {
+    green: "#15803d",
+    blue: "#1d4ed8",
+    red: "#dc2626",
+    amber: "#b45309",
+  }[tone];
+
+  return (
     <AdCard
       animate={false}
       sx={{
@@ -52,36 +167,94 @@ function MetricCard({ card }: { card: DashboardCard }) {
         border: "1px solid #e5e7eb",
         borderRadius: 0,
         boxShadow: "none",
-        minHeight: 102,
+        height: "100%",
       }}
       contentSx={{ p: 1.5, height: "100%" }}
     >
-      <Stack spacing={0.75} sx={{ height: "100%" }}>
-        <Typography
-          variant="caption"
-          sx={{
-            color: "#6b7280",
-            fontWeight: 900,
-            letterSpacing: 0.5,
-            textTransform: "uppercase",
-            lineHeight: 1.15,
-            minHeight: 28,
-          }}
-        >
-          {card.label}
-        </Typography>
-        <Stack direction="row" spacing={1.5} alignItems="flex-end" sx={{ flex: 1 }}>
-          <Typography variant="h3" sx={{ fontWeight: 900, lineHeight: 0.95, color: "#111827", letterSpacing: -1 }}>
-            {formatK(card.value)}
+      <Stack spacing={1.25} sx={{ height: "100%" }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+          <Typography variant="body2" sx={{ color: "#111827", fontWeight: 900 }}>
+            {label}
           </Typography>
-          <Stack spacing={0.25} sx={{ pb: 0.4 }}>
-            <Typography variant="body2" sx={{ color: valueColor, fontWeight: 800, lineHeight: 1 }}>
-              {card.trend}
-            </Typography>
-          </Stack>
+          <Chip size="small" label={value} sx={{ fontWeight: 900, color, bgcolor: `${color}14` }} />
         </Stack>
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          sx={{
+            height: 8,
+            borderRadius: 0,
+            bgcolor: "#f3f4f6",
+            "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 0 },
+          }}
+        />
+        <Typography variant="caption" sx={{ color: "#6b7280", fontWeight: 700, flex: 1 }}>
+          {detail}
+        </Typography>
+        <Button size="small" endIcon={<ArrowForwardIcon />} onClick={onClick} sx={{ alignSelf: "flex-start", fontWeight: 900 }}>
+          Open
+        </Button>
       </Stack>
     </AdCard>
+  );
+}
+
+function ShortcutCard({
+  icon,
+  label,
+  description,
+  to,
+  count,
+  onOpen,
+}: {
+  icon: ReactNode;
+  label: string;
+  description: string;
+  to: string;
+  count?: number;
+  onOpen: (to: string) => void;
+}) {
+  return (
+    <Box
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(to)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onOpen(to);
+      }}
+      sx={{ cursor: "pointer", outline: "none" }}
+    >
+      <AdCard
+        animate={false}
+        sx={{
+          backgroundColor: "#fff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 0,
+          boxShadow: "none",
+          transition: "transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease",
+          "&:hover": { transform: "translateY(-2px)", boxShadow: "0 10px 24px rgba(15,23,42,0.10)", borderColor: "#111827" },
+        }}
+        contentSx={{ p: 1.4 }}
+      >
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Box sx={{ width: 34, height: 34, display: "grid", placeItems: "center", bgcolor: "#f3f4f6", color: "#111827" }}>
+            {icon}
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="body2" sx={{ fontWeight: 900, color: "#111827" }} noWrap>
+                {label}
+              </Typography>
+              {typeof count === "number" ? <Chip size="small" label={count} sx={{ height: 20, fontWeight: 900 }} /> : null}
+            </Stack>
+            <Typography variant="caption" sx={{ color: "#6b7280", fontWeight: 700 }} noWrap>
+              {description}
+            </Typography>
+          </Box>
+          <ArrowForwardIcon sx={{ fontSize: 18, color: "#6b7280" }} />
+        </Stack>
+      </AdCard>
+    </Box>
   );
 }
 
@@ -335,6 +508,7 @@ function QuickStatCard({
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -358,15 +532,9 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  const quickStats = [
-    { icon: <GroupsOutlinedIcon sx={{ fontSize: 18 }} />, label: "Active Partners", value: data?.summary.active_partners ?? 0, tone: "slate" as const },
-    { icon: <WorkOutlineIcon sx={{ fontSize: 18 }} />, label: "Open Jobs", value: data?.summary.open_jobs ?? 0, tone: "blue" as const },
-    { icon: <BadgeOutlinedIcon sx={{ fontSize: 18 }} />, label: "Deployed (Month)", value: data?.summary.deployed_this_month ?? 0, tone: "blue" as const },
-    { icon: <AccessTimeOutlinedIcon sx={{ fontSize: 18 }} />, label: "Late Check-ins", value: data?.summary.late_checkins ?? 0, tone: "red" as const },
-  ];
-
   const weeklyData = data?.charts.attendance_by_day ?? [];
   const cards = data?.cards ?? [];
+  const openPath = (to: string) => navigate(to);
 
   if (loading) {
     return (
@@ -384,8 +552,129 @@ export default function AdminDashboard() {
 
   if (!data) return null;
 
+  const cardLinks: Record<string, string> = {
+    total_employees: "/portal/employees",
+    active_employees: "/portal/employees",
+    present_today: "/portal/attendance/logs",
+    absent_today: "/portal/attendance/logs",
+    on_leave: "/portal/attendance/leave-requests",
+    open_tickets: "/portal/helpdesk/open",
+    pending_approvals: "/portal/attendance/leave-requests",
+    active_partners: "/portal/partners",
+    open_jobs: "/portal/jobs",
+    deployed_this_month: "/portal/deployment",
+    weekly_off_today: "/portal/attendance/weekly-off",
+    holiday_today: "/portal/attendance/holidays",
+    late_checkins: "/portal/attendance/logs",
+  };
+  const cardHelpers: Record<string, string> = {
+    total_employees: "View employee records",
+    active_employees: "Active workforce",
+    present_today: "Open attendance logs",
+    absent_today: "Review exceptions",
+    on_leave: "Review leave flow",
+    open_tickets: "Resolve helpdesk queue",
+    pending_approvals: "Approve pending items",
+    active_partners: "Manage partners",
+    open_jobs: "Manage job mandates",
+    deployed_this_month: "Open deployment tracker",
+    late_checkins: "Review late punches",
+  };
+  const totalAttendance = data.summary.present_today + data.summary.absent_today + data.summary.on_leave;
+  const attendanceRate = pct(data.summary.present_today, totalAttendance);
+  const activeEmployeeRate = pct(data.summary.active_employees, data.summary.total_employees);
+  const exceptionCount = data.summary.absent_today + data.summary.on_leave + data.summary.late_checkins;
+  const deploymentProgress = pct(data.summary.deployed_this_month, Math.max(1, data.summary.open_jobs + data.summary.deployed_this_month));
+  const shortcuts = [
+    {
+      icon: <AddCircleOutlineIcon sx={{ fontSize: 19 }} />,
+      label: "Create Job",
+      description: "Add a new job mandate",
+      to: "/portal/jobs/new",
+    },
+    {
+      icon: <AssignmentIndOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Add Candidate",
+      description: "Create recruitment profile",
+      to: "/portal/recruitment/candidates/new",
+    },
+    {
+      icon: <BusinessOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Partners",
+      description: "Onboard and manage partners",
+      to: "/portal/partners",
+      count: data.summary.active_partners,
+    },
+    {
+      icon: <HelpOutlineOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Helpdesk",
+      description: "Open tickets and escalations",
+      to: "/portal/helpdesk/open",
+      count: data.summary.open_tickets,
+    },
+    {
+      icon: <FlightTakeoffOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Deployment",
+      description: "Visa, travel and joining",
+      to: "/portal/deployment",
+      count: data.summary.deployed_this_month,
+    },
+    {
+      icon: <SettingsOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Settings",
+      description: "Masters and system setup",
+      to: "/portal/settings",
+    },
+    {
+      icon: <ManageAccountsOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Menu Roles",
+      description: "Permissions and role access",
+      to: "/portal/admin/menu-management",
+    },
+    {
+      icon: <DashboardCustomizeOutlinedIcon sx={{ fontSize: 19 }} />,
+      label: "Reports",
+      description: "Analytics workspace",
+      to: "/portal/reports",
+    },
+  ];
+
   return (
     <Stack spacing={2.25}>
+      <AdCard
+        animate={false}
+        sx={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, boxShadow: "none" }}
+        contentSx={{ p: 2 }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ xs: "stretch", md: "center" }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <VisibilityOutlinedIcon sx={{ color: "#111827" }} />
+              <Typography variant="h5" sx={{ fontWeight: 950, color: "#111827" }}>
+                Admin Control Center
+              </Typography>
+              <Chip size="small" label={data.title || "Live Dashboard"} sx={{ fontWeight: 900 }} />
+            </Stack>
+            <Typography variant="body2" sx={{ mt: 0.75, color: "#6b7280", fontWeight: 700 }}>
+              Workforce, recruitment, attendance, partner and support activity in one place.
+            </Typography>
+          </Box>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <Chip
+              icon={<CalendarMonthOutlinedIcon fontSize="small" />}
+              label={`Updated ${formatDateTime(data.generated_at)}`}
+              sx={{ fontWeight: 900, justifyContent: "flex-start" }}
+            />
+            <AdButton startIcon={<AddCircleOutlineIcon fontSize="small" />} onClick={() => navigate("/portal/jobs/new")}>
+              New Job
+            </AdButton>
+            <AdButton variant="secondary" startIcon={<AssignmentTurnedInOutlinedIcon fontSize="small" />} onClick={() => navigate("/portal/attendance/leave-requests")}>
+              Approvals
+            </AdButton>
+          </Stack>
+        </Stack>
+      </AdCard>
+
       <Box
         sx={{
           display: "grid",
@@ -398,8 +687,49 @@ export default function AdminDashboard() {
         }}
       >
         {cards.slice(0, 6).map((card) => (
-          <MetricCard key={card.key} card={card} />
+          <MetricCard key={card.key} card={card} to={cardLinks[card.key]} helper={cardHelpers[card.key]} onOpen={openPath} />
         ))}
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" },
+          gap: 1.2,
+        }}
+      >
+        <InsightCard
+          label="Attendance Health"
+          value={`${attendanceRate}%`}
+          detail={`${data.summary.present_today} present, ${exceptionCount} exceptions today`}
+          progress={attendanceRate}
+          tone={attendanceRate >= 85 ? "green" : attendanceRate >= 65 ? "amber" : "red"}
+          onClick={() => navigate("/portal/attendance/logs")}
+        />
+        <InsightCard
+          label="Active Workforce"
+          value={`${activeEmployeeRate}%`}
+          detail={`${data.summary.active_employees} active out of ${data.summary.total_employees} employees`}
+          progress={activeEmployeeRate}
+          tone={activeEmployeeRate >= 80 ? "green" : "blue"}
+          onClick={() => navigate("/portal/employees")}
+        />
+        <InsightCard
+          label="Deployment Flow"
+          value={`${data.summary.deployed_this_month}`}
+          detail={`${data.summary.open_jobs} open jobs feeding deployment this month`}
+          progress={deploymentProgress}
+          tone="blue"
+          onClick={() => navigate("/portal/deployment")}
+        />
+        <InsightCard
+          label="Attention Queue"
+          value={`${data.summary.pending_approvals + data.summary.open_tickets}`}
+          detail={`${data.summary.pending_approvals} approvals and ${data.summary.open_tickets} tickets pending`}
+          progress={pct(data.summary.pending_approvals + data.summary.open_tickets, Math.max(1, data.summary.total_employees))}
+          tone={data.summary.pending_approvals || data.summary.open_tickets ? "amber" : "green"}
+          onClick={() => navigate("/portal/helpdesk/open")}
+        />
       </Box>
 
       <Box
@@ -415,7 +745,7 @@ export default function AdminDashboard() {
 
       <Stack spacing={1}>
         <Typography variant="body2" sx={{ fontWeight: 900, color: "#111827" }}>
-          Quick Stats
+          Quick Actions
         </Typography>
         <Box
           sx={{
@@ -424,8 +754,8 @@ export default function AdminDashboard() {
             gap: 1.2,
           }}
         >
-          {quickStats.map((item) => (
-            <QuickStatCard key={item.label} {...item} />
+          {shortcuts.map((item) => (
+            <ShortcutCard key={item.label} {...item} onOpen={openPath} />
           ))}
         </Box>
       </Stack>

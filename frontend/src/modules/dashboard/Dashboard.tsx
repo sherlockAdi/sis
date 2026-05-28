@@ -616,13 +616,20 @@ export default function Dashboard() {
   const loading = false;
 
   const role = String(me?.role_code ?? "").toUpperCase();
-  if (role === "ADMIN" || role === "SUPER_ADMIN") {
+  const isCandidate = role === "CANDIDATE";
+  const isPartner = role === "SOURCING" || role === "PARTNER";
+  const isAssociate = role === "ASSOCIATE";
+  const isEmployer = role === "EMPLOYER" || role === "CUSTOMER";
+  const isEmployee = role === "EMPLOYEE";
+  const isAdminLike = Boolean(me) && !(isCandidate || isPartner || isEmployer || isAssociate || isEmployee);
+
+  if (isAdminLike) {
     return <AdminDashboard />;
   }
-  if (role === "EMPLOYEE") {
+  if (isEmployee) {
     return <EmployeeDashboardPage />;
   }
-  if (role === "CANDIDATE") {
+  if (isCandidate) {
     if (!me) return <AdAlertBox severity="error" title="Failed to load" message="Missing profile. Please login again." />;
     return <CandidateDashboard me={me} />;
   }
