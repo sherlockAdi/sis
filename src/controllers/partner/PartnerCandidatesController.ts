@@ -81,6 +81,19 @@ type PartnerApplicationRow = {
   candidate_id: number;
 };
 
+async function hasEmployeeForPartner(candidateId: number, partnerId: number): Promise<boolean> {
+  const [rows] = await pool.query<(RowDataPacket & { employee_id: number })[]>(
+    `SELECT employee_id
+     FROM EMP_T01_employees
+     WHERE candidate_id = :candidate_id
+       AND partner_id = :partner_id
+       AND deleted_at IS NULL
+     LIMIT 1`,
+    { candidate_id: candidateId, partner_id: partnerId }
+  );
+  return Boolean(rows[0]?.employee_id);
+}
+
 @Route('partner/candidates')
 @Tags('Partner')
 export class PartnerCandidatesController extends Controller {
@@ -122,6 +135,11 @@ export class PartnerCandidatesController extends Controller {
     );
     const candidate = candRows[0];
     if (!candidate) throw httpError(404, 'Candidate not found');
+    const canViewContact = await hasEmployeeForPartner(candidateId, partner.partner_id);
+    if (!canViewContact) {
+      candidate.phone = null;
+      candidate.email = null;
+    }
 
     const documents = await callProc<RowDataPacket & PartnerCandidateDocumentRow>(
       `CALL sp_rec_candidate_documents('LIST_BY_CANDIDATE', NULL, :candidate_id, NULL, NULL)`,

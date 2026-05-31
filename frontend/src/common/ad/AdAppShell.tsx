@@ -336,25 +336,17 @@ export default function AdAppShell({
 
       <Divider />
 
-      <Box sx={{ px: effectiveOpen ? 2 : 1, py: 1.5 }}>
-       
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: effectiveOpen ? "block" : "none" }}
-        >
-          {/* {subtitle} */}
-        </Typography>
-      </Box>
+    
 
       <Box sx={{ px: effectiveOpen ? 2 : 1, pb: 1, display: effectiveOpen ? "block" : "none" }}>
         {!navSections?.length ? (
-          <Typography
-            variant="overline"
-            sx={{ fontWeight: 900, color: palette.heading, letterSpacing: 1.2 }}
-          >
-            Main Menu
-          </Typography>
+          // <Typography
+          //   variant="overline"
+          //   sx={{ fontWeight: 900, color: palette.heading, letterSpacing: 1.2 }}
+          // >
+          //   Main Menu
+          // </Typography>
+          <></>
         ) : null}
       </Box>
 

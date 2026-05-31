@@ -23,6 +23,8 @@ function isAppliedStatus(value: string | null | undefined): boolean {
   return normalizeStatus(value) === "applied";
 }
 
+const HIDDEN_CONTACT_TEXT = "Available after employee conversion";
+
 export default function PartnerMySubmissionsPage() {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -136,8 +138,6 @@ export default function PartnerMySubmissionsPage() {
           return <Chip size="small" label={status || "—"} color={isShortlistedStatus(status) ? "success" : "default"} />;
         },
       },
-      { field: "phone", headerName: "Phone", width: 140 },
-      { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
       {
         field: "__actions",
         headerName: "Actions",
@@ -176,14 +176,6 @@ export default function PartnerMySubmissionsPage() {
     [navigate, openCandidate, shortlistingId],
   );
 
-  const visibility = useMemo(
-    () => ({
-      phone: !isSmDown,
-      email: !isMdDown,
-    }),
-    [isMdDown, isSmDown],
-  );
-
   const visibleRows = useMemo(() => rows.filter((row) => isAppliedStatus(row.status)), [rows]);
 
   return (
@@ -204,7 +196,6 @@ export default function PartnerMySubmissionsPage() {
           columns={cols as any}
           loading={loading}
           disableColumnMenu
-          columnVisibilityModel={visibility as any}
           sx={{ minWidth: 0 }}
         />
       </AdCard>
@@ -270,8 +261,8 @@ export default function PartnerMySubmissionsPage() {
                   <ProfileField label="Candidate Code" value={candidateProfile.candidate_code} />
                   <ProfileField label="First Name" value={candidateProfile.first_name} />
                   <ProfileField label="Last Name" value={candidateProfile.last_name} />
-                  <ProfileField label="Mobile" value={candidateProfile.phone} />
-                  <ProfileField label="Email" value={candidateProfile.email} />
+                  <ProfileField label="Mobile" value={candidateProfile.phone ?? HIDDEN_CONTACT_TEXT} />
+                  <ProfileField label="Email" value={candidateProfile.email ?? HIDDEN_CONTACT_TEXT} />
                   <ProfileField label="Passport Number" value={candidateProfile.passport_number} />
                   <ProfileField label="Status" value={candidateProfile.status} />
                 </Box>

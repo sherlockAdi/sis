@@ -110,6 +110,7 @@ import PartnerSubmitCandidatesPage from "../modules/public/pages/partner/Partner
 import PartnerFormPage from "../modules/partners/PartnerFormPage";
 import AssociatePartnersPage from "../modules/associate-partners/AssociatePartnersPage";
 import AssociatePartnerFormPage from "../modules/associate-partners/AssociatePartnerFormPage";
+import AssociateDashboardPage from "../modules/associate-partners/AssociateDashboardPage";
 import AssociateJobListPage from "../modules/associate-partners/AssociateJobListPage";
 import AssociateCreateCandidatesPage from "../modules/associate-partners/AssociateCreateCandidatesPage";
 import AssociateCandidateListPage from "../modules/associate-partners/AssociateCandidateListPage";
@@ -140,6 +141,7 @@ function PortalIndexRedirect() {
   const role = String(me?.role_code ?? "").toUpperCase();
   if (role === "CANDIDATE") return <Navigate to="candidate/home" replace />;
   if (role === "EMPLOYEE") return <Navigate to="employees/dashboard" replace />;
+  if (role === "ASSOCIATE") return <Navigate to="associate/dashboard" replace />;
   if (role === "SOURCING" || role === "PARTNER") return <Navigate to="partner/dashboard" replace />;
   return <Navigate to="dashboard" replace />;
 }
@@ -465,12 +467,7 @@ export default function AppRoutes() {
 
             <Route
               path="associate/dashboard"
-              element={
-                <PlaceholderPage
-                  title="Associate Partner Dashboard"
-                  description="Overview for associate partners, including quick access to candidate and job workflows."
-                />
-              }
+              element={<AssociateDashboardPage />}
             />
             <Route
               path="associate/upload-candidate"

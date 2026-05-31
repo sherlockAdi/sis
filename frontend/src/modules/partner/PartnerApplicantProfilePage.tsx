@@ -16,6 +16,8 @@ import {
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { formatJsonList } from "../../common/utils/jsonList";
 
+const HIDDEN_CONTACT_TEXT = "Available after employee conversion";
+
 type PartnerInterviewRow = {
   interview_id: number;
   application_id: number;
@@ -167,6 +169,8 @@ export default function PartnerApplicantProfilePage() {
   const selectedApplicationStatus = activeApplication ? formatApplicationStatus(activeApplication.status) : "No application";
   const selectedApplicationStatusTone = getStatusTone(activeApplication?.status);
   const candidateStatusTone = getStatusTone(candidate?.status);
+  const candidatePhoneValue = candidate?.phone ?? HIDDEN_CONTACT_TEXT;
+  const candidateEmailValue = candidate?.email ?? HIDDEN_CONTACT_TEXT;
 
   return (
     <Stack
@@ -409,8 +413,8 @@ export default function PartnerApplicantProfilePage() {
                     <ProfileField label="Candidate Code" value={candidate.candidate_code} />
                     <ProfileField label="First Name" value={candidate.first_name} />
                     <ProfileField label="Last Name" value={candidate.last_name} />
-                    <ProfileField label="Mobile" value={candidate.phone} />
-                    <ProfileField label="Email" value={candidate.email} />
+                    <ProfileField label="Mobile" value={candidatePhoneValue} />
+                    <ProfileField label="Email" value={candidateEmailValue} />
                     <ProfileField label="Passport Number" value={candidate.passport_number} />
                     <ProfileField label="Candidate Status" value={candidate.status} />
                     {activeApplication ? <ProfileField label="Application Status" value={activeApplication.status} /> : null}

@@ -1,6 +1,7 @@
 import { Controller, Get, Request, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
+import { pool } from '../../db/pool';
 import { httpError } from '../../utils/httpErrors';
 import { getPartnerByUserId } from '../../services/partnerService';
 
@@ -30,9 +31,40 @@ export class PartnerApplicationsController extends Controller {
     const partner = await getPartnerByUserId(user.user_id);
     if (!partner?.partner_id) throw httpError(403, 'Partner profile not found');
 
-    return callProc<RowDataPacket & PartnerApplicationRow>(
+    const rows = await callProc<RowDataPacket & PartnerApplicationRow>(
       `CALL sp_rec_applications('LIST_BY_PARTNER', NULL, NULL, NULL, NULL, NULL, :partner_id)`,
       { partner_id: partner.partner_id }
+    );
+
+    const candidateIds = Array.from(new Set(rows.map((row) => Number(row.candidate_id)).filter(Number.isFinite)));
+    if (!candidateIds.length) return rows;
+
+    const placeholders = candidateIds.map((_, index) => `:candidate_id_${index}`).join(', ');
+    const params = candidateIds.reduce<Record<string, number>>(
+      (acc, candidateId, index) => {
+        acc[`candidate_id_${index}`] = candidateId;
+        return acc;
+      },
+      { partner_id: partner.partner_id }
+    );
+    const [employeeRows] = await pool.query<(RowDataPacket & { candidate_id: number })[]>(
+      `SELECT candidate_id
+       FROM EMP_T01_employees
+       WHERE partner_id = :partner_id
+         AND deleted_at IS NULL
+         AND candidate_id IN (${placeholders})`,
+      params
+    );
+    const employeeCandidateIds = new Set(employeeRows.map((row) => Number(row.candidate_id)));
+
+    return rows.map((row) =>
+      employeeCandidateIds.has(Number(row.candidate_id))
+        ? row
+        : {
+            ...row,
+            phone: null,
+            email: null,
+          }
     );
   }
 }

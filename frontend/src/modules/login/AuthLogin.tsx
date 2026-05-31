@@ -64,12 +64,14 @@ function resolvePostLoginTarget(profile: MeResponse, requestedFrom?: unknown): s
   if (from.startsWith("/portal")) {
     if (role === "CANDIDATE" && from.startsWith("/portal/candidate")) return from;
     if ((role === "SOURCING" || role === "PARTNER") && from.startsWith("/portal/partner")) return from;
+    if (role === "ASSOCIATE" && from.startsWith("/portal/associate")) return from;
     if (role === "EMPLOYEE" && from.startsWith("/portal/employees")) return from;
-    if (!["CANDIDATE", "SOURCING", "PARTNER", "EMPLOYEE"].includes(role)) return from;
+    if (!["CANDIDATE", "SOURCING", "PARTNER", "ASSOCIATE", "EMPLOYEE"].includes(role)) return from;
   }
 
   if (role === "CANDIDATE") return withPortalBase("/candidate/home");
   if (role === "EMPLOYEE") return withPortalBase("/employees/dashboard");
+  if (role === "ASSOCIATE") return withPortalBase("/associate/dashboard");
   if (role === "SOURCING" || role === "PARTNER") return withPortalBase("/partner/dashboard");
   return withPortalBase("/dashboard");
 }

@@ -696,7 +696,7 @@ export default function AppShellLayout() {
     if (isPartner) return "Employer Portal";
     if (isAssociate) return "Associate Partner Portal";
     if (isEmployer) return "Employer Portal";
-    return "Administrator Dashboard";
+    return "Administrator Portal";
   }, [isAssociate, isCandidate, isEmployer, isPartner]);
 
   const effectiveRightSlot = useMemo(() => {
