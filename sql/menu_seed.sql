@@ -202,7 +202,8 @@ INSERT INTO AUTH_U02_menus (menu_name, menu_code, parent_menu_id, menu_path, ico
 VALUES
   ('Partner List', 'ADM_PART_LIST', @m_partners, '/partners/list', 'people', 81, TRUE),
   ('Candidate Referrals', 'ADM_PART_REF', @m_partners, '/partners/referrals', 'people', 82, TRUE),
-  ('Performance Tracking', 'ADM_PART_PERF', @m_partners, '/partners/performance', 'description', 83, TRUE)
+  ('Performance Tracking', 'ADM_PART_PERF', @m_partners, '/partners/performance', 'description', 83, TRUE),
+  ('Lead Panel', 'ADM_PART_LEADS', @m_partners, '/leads', 'people', 84, TRUE)
 ON DUPLICATE KEY UPDATE
   menu_name = VALUES(menu_name),
   parent_menu_id = VALUES(parent_menu_id),

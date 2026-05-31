@@ -97,6 +97,7 @@ import EmployerZonePage from "../modules/public/pages/EmployerZonePage";
 import PartnerZonePage from "../modules/public/pages/PartnerZonePage";
 import PublicRegisterPage from "../modules/public/pages/PublicRegisterPage";
 import PublicMenuPage from "../modules/public/pages/PublicMenuPage";
+import LeadFormPage from "../modules/public/pages/LeadFormPage";
 import AboutIndexPage from "../modules/public/pages/about/AboutIndexPage";
 import EmployerZoneLandingPage from "../modules/public/pages/employer/EmployerZoneLandingPage";
 import EmployerWhyPartnerPage from "../modules/public/pages/employer/EmployerWhyPartnerPage";
@@ -120,6 +121,7 @@ import AssociateOnboardingOfferPage from "../modules/associate-partners/Associat
 import AssociateTotalJobListPage from "../modules/associate-partners/AssociateTotalJobListPage";
 import AssociateInterviewProcessPage from "../modules/associate-partners/AssociateInterviewProcessPage";
 import PlaceholderPage from "../modules/admin/PlaceholderPage";
+import LeadPanelPage from "../modules/leads/LeadPanelPage";
 import { useAuth } from "../common/auth/AuthContext";
 
 const mode = import.meta.env.VITE_APP_MODE ?? "all";
@@ -188,6 +190,8 @@ export default function AppRoutes() {
           {/* Legacy single-page partner zone */}
           <Route path="/partner-zone-legacy" element={<PartnerZonePage />} />
           <Route path="/register" element={<PublicRegisterPage />} />
+          <Route path="/lead" element={<LeadFormPage />} />
+          <Route path="/leads" element={<LeadFormPage />} />
           <Route path="/menu" element={<PublicMenuPage />} />
         </Route>
 
@@ -389,6 +393,7 @@ export default function AppRoutes() {
               element={<PartnerFinalSelectedPage />}
             />
             <Route path="companies" element={<CompaniesPage />} />
+            <Route path="leads" element={<LeadPanelPage />} />
 
             {/* Admin scaffolding routes (dummy pages for now, safe for dynamic Menu Management paths) */}
             <Route
