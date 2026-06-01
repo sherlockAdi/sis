@@ -1,0 +1,417 @@
+/* CountrySlider.module.css */
+/* SIS Global Workforce — Light theme: white / grey / #B22225 */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Palette vars ─────────────────────────────────────────────────────────────
+   --red:      #B22225  (primary brand)
+   --red-dark: #8c1a1c  (hover / deep accent)
+   --red-pale: #f5e5e5  (tint fills)
+   --red-mid:  #d44446  (softer usage)
+   bg levels:  #ffffff → #f4f4f4 → #eaeaea → #d8d8d8
+   text:       #1a1a1a → #4a4a4a → #888
+*/
+
+/* ── Root ─────────────────────────────────────────────────────────────────── */
+.root {
+  background: #f4f4f4;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 48px 32px 36px;
+  position: relative;
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid #d8d8d8;
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 35% at 50% 0%, rgba(178,34,37,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 100% 100%, rgba(178,34,37,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #B22225;
+  margin-bottom: 10px;
+  padding: 4px 14px;
+  border: 1px solid rgba(178,34,37,0.35);
+  border-radius: 20px;
+  background: rgba(178,34,37,0.07);
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.15;
+  margin: 8px 0;
+}
+
+.title span {
+  color: #B22225;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Stage ──────────────────────────────────────────────────────────────────── */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+}
+
+.globeWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.globeLabel {
+  text-align: center;
+  margin-top: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color 0.4s ease;
+}
+
+/* Info panel */
+.infoPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.infoFlag { font-size: 40px; line-height: 1; }
+
+.infoName {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.infoRegion {
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 0.3px;
+}
+
+.infoProp {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  transition: color 0.4s ease;
+}
+
+.infoBtn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--accent, #B22225);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  width: fit-content;
+  letter-spacing: 0.3px;
+}
+
+.infoBtn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.progressWrap {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: 200px;
+}
+
+.progressDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d0d0d0;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.progressDotActive {
+  width: 20px;
+  border-radius: 4px;
+  background: #B22225;
+}
+
+/* ── Region Filters ─────────────────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  color: #666;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill:hover {
+  border-color: #B22225;
+  color: #B22225;
+  background: rgba(178,34,37,0.04);
+}
+
+.pillActive {
+  background: rgba(178,34,37,0.08);
+  border-color: #B22225;
+  color: #B22225;
+}
+
+.filterCount {
+  margin-left: auto;
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 0.5px;
+}
+
+/* ── Slider ─────────────────────────────────────────────────────────────────── */
+.sliderWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.navBtn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  color: #333;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.navBtn:hover {
+  background: #B22225;
+  border-color: #B22225;
+  color: #fff;
+}
+
+.track {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 8px 20px;
+}
+
+.track::-webkit-scrollbar { display: none; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────────── */
+.card {
+  flex: 0 0 260px;
+  scroll-snap-align: center;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  border: 1.5px solid #e0e0e0;
+  background: #ffffff;
+  transition: transform 0.38s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.3s ease,
+              box-shadow 0.38s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #c8c8c8;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+}
+
+.cardActive {
+  border-color: var(--accent, #B22225) !important;
+  transform: translateY(-12px) scale(1.03) !important;
+  box-shadow:
+    0 28px 60px rgba(0,0,0,0.14),
+    0 0 0 3px color-mix(in srgb, var(--accent, #B22225) 18%, transparent) !important;
+}
+
+.cardAdjacent {
+  transform: translateY(-5px) scale(1.01);
+  border-color: #c8c8c8;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
+
+/* Card media */
+.cardImgWrap {
+  position: relative;
+  width: 100%;
+  height: 185px;
+  overflow: hidden;
+}
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.card:hover .cardImg,
+.cardActive .cardImg { transform: scale(1.07); }
+
+.cardImgOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,10,10,0.72) 0%, rgba(20,10,10,0.05) 55%, transparent 100%);
+}
+
+.cardBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 22px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 8px;
+  padding: 3px 7px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.videoPill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(178,34,37,0.9);
+  border-radius: 6px;
+  padding: 3px 8px;
+  backdrop-filter: blur(4px);
+}
+
+/* Card body */
+.cardBody {
+  padding: 16px 18px 18px;
+  background: #fff;
+}
+
+.cardName {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.cardRegion {
+  font-size: 10px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.cardProps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+}
+
+.cardDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #B22225);
+  flex-shrink: 0;
+  box-shadow: 0 0 5px color-mix(in srgb, var(--accent, #B22225) 60%, transparent);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .root { padding: 32px 16px 24px; }
+
+  .stage {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .infoPanel {
+    align-items: center;
+    text-align: center;
+  }
+
+  .progressWrap {
+    justify-content: center;
+    max-width: 100%;
+  }
+
+  .card { flex: 0 0 220px; }
+  .cardImgWrap { height: 155px; }
+}
