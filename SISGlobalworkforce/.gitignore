@@ -1,0 +1,77 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependency folders
+node_modules/
+vendor/
+
+# Build folders
+dist/
+build/
+out/
+coverage/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package manager lock files (optional)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env/
+
+# Java
+*.class
+target/
+
+# C/C++
+*.o
+*.exe
+
+# Mac/Linux temp
+*.tmp
+*.temp
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Next.js
+.next/
+
+# React Native
+.expo/
+.expo-shared/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Firebase
+.firebase/
+
+# TypeScript
+*.tsbuildinfo
