@@ -10,6 +10,7 @@ export type AdDateTimePickerProps = {
   required?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  format?: string;
   onChange?: (value: Dayjs | null) => void;
 };
 
@@ -19,6 +20,7 @@ export function AdDateTimePicker({
   required = false,
   disabled = false,
   fullWidth = true,
+  format = "DD/MM/YYYY HH:mm",
   onChange,
 }: AdDateTimePickerProps) {
   const [selected, setSelected] = useState<Dayjs | null>(value);
@@ -39,6 +41,7 @@ export function AdDateTimePicker({
         value={selected}
         onChange={handleChange}
         disabled={disabled}
+        format={format}
         slotProps={{
           textField: {
             required,

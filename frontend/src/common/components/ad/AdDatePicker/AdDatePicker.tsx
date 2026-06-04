@@ -11,6 +11,7 @@ export type AdDatePickerProps = {
   disabled?: boolean;
   fullWidth?: boolean;
   variant?: "standard" | "outlined" | "filled";
+  format?: string;
   onChange?: (value: Dayjs | null) => void;
 };
 
@@ -21,6 +22,7 @@ export function AdDatePicker({
   disabled = false,
   fullWidth = true,
   variant = "outlined",
+  format = "DD/MM/YYYY",
   onChange,
 }: AdDatePickerProps) {
   const [selected, setSelected] = useState<Dayjs | null>(value);
@@ -41,6 +43,7 @@ export function AdDatePicker({
         value={selected}
         onChange={handleChange}
         disabled={disabled}
+        format={format}
         slotProps={{
           textField: {
             required,

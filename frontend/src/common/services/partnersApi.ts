@@ -38,6 +38,12 @@ export type PartnerApplicationRow = {
   candidate_name: string;
   phone: string | null;
   email: string | null;
+  country_id?: number | null;
+  country_name?: string | null;
+  state_id?: number | null;
+  state_name?: string | null;
+  city_id?: number | null;
+  city_name?: string | null;
   job_id: number;
   job_title: string;
   job_code: string | null;

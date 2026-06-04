@@ -24,7 +24,8 @@ function normalizeStatus(value: string | null | undefined): string {
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   const parsed = dayjs(value);
-  return parsed.isValid() ? parsed.format("DD MMM YYYY, HH:mm") : String(value);
+  if (!parsed.isValid()) return String(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? parsed.format("DD MMM YYYY") : parsed.format("DD MMM YYYY, hh:mm A");
 }
 
 function formatStatusLabel(value: string | null | undefined): string {
@@ -65,7 +66,6 @@ function buildJourney(activeApplication: CandidateApplicationRow | null, intervi
       key: "shortlisted",
       label: "Shortlisted",
       note: hasShortlist ? "Your job application has moved into review" : "Waiting for shortlist",
-      time: hasShortlist ? formatDateTime(activeApplication.application_date) : undefined,
       evidence: hasShortlist,
     },
     {
@@ -83,7 +83,7 @@ function buildJourney(activeApplication: CandidateApplicationRow | null, intervi
       key: "ready",
       label: "Ready",
       note: hasReady ? "All previous steps are complete for this job" : "Waiting for final readiness",
-      time: hasReady ? formatDateTime(latestInterview?.interview_date ?? activeApplication.application_date) : undefined,
+      time: hasReady && latestInterview?.interview_date ? formatDateTime(latestInterview.interview_date) : undefined,
       evidence: hasReady,
     },
   ];

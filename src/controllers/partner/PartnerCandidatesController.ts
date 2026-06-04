@@ -81,6 +81,30 @@ type PartnerApplicationRow = {
   candidate_id: number;
 };
 
+async function enrichCandidateLocation<T extends PartnerCandidateRow>(candidate: T): Promise<T> {
+  if (!candidate) return candidate;
+  const [rows] = await pool.query<(RowDataPacket & {
+    country_name: string | null;
+    state_name: string | null;
+    city_name: string | null;
+  })[]>(
+    `SELECT co.country_name, st.state_name, ci.city_name
+     FROM REC_T01_candidates c
+     LEFT JOIN LOC_M01_countries co ON co.country_id = c.country_id
+     LEFT JOIN LOC_M02_states st ON st.state_id = c.state_id
+     LEFT JOIN LOC_M03_cities ci ON ci.city_id = c.city_id
+     WHERE c.candidate_id = :candidate_id
+     LIMIT 1`,
+    { candidate_id: candidate.candidate_id }
+  );
+  return {
+    ...candidate,
+    country_name: candidate.country_name ?? rows[0]?.country_name ?? null,
+    state_name: candidate.state_name ?? rows[0]?.state_name ?? null,
+    city_name: candidate.city_name ?? rows[0]?.city_name ?? null,
+  };
+}
+
 async function hasEmployeeForPartner(candidateId: number, partnerId: number): Promise<boolean> {
   const [rows] = await pool.query<(RowDataPacket & { employee_id: number })[]>(
     `SELECT employee_id
@@ -133,8 +157,9 @@ export class PartnerCandidatesController extends Controller {
       `CALL sp_rec_candidates('GET', :candidate_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { candidate_id: candidateId }
     );
-    const candidate = candRows[0];
-    if (!candidate) throw httpError(404, 'Candidate not found');
+    const candidateRow = candRows[0];
+    if (!candidateRow) throw httpError(404, 'Candidate not found');
+    const candidate = await enrichCandidateLocation(candidateRow);
     const canViewContact = await hasEmployeeForPartner(candidateId, partner.partner_id);
     if (!canViewContact) {
       candidate.phone = null;

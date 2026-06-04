@@ -37,6 +37,7 @@ import { mastersApi, type VisaType } from "../../common/services/mastersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 
 const stages = ["Ready", "Offered", "Visa Processing", "Biometrics", "Visa Approved", "Travel Booked", "Deployed"] as const;
+const VISA_DATE_DISPLAY_FORMAT = "DD/MM/YYYY";
 
 function stageFromPath(pathname: string): string | null {
   if (pathname.includes("/deployment/ready")) return "Ready";
@@ -746,12 +747,14 @@ export default function DeploymentManagementPage() {
                     <AdDatePicker
                       label="Visa Issue Date"
                       variant="standard"
+                      format={VISA_DATE_DISPLAY_FORMAT}
                       value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
                       onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
                     />
                     <AdDatePicker
                       label="Visa Expiry Date"
                       variant="standard"
+                      format={VISA_DATE_DISPLAY_FORMAT}
                       value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
                       onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
                     />
@@ -782,6 +785,7 @@ export default function DeploymentManagementPage() {
                     <AdDatePicker
                       label="Passport Expiry Date"
                       variant="standard"
+                      format={VISA_DATE_DISPLAY_FORMAT}
                       value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
                       onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
                     />

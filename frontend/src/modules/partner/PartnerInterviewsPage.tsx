@@ -78,6 +78,12 @@ function stageLabel(stage: "shortlisted" | "interviewed" | "postponed"): string 
   return "Postponed";
 }
 
+function formatDateCompact(value: string | null | undefined): string {
+  if (!value) return "-";
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("DDMMYYYY") : String(value);
+}
+
 export default function PartnerInterviewsPage() {
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
@@ -199,7 +205,12 @@ export default function PartnerInterviewsPage() {
       { field: "candidate_name", headerName: "Candidate", flex: 1, minWidth: 180 },
       { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
       { field: "mode_name", headerName: "Mode", width: 140 },
-      { field: "interview_date", headerName: "Date", width: 180 },
+      {
+        field: "interview_date",
+        headerName: "Date",
+        width: 130,
+        renderCell: (p: any) => formatDateCompact(p.value),
+      },
       {
         field: "stage",
         headerName: "Status",
@@ -469,7 +480,7 @@ export default function PartnerInterviewsPage() {
             onChange={(v) => setSchedule((s) => ({ ...s, application_id: String(v) }))}
             options={appOptions}
           />
-          <Stack spacing={1}>
+          <Stack spacing={1} sx={{ display: "none" }}>
             <Typography fontWeight={900}>Previous Interviews</Typography>
             {selectedApplication ? (
               <Typography variant="body2" color="text.secondary">
@@ -486,7 +497,7 @@ export default function PartnerInterviewsPage() {
                       <Stack spacing={0.25}>
                         <Typography fontWeight={900}>{item.mode_name ?? "Interview"}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {item.interview_date ?? "—"}
+                          {formatDateCompact(item.interview_date)}
                         </Typography>
                         {item.remarks ? (
                           <Typography variant="caption" color="text.secondary">
@@ -538,7 +549,7 @@ export default function PartnerInterviewsPage() {
                     <Stack spacing={0.25}>
                       <Typography fontWeight={900}>{item.mode_name ?? "Interview"}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {item.interview_date ?? "—"}
+                        {formatDateCompact(item.interview_date)}
                       </Typography>
                       {item.remarks ? (
                         <Typography variant="caption" color="text.secondary">

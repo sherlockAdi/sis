@@ -128,6 +128,9 @@ export default function PartnerMySubmissionsPage() {
     () => [
       { field: "application_id", headerName: "App ID", width: 100 },
       { field: "candidate_name", headerName: "Candidate", flex: 1, minWidth: 180 },
+      { field: "country_name", headerName: "Country", flex: 0.8, minWidth: 140, hide: isMdDown },
+      { field: "state_name", headerName: "State", flex: 0.8, minWidth: 140, hide: isMdDown },
+      { field: "city_name", headerName: "City", flex: 0.8, minWidth: 140, hide: isSmDown },
       { field: "job_title", headerName: "Job", flex: 1, minWidth: 220 },
       { field: "application_date", headerName: "Date", width: 130 },
       {
@@ -174,7 +177,7 @@ export default function PartnerMySubmissionsPage() {
         },
       },
     ],
-    [navigate, openCandidate, shortlistingId],
+    [isMdDown, isSmDown, navigate, openCandidate, shortlistingId],
   );
 
   const visibleRows = useMemo(() => rows.filter((row) => isAppliedStatus(row.status)), [rows]);

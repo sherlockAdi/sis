@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Path, Post, Put, Query, Request, Route, Security, Tags } from 'tsoa';
 import type { RowDataPacket } from 'mysql2/promise';
 import { callProc } from '../../db/proc';
+import { pool } from '../../db/pool';
 import { httpError } from '../../utils/httpErrors';
 import { sendStatusNotification } from '../../services/notificationService';
 
@@ -87,6 +88,50 @@ type VisaChecklistStatusRow = {
   created_at: string | null;
   updated_at: string | null;
 };
+
+type CandidatePassportRow = RowDataPacket & {
+  passport_number: string | null;
+  passport_expiry_date: string | null;
+};
+
+function createEmptyVisaDetailRow(
+  deploymentId: number,
+  candidatePassport: Pick<CandidatePassportRow, 'passport_number' | 'passport_expiry_date'> | undefined
+): VisaDetailRow {
+  return {
+    offer_detail_id: null,
+    visa_processing_id: null,
+    ticket_booking_id: null,
+    deployment_id: deploymentId,
+    offer_date: null,
+    offer_letter_file_path: null,
+    isaccepted: null,
+    offer_payment_received: null,
+    offer_remarks: null,
+    visa_type_id: null,
+    visa_number: null,
+    issue_date: null,
+    expiry_date: null,
+    passport_number: candidatePassport?.passport_number ?? null,
+    passport_issue_date: null,
+    passport_expiry_date: candidatePassport?.passport_expiry_date ?? null,
+    sponsor_id: null,
+    sponsor_contact: null,
+    passport_file_path: null,
+    visa_file_path: null,
+    visa_payment_received: null,
+    visa_remarks: null,
+    checklist_complete: null,
+    ticket_number: null,
+    booked_date: null,
+    travel_date: null,
+    ticket_file_path: null,
+    ticket_remarks: null,
+    remarks: null,
+    created_at: '',
+    updated_at: '',
+  };
+}
 
 @Route('deployment')
 @Tags('Deployment')
@@ -286,7 +331,25 @@ export class DeploymentController extends Controller {
       `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { deployment_id: deploymentId }
     );
-    return rows[0] ?? null;
+    const [candidateRows] = await pool.query<CandidatePassportRow[]>(
+      `SELECT c.passport_number, c.passport_expiry_date
+       FROM DEP_T01_deployments d
+       JOIN REC_T02_applications a ON a.application_id = d.application_id
+       JOIN REC_T01_candidates c ON c.candidate_id = a.candidate_id
+       WHERE d.deployment_id = :deployment_id
+       LIMIT 1`,
+      { deployment_id: deploymentId }
+    );
+    const candidatePassport = candidateRows[0];
+    const details = rows[0];
+    if (!details) {
+      return candidatePassport ? createEmptyVisaDetailRow(deploymentId, candidatePassport) : null;
+    }
+    return {
+      ...details,
+      passport_number: details.passport_number ?? candidatePassport?.passport_number ?? null,
+      passport_expiry_date: details.passport_expiry_date ?? candidatePassport?.passport_expiry_date ?? null,
+    };
   }
 
   @Get('visa-checklist/master')

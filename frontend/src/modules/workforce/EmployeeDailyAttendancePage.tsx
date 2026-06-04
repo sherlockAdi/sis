@@ -252,6 +252,7 @@ export default function EmployeeDailyAttendancePage() {
               label="Select Date"
               value={selectedDate}
               onChange={setSelectedDate}
+              format="DD/MM/YYYY"
               slotProps={{ textField: { size: "small" } }}
             />
           </LocalizationProvider>
