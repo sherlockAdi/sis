@@ -24,6 +24,7 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useNavigate } from "react-router-dom";
 import { candidateApi } from "../../common/services/candidateApi";
 import { listCities, listCountries, listStates, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { formatCandidateExperience } from "../../common/utils/candidateExperience";
 import { formatJsonList } from "../../common/utils/jsonList";
 
 type CandidateProfile = Awaited<ReturnType<typeof candidateApi.profile.me>>;
@@ -112,7 +113,7 @@ function FieldRow({
       <Typography
         variant="body2"
         fontWeight={700}
-        sx={{ lineHeight: 1.2, minWidth: 0, wordBreak: "break-word", textAlign: "right" }}
+        sx={{ lineHeight: 1.2, minWidth: 0, whiteSpace: "pre-line", wordBreak: "break-word", textAlign: "right" }}
       >
         {formatValue(value)}
       </Typography>
@@ -589,7 +590,7 @@ export default function CandidateHomePage() {
             <FieldRow label="Gender" value={profile?.gender} />
             <FieldRow label="Skills" value={formatJsonList(profile?.skills)} />
             <FieldRow label="Education" value={profile?.education} />
-            <FieldRow label="Experience" value={profile?.experience} />
+            <FieldRow label="Experience" value={formatCandidateExperience(profile?.experience)} />
             <FieldRow label="Industry Type" value={profile?.industry_type} />
             <FieldRow label="Languages Known" value={formatJsonList(profile?.languages_known)} />
           </CompactCard>

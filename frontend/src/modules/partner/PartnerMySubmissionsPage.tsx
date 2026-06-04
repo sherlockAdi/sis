@@ -10,6 +10,7 @@ import { mastersApi, type DocumentType } from "../../common/services/mastersApi"
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { partnerPortalApi, type PartnerApplicationRow, type PartnerCandidateRow } from "../../common/services/partnersApi";
 import { formatJsonList } from "../../common/utils/jsonList";
+import { formatCandidateExperience } from "../../common/utils/candidateExperience";
 
 function normalizeStatus(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
@@ -288,7 +289,7 @@ export default function PartnerMySubmissionsPage() {
                   <ProfileField label="Gender" value={candidateProfile.gender} />
                   <ProfileField label="Skills" value={formatJsonList(candidateProfile.skills)} />
                   <ProfileField label="Education" value={candidateProfile.education} />
-                  <ProfileField label="Experience" value={candidateProfile.experience} />
+                  <ProfileField label="Experience" value={formatCandidateExperience(candidateProfile.experience)} />
                   <ProfileField label="Industry Type" value={candidateProfile.industry_type} />
                   <ProfileField label="Languages Known" value={formatJsonList(candidateProfile.languages_known)} />
                 </Box>
@@ -381,8 +382,8 @@ function ProfileField({ label, value }: { label: string; value: string | null | 
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
-        {value ?? "—"}
+      <Typography variant="body2" fontWeight={700} sx={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>
+        {value ?? "-"}
       </Typography>
     </Box>
   );

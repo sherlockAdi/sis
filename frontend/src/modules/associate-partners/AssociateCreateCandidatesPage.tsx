@@ -8,6 +8,8 @@ import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { mastersApi, type Education, type JobCategory, type Language, type Skill } from "../../common/services/mastersApi";
 import { getIndiaCountryId, listCities, listCountries, listStates, lookupIndianPincode, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
 import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
+import CandidateExperienceEditor from "../../common/components/CandidateExperienceEditor";
+import { parseCandidateExperience, serializeCandidateExperience, serializeCandidateExperienceDraft } from "../../common/utils/candidateExperience";
 
 type Form = {
   first_name: string;
@@ -244,7 +246,7 @@ export default function AssociateCreateCandidatesPage() {
         gender: form.gender.trim() || null,
         skills: form.skills.trim() || null,
         education: form.education.trim() || null,
-        experience: form.experience.trim() || null,
+        experience: serializeCandidateExperience(parseCandidateExperience(form.experience)),
         industry_type: form.industry_type.trim() || null,
         resume_file_path: form.resume_file_path.trim() || null,
         passport_expiry_date: form.passport_expiry_date || null,
@@ -376,16 +378,16 @@ export default function AssociateCreateCandidatesPage() {
                 <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                   <AdSearchableDropDownMulti variant="standard" label="Skills" options={skillOptions} value={form.skills ? parseJsonList(form.skills) : []} onChange={(v) => setForm((f) => ({ ...f, skills: serializeJsonList(v) }))} />
                 </Box>
-                <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
-                  <TextField
-                    variant="standard"
-                    size="small"
-                    label="Experience"
-                    value={form.experience}
-                    onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))}
-                    fullWidth
-                    multiline
-                    minRows={2}
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <CandidateExperienceEditor
+                    value={parseCandidateExperience(form.experience)}
+                    countryOptions={countryOptions}
+                    onChange={(experience) =>
+                      setForm((f) => ({
+                        ...f,
+                        experience: serializeCandidateExperienceDraft(experience),
+                      }))
+                    }
                   />
                 </Box>
                 <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>

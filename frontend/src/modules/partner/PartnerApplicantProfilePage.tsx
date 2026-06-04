@@ -15,6 +15,7 @@ import {
 } from "../../common/services/partnersApi";
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { formatJsonList } from "../../common/utils/jsonList";
+import { formatCandidateExperience } from "../../common/utils/candidateExperience";
 
 const HIDDEN_CONTACT_TEXT = "Available after employee conversion";
 
@@ -435,7 +436,7 @@ export default function PartnerApplicantProfilePage() {
                     <ProfileField label="Gender" value={candidate.gender} />
                     <ProfileField label="Skills" value={formatJsonList(candidate.skills)} />
                     <ProfileField label="Education" value={candidate.education} />
-                    <ProfileField label="Experience" value={candidate.experience} />
+                    <ProfileField label="Experience" value={formatCandidateExperience(candidate.experience)} />
                     <ProfileField label="Industry Type" value={candidate.industry_type} />
                     <ProfileField label="Languages Known" value={formatJsonList(candidate.languages_known)} />
                   </SectionCard>
@@ -602,8 +603,8 @@ function ProfileField({ label, value }: { label: string; value: string | null | 
       <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={800} sx={{ wordBreak: "break-word", color: "text.primary" }}>
-        {value ?? "—"}
+      <Typography variant="body2" fontWeight={800} sx={{ whiteSpace: "pre-line", wordBreak: "break-word", color: "text.primary" }}>
+        {value ?? "-"}
       </Typography>
     </Box>
   );

@@ -20,7 +20,7 @@ export default function PartnerSubmitCandidatePage() {
               <TextField label="Candidate Name" placeholder="Full name" />
               <TextField label="Mobile" placeholder="+91..." />
               <TextField label="Skill" placeholder="Security / Electrician / Helper..." />
-              <TextField label="Experience (Years)" placeholder="e.g. 2" />
+              <TextField label="Experience Details" placeholder="Organization, role, from and to dates" multiline minRows={2} />
               <TextField label="Documents" placeholder="Upload will be added here (bulk upload later)" disabled />
             </Stack>
           </CardContent>

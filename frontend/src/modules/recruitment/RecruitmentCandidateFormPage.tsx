@@ -12,11 +12,16 @@ import {
   AdNotification,
   AdPhoneField,
   AdSearchableDropDown,
+  AdSearchableDropDownMulti,
   AdTextBox,
 } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { recruitmentApi, type CandidateRow } from "../../common/services/recruitmentApi";
 import { getIndiaCountryId, listCities, listCountries, listStates, lookupIndianPincode, type CityRow, type Country, type StateRow } from "../../common/services/locationApi";
+import { mastersApi, type Language, type Skill } from "../../common/services/mastersApi";
+import CandidateExperienceEditor from "../../common/components/CandidateExperienceEditor";
+import { parseCandidateExperience, serializeCandidateExperience, serializeCandidateExperienceDraft } from "../../common/utils/candidateExperience";
+import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
 
 type Form = {
   candidate_id?: number;
@@ -239,6 +244,8 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<StateRow[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [languages, setLanguages] = useState<Language[]>([]);
   const [form, setForm] = useState<Form>(emptyForm);
   const [pendingFiles, setPendingFiles] = useState<PendingFiles>(emptyPendingFiles);
 
@@ -258,6 +265,22 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
       }
     })();
   }, [mode]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [skillRows, languageRows] = await Promise.all([
+          mastersApi.skills.list(true),
+          mastersApi.languages.list(true),
+        ]);
+        setSkills(skillRows);
+        setLanguages(languageRows);
+      } catch {
+        setSkills([]);
+        setLanguages([]);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (mode !== "edit" || !candidateId) return;
@@ -342,6 +365,8 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
     () => cities.map((c) => ({ label: c.city_name, value: String(c.city_id) })),
     [cities],
   );
+  const skillOptions = useMemo(() => skills.map((s) => ({ label: s.skill_name, value: s.skill_name })), [skills]);
+  const languageOptions = useMemo(() => languages.map((l) => ({ label: l.language_name, value: l.language_name })), [languages]);
   const missingFields = useMemo(() => getMissingFields(form), [form]);
   const profileComplete = missingFields.length === 0;
   const statusOptions = useMemo(
@@ -439,7 +464,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
     gender: toNull(form.gender),
     skills: toNull(form.skills),
     education: toNull(form.education),
-    experience: toNull(form.experience),
+    experience: serializeCandidateExperience(parseCandidateExperience(form.experience)),
     industry_type: toNull(form.industry_type),
     resume_file_path: toNull(form.resume_file_path),
     passport_expiry_date: form.passport_expiry_date || null,
@@ -615,24 +640,6 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                   onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))}
                   disabled={!form.state_id}
                 />
-                <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
-                <TextField
-                  variant="standard"
-                  size="small"
-                  label="DOB"
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
-                <AdDropDown
-                  variant="standard"
-                  label="Gender"
-                  options={genderOptions}
-                  value={form.gender}
-                  onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
-                />
                 <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                   <TextField
                     variant="standard"
@@ -657,6 +664,7 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                     minRows={2}
                   />
                 </Box>
+                <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
                 <AdTextBox
                   variant="standard"
                   size="small"
@@ -667,22 +675,6 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
                     void applyPincodeLookup(form.pincode);
                   }}
                 />
-                <AdTextBox variant="standard" size="small" label="Education" value={form.education} onChange={(v) => setForm((f) => ({ ...f, education: v }))} />
-                <AdTextBox variant="standard" size="small" label="Skills" value={form.skills} onChange={(v) => setForm((f) => ({ ...f, skills: v }))} />
-                <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
-                  <TextField
-                    variant="standard"
-                    size="small"
-                    label="Experience"
-                    value={form.experience}
-                    onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))}
-                    fullWidth
-                    multiline
-                    minRows={2}
-                  />
-                </Box>
-                <AdTextBox variant="standard" size="small" label="Industry Type" value={form.industry_type} onChange={(v) => setForm((f) => ({ ...f, industry_type: v }))} />
-                <AdTextBox variant="standard" size="small" label="Languages Known" value={form.languages_known} onChange={(v) => setForm((f) => ({ ...f, languages_known: v }))} />
               </Box>
             </Stack>
           </CardContent>
@@ -700,8 +692,45 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
           >
             <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
               <Stack spacing={1.5}>
-                <Typography fontWeight={950}>Profile Summary</Typography>
+                <Typography fontWeight={950}>Personal Details</Typography>
                 <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
+                  <AdTextBox variant="standard" size="small" label="Education" value={form.education} onChange={(v) => setForm((f) => ({ ...f, education: v }))} />
+                  <AdTextBox variant="standard" size="small" label="Industry Type" value={form.industry_type} onChange={(v) => setForm((f) => ({ ...f, industry_type: v }))} />
+                  <TextField
+                    variant="standard"
+                    size="small"
+                    label="DOB"
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <AdDropDown
+                    variant="standard"
+                    label="Gender"
+                    options={genderOptions}
+                    value={form.gender}
+                    onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
+                  />
+                  <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
+                    <AdSearchableDropDownMulti
+                      variant="standard"
+                      label="Skills"
+                      options={skillOptions}
+                      value={parseJsonList(form.skills)}
+                      onChange={(v) => setForm((f) => ({ ...f, skills: serializeJsonList(v) }))}
+                    />
+                  </Box>
+                  <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
+                    <AdSearchableDropDownMulti
+                      variant="standard"
+                      label="Languages Known"
+                      options={languageOptions}
+                      value={parseJsonList(form.languages_known)}
+                      onChange={(v) => setForm((f) => ({ ...f, languages_known: serializeJsonList(v) }))}
+                    />
+                  </Box>
                   <AdDatePicker
                     variant="standard"
                     label="Passport Expiry Date"
@@ -780,6 +809,27 @@ export default function RecruitmentCandidateFormPage({ mode }: { mode: "create" 
             </CardContent>
           </Card>
         </Box>
+
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(148, 163, 184, 0.42)",
+            bgcolor: "#fff",
+            boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Stack spacing={1.5}>
+              <Typography fontWeight={950}>Experience</Typography>
+              <CandidateExperienceEditor
+                value={parseCandidateExperience(form.experience)}
+                countryOptions={countryOptions}
+                onChange={(experience) => setForm((f) => ({ ...f, experience: serializeCandidateExperienceDraft(experience) }))}
+              />
+            </Stack>
+          </CardContent>
+        </Card>
 
         <Stack direction="row" justifyContent="flex-end">
           <Typography variant="caption" color="text.secondary">

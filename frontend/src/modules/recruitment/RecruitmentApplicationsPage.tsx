@@ -12,6 +12,7 @@ import { jobsApi, type JobListRow } from "../../common/services/jobsApi";
 import { recruitmentApi, type ApplicationDocRow, type ApplicationInterviewRow, type ApplicationRow, type CandidateRow } from "../../common/services/recruitmentApi";
 import { mastersApi, type InterviewMode } from "../../common/services/mastersApi";
 import { deploymentApi } from "../../common/services/deploymentApi";
+import { formatCandidateExperience } from "../../common/utils/candidateExperience";
 import { formatJsonList } from "../../common/utils/jsonList";
 
 function fileExt(name: string): string {
@@ -67,7 +68,7 @@ function ProfileField({ label, value }: { label: string; value: string | number 
       <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.1 }}>
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.25, wordBreak: "break-word" }}>
+      <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.25, whiteSpace: "pre-line", wordBreak: "break-word" }}>
         {formatValue(value)}
       </Typography>
     </Box>
@@ -93,6 +94,11 @@ export default function RecruitmentApplicationsPage() {
   const [candidateLoading, setCandidateLoading] = useState(false);
   const [candidateError, setCandidateError] = useState<string | null>(null);
   const [candidateProfile, setCandidateProfile] = useState<CandidateRow | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<{ open: boolean; title: string; url: string }>({
+    open: false,
+    title: "",
+    url: "",
+  });
 
   const [interviewsOpen, setInterviewsOpen] = useState(false);
   const [interviews, setInterviews] = useState<ApplicationInterviewRow[]>([]);
@@ -282,9 +288,20 @@ export default function RecruitmentApplicationsPage() {
     if (!doc.file_path) return;
     try {
       const presign = await recruitmentApi.files.presignDownload(doc.file_path);
-      window.open(presign.url, "_blank", "noopener,noreferrer");
+      setDocumentPreview({ open: true, title: doc.document_name || "Document", url: presign.url });
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open file", severity: "error" });
+    }
+  };
+
+  const openCandidateDocument = async (filePath: string | null | undefined, title: string) => {
+    const path = String(filePath ?? "").trim();
+    if (!path) return;
+    try {
+      const presign = await recruitmentApi.files.presignDownload(path);
+      setDocumentPreview({ open: true, title, url: presign.url });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as ApiError)?.message ?? "Failed to open document", severity: "error" });
     }
   };
 
@@ -549,7 +566,7 @@ export default function RecruitmentApplicationsPage() {
                   <ProfileField label="Gender" value={candidateProfile.gender} />
                   <ProfileField label="Skills" value={formatJsonList(candidateProfile.skills)} />
                   <ProfileField label="Education" value={candidateProfile.education} />
-                  <ProfileField label="Experience" value={candidateProfile.experience} />
+                  <ProfileField label="Experience" value={formatCandidateExperience(candidateProfile.experience)} />
                   <ProfileField label="Industry Type" value={candidateProfile.industry_type} />
                   <ProfileField label="Languages Known" value={formatJsonList(candidateProfile.languages_known)} />
                 </Box>
@@ -575,7 +592,14 @@ export default function RecruitmentApplicationsPage() {
                         <Typography variant="body2" color="text.secondary">
                           {doc.label}
                         </Typography>
-                        <Chip size="small" label={doc.value ? "Uploaded" : "Missing"} color={doc.value ? "success" : "default"} />
+                        <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="flex-end">
+                          <Chip size="small" label={doc.value ? "Uploaded" : "Missing"} color={doc.value ? "success" : "default"} />
+                          {doc.value ? (
+                            <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => void openCandidateDocument(doc.value, doc.label)}>
+                              View
+                            </AdButton>
+                          ) : null}
+                        </Stack>
                       </Box>
                     ))}
                   </Stack>
@@ -798,6 +822,25 @@ export default function RecruitmentApplicationsPage() {
             </Stack>
           </Stack>
         )}
+      </AdModal>
+
+      <AdModal
+        open={documentPreview.open}
+        onClose={() => setDocumentPreview({ open: false, title: "", url: "" })}
+        title={documentPreview.title || "Document"}
+        maxWidth="lg"
+      >
+        <Box
+          component="iframe"
+          src={documentPreview.url}
+          title={documentPreview.title || "Document"}
+          sx={{
+            width: "100%",
+            height: { xs: "70vh", md: "78vh" },
+            border: "1px solid rgba(148,163,184,0.35)",
+            bgcolor: "#fff",
+          }}
+        />
       </AdModal>
     </Stack>
   );

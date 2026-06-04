@@ -9,6 +9,8 @@ import { mastersApi, type Education, type JobCategory, type Language, type Skill
 import { recruitmentApi } from "../../common/services/recruitmentApi";
 import { getIndiaCountryId, listCountries, listStates, listCities, lookupIndianPincode, type Country, type StateRow, type CityRow } from "../../common/services/locationApi";
 import { parseJsonList, serializeJsonList } from "../../common/utils/jsonList";
+import CandidateExperienceEditor from "../../common/components/CandidateExperienceEditor";
+import { parseCandidateExperience, serializeCandidateExperience, serializeCandidateExperienceDraft } from "../../common/utils/candidateExperience";
 
 type CandidateProfileForm = {
   candidate_id: number | null;
@@ -383,7 +385,7 @@ export default function CandidateProfileSettingsPage() {
         gender: fieldValue(form.gender),
         skills: serializeJsonList(form.skills),
         education: fieldValue(form.education),
-        experience: fieldValue(form.experience),
+        experience: serializeCandidateExperience(parseCandidateExperience(form.experience)),
         industry_type: fieldValue(form.industry_type),
         resume_file_path: fieldValue(form.resume_file_path),
         passport_expiry_date: fieldValue(form.passport_expiry_date),
@@ -469,18 +471,6 @@ export default function CandidateProfileSettingsPage() {
                 <AdSearchableDropDown variant="standard" label="Country" options={countryOptions} value={form.country_id} onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))} />
                 <AdSearchableDropDown variant="standard" label="State" options={stateOptions} disabled={!form.country_id} value={form.state_id} onChange={(v) => setForm((f) => ({ ...f, state_id: String(v), city_id: "" }))} />
                 <AdSearchableDropDown variant="standard" label="City" options={cityOptions} disabled={!form.state_id} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))} />
-                <AdDropDown
-                  variant="standard"
-                  label="Gender"
-                  options={[
-                    { label: "Select", value: "" },
-                    { label: "Male", value: "Male" },
-                    { label: "Female", value: "Female" },
-                    { label: "Other", value: "Other" },
-                  ]}
-                  value={form.gender}
-                  onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
-                />
                 <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
                 <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
                 <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
@@ -493,16 +483,6 @@ export default function CandidateProfileSettingsPage() {
                   onBlur={() => {
                     void applyPincodeLookup(form.pincode);
                   }}
-                />
-                <TextField
-                  variant="standard"
-                  size="small"
-                  label="DOB"
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
                 />
               </Box>
             </Stack>
@@ -537,6 +517,28 @@ export default function CandidateProfileSettingsPage() {
                     value={form.industry_type}
                     onChange={(v) => setForm((f) => ({ ...f, industry_type: String(v) }))}
                   />
+                  <TextField
+                    variant="standard"
+                    size="small"
+                    label="DOB"
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <AdDropDown
+                    variant="standard"
+                    label="Gender"
+                    options={[
+                      { label: "Select", value: "" },
+                      { label: "Male", value: "Male" },
+                      { label: "Female", value: "Female" },
+                      { label: "Other", value: "Other" },
+                    ]}
+                    value={form.gender}
+                    onChange={(v) => setForm((f) => ({ ...f, gender: String(v) }))}
+                  />
                   <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                     <AdSearchableDropDownMulti
                       variant="standard"
@@ -544,18 +546,6 @@ export default function CandidateProfileSettingsPage() {
                       options={skillOptions}
                       value={form.skills}
                       onChange={(v) => setForm((f) => ({ ...f, skills: v }))}
-                    />
-                  </Box>
-                  <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
-                    <TextField
-                      variant="standard"
-                      size="small"
-                      label="Experience"
-                      value={form.experience}
-                      onChange={(e) => setForm((f) => ({ ...f, experience: e.target.value }))}
-                      fullWidth
-                      multiline
-                      minRows={2}
                     />
                   </Box>
                   <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
@@ -656,6 +646,32 @@ export default function CandidateProfileSettingsPage() {
             </CardContent>
           </Card>
         </Box>
+
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 0,
+            borderColor: "rgba(148, 163, 184, 0.42)",
+            bgcolor: "#fff",
+            boxShadow: "0 8px 28px rgba(15,23,42,0.05)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Stack spacing={1.5}>
+              <Typography fontWeight={950}>Experience</Typography>
+              <CandidateExperienceEditor
+                value={parseCandidateExperience(form.experience)}
+                countryOptions={countryOptions}
+                onChange={(experience) =>
+                  setForm((f) => ({
+                    ...f,
+                    experience: serializeCandidateExperienceDraft(experience),
+                  }))
+                }
+              />
+            </Stack>
+          </CardContent>
+        </Card>
       </Stack>
     </Container>
   );

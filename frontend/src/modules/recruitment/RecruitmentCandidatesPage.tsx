@@ -13,11 +13,13 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { useNavigate } from "react-router-dom";
-import { AdAlertBox, AdButton, AdCard, AdDropDown, AdNotification, AdPagingGrid } from "../../common/ad";
+import { AdAlertBox, AdButton, AdCard, AdDropDown, AdModal, AdNotification, AdPagingGrid } from "../../common/ad";
 import { recruitmentApi, type CandidateRow } from "../../common/services/recruitmentApi";
+import { formatCandidateExperience } from "../../common/utils/candidateExperience";
 import { formatJsonList } from "../../common/utils/jsonList";
 
 type VerificationFilter = "" | "verified" | "unverified";
@@ -139,7 +141,7 @@ function FieldRow({ label, value }: { label: string; value: string | number | nu
       <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.1 }}>
         {label}
       </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.25, wordBreak: "break-word" }}>
+      <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.25, whiteSpace: "pre-line", wordBreak: "break-word" }}>
         {formatValue(value)}
       </Typography>
     </Box>
@@ -179,6 +181,11 @@ export default function RecruitmentCandidatesPage({
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>(forceVerificationFilter ?? "");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRow | null>(null);
   const [verifiedOverrides, setVerifiedOverrides] = useState<Record<number, boolean>>({});
+  const [documentPreview, setDocumentPreview] = useState<{ open: boolean; title: string; url: string }>({
+    open: false,
+    title: "",
+    url: "",
+  });
 
   const refresh = async () => {
     setLoading(true);
@@ -246,6 +253,17 @@ export default function RecruitmentCandidatesPage({
       { label: "Profile Photo", uploaded: Boolean(selectedCandidateResolved.profile_photo_file_path), value: selectedCandidateResolved.profile_photo_file_path },
     ];
   }, [selectedCandidateResolved]);
+
+  const openCandidateDocument = async (filePath: string | null | undefined, title: string) => {
+    const path = String(filePath ?? "").trim();
+    if (!path) return;
+    try {
+      const presign = await recruitmentApi.files.presignDownload(path);
+      setDocumentPreview({ open: true, title, url: presign.url });
+    } catch (e: any) {
+      setToast({ open: true, message: (e as Error)?.message ?? "Failed to open document", severity: "error" });
+    }
+  };
 
   const setVerified = async (candidate: CandidateRow, nextVerified: boolean) => {
     try {
@@ -554,7 +572,7 @@ export default function RecruitmentCandidatesPage({
                 <FieldRow label="Gender" value={selectedCandidateResolved.gender} />
                 <FieldRow label="Skills" value={formatJsonList(selectedCandidateResolved.skills)} />
                 <FieldRow label="Education" value={selectedCandidateResolved.education} />
-                <FieldRow label="Experience" value={selectedCandidateResolved.experience} />
+                <FieldRow label="Experience" value={formatCandidateExperience(selectedCandidateResolved.experience)} />
                 <FieldRow label="Industry Type" value={selectedCandidateResolved.industry_type} />
                 <FieldRow label="Languages Known" value={formatJsonList(selectedCandidateResolved.languages_known)} />
               </SectionCard>
@@ -576,13 +594,15 @@ export default function RecruitmentCandidatesPage({
                       <Typography variant="body2" fontWeight={700}>
                         {doc.label}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {doc.uploaded ? "Uploaded" : "Missing"}
-                      </Typography>
                     </Box>
-                    <Typography variant="body2" fontWeight={700} sx={{ textAlign: "right" }}>
-                      {formatValue(doc.value)}
-                    </Typography>
+                    <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="flex-end">
+                      <Chip size="small" label={doc.uploaded ? "Uploaded" : "Missing"} color={doc.uploaded ? "success" : "default"} />
+                      {doc.uploaded ? (
+                        <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => void openCandidateDocument(doc.value, doc.label)}>
+                          View
+                        </AdButton>
+                      ) : null}
+                    </Stack>
                   </Box>
                 ))}
               </SectionCard>
@@ -595,6 +615,25 @@ export default function RecruitmentCandidatesPage({
           ) : null}
         </Box>
       </Drawer>
+
+      <AdModal
+        open={documentPreview.open}
+        onClose={() => setDocumentPreview({ open: false, title: "", url: "" })}
+        title={documentPreview.title || "Document"}
+        maxWidth="lg"
+      >
+        <Box
+          component="iframe"
+          src={documentPreview.url}
+          title={documentPreview.title || "Document"}
+          sx={{
+            width: "100%",
+            height: { xs: "70vh", md: "78vh" },
+            border: "1px solid rgba(148,163,184,0.35)",
+            bgcolor: "#fff",
+          }}
+        />
+      </AdModal>
     </Stack>
   );
 }
