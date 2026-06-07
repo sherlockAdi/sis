@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 const PROTECTION_CLASS = "sis-screen-protection-active";
+const PROTECTION_ENABLED_CLASS = "sis-screen-protection-enabled";
 
 function brieflyMaskScreen() {
   document.documentElement.classList.add(PROTECTION_CLASS);
@@ -11,6 +12,8 @@ function brieflyMaskScreen() {
 
 export default function ScreenProtection() {
   useEffect(() => {
+    document.documentElement.classList.add(PROTECTION_ENABLED_CLASS);
+
     const preventDefault = (event: Event) => {
       event.preventDefault();
     };
@@ -46,6 +49,8 @@ export default function ScreenProtection() {
     document.addEventListener("keyup", handleKeyUp, true);
 
     return () => {
+      document.documentElement.classList.remove(PROTECTION_ENABLED_CLASS);
+      document.documentElement.classList.remove(PROTECTION_CLASS);
       document.removeEventListener("contextmenu", preventDefault);
       document.removeEventListener("dragstart", preventDefault);
       document.removeEventListener("keydown", handleKeyDown, true);

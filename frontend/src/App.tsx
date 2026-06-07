@@ -4,11 +4,13 @@ import AppRoutes from "./routes/AppRoutes";
 import { AuthProvider } from "./common/auth/AuthContext";
 import ScreenProtection from "./common/security/ScreenProtection";
 
+const ENABLE_SCREEN_PROTECTION = false;
+
 function App() {
   return (
     <AdThemeProvider>
       <AuthProvider>
-        <ScreenProtection />
+        {ENABLE_SCREEN_PROTECTION ? <ScreenProtection /> : null}
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
