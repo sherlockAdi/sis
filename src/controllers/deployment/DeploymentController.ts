@@ -52,6 +52,7 @@ type VisaDetailRow = {
   sponsor_id: string | null;
   sponsor_contact: string | null;
   passport_file_path: string | null;
+  support_document_file_path: string | null;
   visa_file_path: string | null;
   visa_payment_received: number | null;
   visa_remarks: string | null;
@@ -59,6 +60,8 @@ type VisaDetailRow = {
   ticket_number: string | null;
   booked_date: string | null;
   travel_date: string | null;
+  journey_from: string | null;
+  journey_destination: string | null;
   ticket_file_path: string | null;
   ticket_remarks: string | null;
   remarks: string | null;
@@ -118,6 +121,7 @@ function createEmptyVisaDetailRow(
     sponsor_id: null,
     sponsor_contact: null,
     passport_file_path: null,
+    support_document_file_path: null,
     visa_file_path: null,
     visa_payment_received: null,
     visa_remarks: null,
@@ -125,6 +129,8 @@ function createEmptyVisaDetailRow(
     ticket_number: null,
     booked_date: null,
     travel_date: null,
+    journey_from: null,
+    journey_destination: null,
     ticket_file_path: null,
     ticket_remarks: null,
     remarks: null,
@@ -331,6 +337,22 @@ export class DeploymentController extends Controller {
       `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { deployment_id: deploymentId }
     );
+    const [extraRows] = await pool.query<(RowDataPacket & {
+      support_document_file_path: string | null;
+      journey_from: string | null;
+      journey_destination: string | null;
+    })[]>(
+      `SELECT
+         v.support_document_file_path,
+         t.journey_from,
+         t.journey_destination
+       FROM (SELECT :deployment_id AS deployment_id) dep
+       LEFT JOIN DEP_T04_visa_processing_details v ON v.deployment_id = dep.deployment_id
+       LEFT JOIN DEP_T05_ticket_bookings t ON t.deployment_id = dep.deployment_id
+       LIMIT 1`,
+      { deployment_id: deploymentId }
+    );
+    const extra = extraRows[0];
     const [candidateRows] = await pool.query<CandidatePassportRow[]>(
       `SELECT c.passport_number, c.passport_expiry_date
        FROM DEP_T01_deployments d
@@ -343,12 +365,16 @@ export class DeploymentController extends Controller {
     const candidatePassport = candidateRows[0];
     const details = rows[0];
     if (!details) {
-      return candidatePassport ? createEmptyVisaDetailRow(deploymentId, candidatePassport) : null;
+      const empty = candidatePassport ? createEmptyVisaDetailRow(deploymentId, candidatePassport) : null;
+      return empty ? { ...empty, ...extra } : null;
     }
     return {
       ...details,
       passport_number: details.passport_number ?? candidatePassport?.passport_number ?? null,
       passport_expiry_date: details.passport_expiry_date ?? candidatePassport?.passport_expiry_date ?? null,
+      support_document_file_path: extra?.support_document_file_path ?? details.passport_file_path ?? null,
+      journey_from: extra?.journey_from ?? null,
+      journey_destination: extra?.journey_destination ?? null,
     };
   }
 
@@ -414,6 +440,7 @@ export class DeploymentController extends Controller {
       sponsor_contact?: string | null;
       offer_date?: string | null;
       passport_file_path?: string | null;
+      support_document_file_path?: string | null;
       visa_file_path?: string | null;
       offer_letter_file_path?: string | null;
       offer_payment_received?: number | null;
@@ -423,6 +450,8 @@ export class DeploymentController extends Controller {
       ticket_number?: string | null;
       booked_date?: string | null;
       travel_date?: string | null;
+      journey_from?: string | null;
+      journey_destination?: string | null;
       ticket_file_path?: string | null;
       ticket_remarks?: string | null;
       remarks?: string | null;
@@ -432,6 +461,7 @@ export class DeploymentController extends Controller {
     const user = (req as any).user as { user_id?: number } | undefined;
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
 
+    const supportDocumentFilePath = body.support_document_file_path ?? body.passport_file_path ?? null;
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
       `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
@@ -450,7 +480,7 @@ export class DeploymentController extends Controller {
         passport_expiry_date: body.passport_expiry_date ?? null,
         sponsor_id: body.sponsor_id ?? null,
         sponsor_contact: body.sponsor_contact ?? null,
-        passport_file_path: body.passport_file_path ?? null,
+        passport_file_path: supportDocumentFilePath,
         visa_file_path: body.visa_file_path ?? null,
         visa_payment_received: body.visa_payment_received ?? null,
         visa_remarks: body.visa_remarks ?? null,
@@ -466,6 +496,35 @@ export class DeploymentController extends Controller {
 
     const visa_detail_id = rows[0]?.visa_detail_id;
     if (!visa_detail_id) throw httpError(500, 'Failed to save visa details');
+
+    if (body.support_document_file_path !== undefined || body.passport_file_path !== undefined) {
+      await pool.query(
+        `UPDATE DEP_T04_visa_processing_details
+         SET support_document_file_path = COALESCE(NULLIF(:support_document_file_path, ''), support_document_file_path)
+         WHERE deployment_id = :deployment_id`,
+        { deployment_id: deploymentId, support_document_file_path: supportDocumentFilePath }
+      );
+    }
+
+    if (body.journey_from !== undefined || body.journey_destination !== undefined) {
+      await pool.query(
+        `INSERT INTO DEP_T05_ticket_bookings (
+           deployment_id, journey_from, journey_destination, created_by, updated_by
+         ) VALUES (
+           :deployment_id, :journey_from, :journey_destination, :user_id, :user_id
+         )
+         ON DUPLICATE KEY UPDATE
+           journey_from = COALESCE(VALUES(journey_from), journey_from),
+           journey_destination = COALESCE(VALUES(journey_destination), journey_destination),
+           updated_by = VALUES(updated_by)`,
+        {
+          deployment_id: deploymentId,
+          journey_from: body.journey_from ?? null,
+          journey_destination: body.journey_destination ?? null,
+          user_id: user.user_id,
+        }
+      );
+    }
 
     // Auto-move to Visa Processing when visa details are saved
     const beforeRows = await callProc<RowDataPacket & DeploymentRow>(

@@ -159,7 +159,9 @@ export default function CandidateOnboardingTicketsPage() {
                     <InfoCard label="Candidate" value={selectedDeployment.candidate_name} />
                     <InfoCard label="Job" value={selectedDeployment.job_title} />
                     <InfoCard label="Status" value={selectedDeployment.current_status ?? "Unknown"} />
-                    <InfoCard label="Ticket Number" value={fieldValue(details?.ticket_number)} />
+                    <InfoCard label="PNR Number" value={fieldValue(details?.ticket_number)} />
+                    <InfoCard label="From" value={fieldValue(details?.journey_from)} />
+                    <InfoCard label="Destination" value={fieldValue(details?.journey_destination)} />
                     <InfoCard label="Booked Date" value={formatDate(details?.booked_date)} />
                     <InfoCard label="Travel Date" value={formatDate(details?.travel_date)} />
                     <InfoCard

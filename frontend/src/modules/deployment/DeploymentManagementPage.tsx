@@ -135,7 +135,12 @@ export default function DeploymentManagementPage() {
   }, []);
 
   const visaOptions = useMemo(
-    () => [{ label: "- Select -", value: "" }].concat(visaTypes.map((v) => ({ label: v.visa_type_name, value: String(v.visa_type_id) }))),
+    () =>
+      [{ label: "- Select -", value: "" }].concat(
+        visaTypes
+          .filter((v) => String(v.visa_type_name ?? "").trim().toLowerCase() === "work visa")
+          .map((v) => ({ label: v.visa_type_name, value: String(v.visa_type_id) })),
+      ),
     [visaTypes],
   );
 
@@ -315,10 +320,11 @@ export default function DeploymentManagementPage() {
     [isMdDown],
   );
 
-  const uploadFile = async (file: File, type: "passport" | "visa") => {
+  const uploadFile = async (file: File, type: "supportDocument" | "visa") => {
     if (!activeRow) return;
     try {
-      setUploading((u) => ({ ...u, [type]: true }));
+      const uploadKey = type === "supportDocument" ? "passport" : "visa";
+      setUploading((u) => ({ ...u, [uploadKey]: true }));
       const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
       const objectKey = `deployments/${activeRow.deployment_id}/${type}_${Date.now()}${ext}`;
       const presign = await recruitmentApi.files.presignUpload(objectKey);
@@ -327,14 +333,16 @@ export default function DeploymentManagementPage() {
 
       setVisaForm((v) => ({
         ...v,
-        passport_file_path: type === "passport" ? objectKey : v.passport_file_path,
+        support_document_file_path: type === "supportDocument" ? objectKey : v.support_document_file_path,
+        passport_file_path: type === "supportDocument" ? objectKey : v.passport_file_path,
         visa_file_path: type === "visa" ? objectKey : v.visa_file_path,
       }));
-      setToast({ open: true, message: `${type === "passport" ? "Passport" : "Visa"} file uploaded`, severity: "success" });
+      setToast({ open: true, message: `${type === "supportDocument" ? "Support document" : "Visa"} file uploaded`, severity: "success" });
     } catch (e: any) {
-      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? `${type === "passport" ? "Passport" : "Visa"} upload failed`, severity: "error" });
+      setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? `${type === "supportDocument" ? "Support document" : "Visa"} upload failed`, severity: "error" });
     } finally {
-      setUploading((u) => ({ ...u, [type]: false }));
+      const uploadKey = type === "supportDocument" ? "passport" : "visa";
+      setUploading((u) => ({ ...u, [uploadKey]: false }));
     }
   };
 
@@ -457,7 +465,7 @@ export default function DeploymentManagementPage() {
         passport_expiry_date: visaForm.passport_expiry_date ?? null,
         sponsor_id: visaForm.sponsor_id ?? null,
         sponsor_contact: visaForm.sponsor_contact ?? null,
-        passport_file_path: visaForm.passport_file_path ?? null,
+        support_document_file_path: visaForm.support_document_file_path ?? visaForm.passport_file_path ?? null,
         visa_file_path: visaForm.visa_file_path ?? null,
         visa_payment_received: visaForm.visa_payment_received ?? null,
         visa_remarks: visaForm.visa_remarks ?? null,
@@ -476,6 +484,9 @@ export default function DeploymentManagementPage() {
     }
 
     if (activeStage === "Ready") {
+      if (!visaForm.offer_date) {
+        throw new Error("Offer Date is required.");
+      }
       await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
         offer_date: visaForm.offer_date ?? null,
         offer_letter_file_path: visaForm.offer_letter_file_path ?? null,
@@ -495,6 +506,8 @@ export default function DeploymentManagementPage() {
         ticket_number: visaForm.ticket_number ?? null,
         booked_date: visaForm.booked_date ?? null,
         travel_date: visaForm.travel_date ?? null,
+        journey_from: visaForm.journey_from ?? null,
+        journey_destination: visaForm.journey_destination ?? null,
         ticket_file_path: visaForm.ticket_file_path ?? null,
         ticket_remarks: visaForm.ticket_remarks ?? null,
         remarks: visaForm.remarks ?? null,
@@ -681,7 +694,19 @@ export default function DeploymentManagementPage() {
                     Ticket Booking
                   </Typography>
                   <Stack spacing={1.25}>
-                    <AdTextArea label="Ticket Number" minRows={1} value={visaForm.ticket_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, ticket_number: v }))} />
+                    <AdTextArea label="PNR Number" minRows={1} value={visaForm.ticket_number ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, ticket_number: v }))} />
+                    <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                      <AdTextBox
+                        label="From"
+                        value={visaForm.journey_from ?? ""}
+                        onChange={(v) => setVisaForm((f) => ({ ...f, journey_from: v }))}
+                      />
+                      <AdTextBox
+                        label="Destination"
+                        value={visaForm.journey_destination ?? ""}
+                        onChange={(v) => setVisaForm((f) => ({ ...f, journey_destination: v }))}
+                      />
+                    </Box>
                     <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
                       <AdDatePicker
                         label="Booked Date"
@@ -900,11 +925,16 @@ export default function DeploymentManagementPage() {
                   </Box>
                   <Box sx={{ mt: 1.25, display: "flex", gap: 1, flexWrap: "wrap" }}>
                     <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport || !activeRow}>
-                      Upload Passport
-                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "passport")} />
+                      Upload Support Document
+                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "supportDocument")} />
                     </AdButton>
-                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.passport_file_path} onClick={() => openFile(visaForm.passport_file_path)}>
-                      View Passport
+                    <AdButton
+                      variant="text"
+                      startIcon={<OpenInNewIcon fontSize="small" />}
+                      disabled={!(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
+                      onClick={() => openFile(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
+                    >
+                      View Support Document
                     </AdButton>
                     <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
                       Upload Visa

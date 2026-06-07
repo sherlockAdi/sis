@@ -111,10 +111,24 @@ export default function CandidateOnboardingVisaDetailsPage() {
   }, [selectedDeploymentId]);
 
   const visaTypeName = useMemo(() => {
-    if (!details?.visa_type_id) return "-";
-    return visaTypes.find((v) => v.visa_type_id === details.visa_type_id)?.visa_type_name ?? String(details.visa_type_id);
-  }, [details?.visa_type_id, visaTypes]);
+    if (details?.visa_type_id) {
+      return visaTypes.find((v) => v.visa_type_id === details.visa_type_id)?.visa_type_name ?? selectedDeployment?.visa_type_name ?? String(details.visa_type_id);
+    }
+    return selectedDeployment?.visa_type_name ?? "-";
+  }, [details?.visa_type_id, selectedDeployment?.visa_type_name, visaTypes]);
   const isOfferAccepted = details?.isaccepted === 1;
+  const hasAdminVisaDetails = Boolean(
+    details?.visa_type_id ||
+      details?.visa_number ||
+      details?.issue_date ||
+      details?.expiry_date ||
+      details?.sponsor_id ||
+      details?.sponsor_contact ||
+      details?.visa_file_path ||
+      details?.visa_remarks ||
+      selectedDeployment?.visa_type_name,
+  );
+  const showVisaDetails = isOfferAccepted || hasAdminVisaDetails;
 
   const openFile = async (path?: string | null) => {
     if (!path) return;
@@ -165,7 +179,7 @@ export default function CandidateOnboardingVisaDetailsPage() {
                     <InfoCard label="Offer Acceptance" value={details ? (isOfferAccepted ? "Accepted" : "Not accepted") : "-"} />
                   </Box>
 
-                  {!isOfferAccepted ? (
+                  {!showVisaDetails ? (
                     <Box
                       sx={{
                         mt: 0.5,
@@ -178,7 +192,7 @@ export default function CandidateOnboardingVisaDetailsPage() {
                     >
                       <Typography fontWeight={900}>Visa details are locked</Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            Accept the offer first to unlock the visa record for this job.
+                            Visa details will appear after the offer is accepted or after Admin saves the visa record.
                           </Typography>
                         </Box>
                   ) : (
@@ -228,7 +242,7 @@ export default function CandidateOnboardingVisaDetailsPage() {
                           <Typography variant="body2" color="text.secondary">
                             {detailLoading
                               ? "Loading visa details..."
-                              : isOfferAccepted
+                              : showVisaDetails
                                 ? "This is the visa record for the selected job."
                                 : "Visa details will appear after the offer is accepted."}
                           </Typography>

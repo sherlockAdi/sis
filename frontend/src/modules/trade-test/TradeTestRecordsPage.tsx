@@ -132,6 +132,14 @@ export default function TradeTestRecordsPage({ scope, editable, title, subtitle 
         certificate_file_size: form.certificate_file_size ?? null,
         remarks: form.remarks ?? null,
       };
+      if (normalizeStatus(payload.review_status).includes("pass")) {
+        if (!payload.trade_video_file_path) {
+          throw new Error("Upload trade video before marking Passed.");
+        }
+        if (!payload.certificate_file_path) {
+          throw new Error("Upload certificate before marking Passed.");
+        }
+      }
       const result = await tradeTestApi.admin.upsert(activeRow.application_id, payload);
       setToast({
         open: true,

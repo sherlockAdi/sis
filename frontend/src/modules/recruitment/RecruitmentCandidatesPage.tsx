@@ -181,6 +181,7 @@ export default function RecruitmentCandidatesPage({
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>(forceVerificationFilter ?? "");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRow | null>(null);
   const [verifiedOverrides, setVerifiedOverrides] = useState<Record<number, boolean>>({});
+  const [verifyingCandidateIds, setVerifyingCandidateIds] = useState<Record<number, boolean>>({});
   const [documentPreview, setDocumentPreview] = useState<{ open: boolean; title: string; url: string }>({
     open: false,
     title: "",
@@ -266,20 +267,28 @@ export default function RecruitmentCandidatesPage({
   };
 
   const setVerified = async (candidate: CandidateRow, nextVerified: boolean) => {
+    const candidateId = candidate.candidate_id;
+    setVerifyingCandidateIds((current) => ({ ...current, [candidateId]: true }));
     try {
-      await recruitmentApi.candidates.update(candidate.candidate_id, { is_verified: nextVerified });
-      setVerifiedOverrides((current) => ({ ...current, [candidate.candidate_id]: nextVerified }));
+      await recruitmentApi.candidates.update(candidateId, { is_verified: nextVerified });
+      setVerifiedOverrides((current) => ({ ...current, [candidateId]: nextVerified }));
       setToast({
         open: true,
         message: nextVerified ? "Candidate verified" : "Candidate unverified",
         severity: "success",
       });
-      if (selectedCandidate?.candidate_id === candidate.candidate_id) {
+      if (selectedCandidate?.candidate_id === candidateId) {
         setSelectedCandidate({ ...candidate, is_verified: nextVerified });
       }
       await refresh();
     } catch (e: any) {
       setToast({ open: true, message: (e as Error)?.message ?? "Failed to update verification", severity: "error" });
+    } finally {
+      setVerifyingCandidateIds((current) => {
+        const next = { ...current };
+        delete next[candidateId];
+        return next;
+      });
     }
   };
 
@@ -337,6 +346,7 @@ export default function RecruitmentCandidatesPage({
                 const r = p.row as CandidateRow;
                 const verified = isVerifiedCandidate(r);
                 const profileComplete = getMissingFields(r).length === 0;
+                const isVerifying = Boolean(verifyingCandidateIds[r.candidate_id]);
                 return (
                   <Stack direction="row" spacing={0.5}>
                     {rowActionMode === "full" ? (
@@ -356,6 +366,7 @@ export default function RecruitmentCandidatesPage({
                           color={verified ? "warning" : "success"}
                           startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
                           disabled={!verified && !profileComplete}
+                          loading={isVerifying}
                           onClick={(e: any) => {
                             e?.stopPropagation?.();
                             if (!verified && !profileComplete) return;
@@ -397,6 +408,7 @@ export default function RecruitmentCandidatesPage({
                         variant="contained"
                         color="success"
                         disabled={!profileComplete}
+                        loading={isVerifying}
                         startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
                         onClick={(e: any) => {
                           e?.stopPropagation?.();
@@ -414,7 +426,7 @@ export default function RecruitmentCandidatesPage({
           ]
         : []),
     ],
-    [navigate, rowActionMode],
+    [navigate, rowActionMode, verifyingCandidateIds],
   );
 
   return (
@@ -523,11 +535,13 @@ export default function RecruitmentCandidatesPage({
                   {(() => {
                     const profileComplete = selectedProfileComplete;
                     const verified = isVerifiedCandidate(selectedCandidateResolved);
+                    const isVerifying = Boolean(verifyingCandidateIds[selectedCandidateResolved.candidate_id]);
                     return (
                       <AdButton
                         variant={verified ? "outlined" : "contained"}
                         color={verified ? "warning" : "success"}
                         disabled={!verified && !profileComplete}
+                        loading={isVerifying}
                         startIcon={<VerifiedUserOutlinedIcon fontSize="small" />}
                         onClick={() => {
                           if (!verified && !profileComplete) return;

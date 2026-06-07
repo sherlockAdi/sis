@@ -186,6 +186,16 @@ export class TradeTestsController extends Controller {
     const reviewStatus = toNull(body.review_status) ?? 'Pending';
     const tradeVideoFilePath = toNull(body.trade_video_file_path);
     const certificateFilePath = toNull(body.certificate_file_path);
+    if (normalizeStatus(reviewStatus).includes('pass')) {
+      const existingVideoFilePath = toNull(current.trade_video_file_path);
+      const existingCertificateFilePath = toNull(current.certificate_file_path);
+      if (!tradeVideoFilePath && !existingVideoFilePath) {
+        throw httpError(400, 'Trade video is required before marking the trade test as Passed');
+      }
+      if (!certificateFilePath && !existingCertificateFilePath) {
+        throw httpError(400, 'Certificate is required before marking the trade test as Passed');
+      }
+    }
 
     await pool.query<ResultSetHeader>(
       `INSERT INTO REC_T06_application_trade_tests (

@@ -47,6 +47,7 @@ export type VisaDetailRow = {
   sponsor_id: string | null;
   sponsor_contact: string | null;
   passport_file_path: string | null;
+  support_document_file_path?: string | null;
   visa_file_path: string | null;
   visa_payment_received?: number | null;
   visa_remarks?: string | null;
@@ -54,6 +55,8 @@ export type VisaDetailRow = {
   ticket_number?: string | null;
   booked_date?: string | null;
   travel_date?: string | null;
+  journey_from?: string | null;
+  journey_destination?: string | null;
   ticket_file_path?: string | null;
   ticket_remarks?: string | null;
   remarks: string | null;
