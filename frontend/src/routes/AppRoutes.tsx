@@ -153,6 +153,13 @@ function WorkforceHolidaysRedirect() {
   return <Navigate to={`/portal/attendance/holidays${location.search}`} replace />;
 }
 
+function EmployeeDirectoryRoute() {
+  const { me } = useAuth();
+  const role = String(me?.role_code ?? "").trim().toUpperCase();
+  if (role === "EMPLOYEE") return <Navigate to="/portal/employees/dashboard" replace />;
+  return <EmployeesPage />;
+}
+
 export default function AppRoutes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -438,8 +445,8 @@ export default function AppRoutes() {
             <Route path="customers" element={<PlaceholderPage title="Customer Management" />} />
             <Route path="customers/*" element={<PlaceholderPage title="Customer Management" />} />
 
-            <Route path="employees" element={<EmployeesPage />} />
-            <Route path="employees/*" element={<EmployeesPage />} />
+            <Route path="employees" element={<EmployeeDirectoryRoute />} />
+            <Route path="employees/*" element={<EmployeeDirectoryRoute />} />
             <Route path="employees/dashboard" element={<EmployeeDashboardPage />} />
             <Route path="employees/profile" element={<EmployeeProfilePage />} />
             <Route path="employees/profile/personal-info" element={<EmployeeProfilePage />} />

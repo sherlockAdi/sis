@@ -136,13 +136,17 @@ export default function DeploymentManagementPage() {
 
   const visaOptions = useMemo(
     () =>
-      [{ label: "- Select -", value: "" }].concat(
-        visaTypes
-          .filter((v) => String(v.visa_type_name ?? "").trim().toLowerCase() === "work visa")
-          .map((v) => ({ label: v.visa_type_name, value: String(v.visa_type_id) })),
-      ),
+      visaTypes
+        .filter((v) => String(v.visa_type_name ?? "").trim().toLowerCase() === "work visa")
+        .map((v) => ({ label: v.visa_type_name, value: String(v.visa_type_id) })),
     [visaTypes],
   );
+
+  useEffect(() => {
+    if (visaOptions.length === 1 && !visaForm.visa_type_id) {
+      setVisaForm((current) => ({ ...current, visa_type_id: Number(visaOptions[0].value) }));
+    }
+  }, [visaForm.visa_type_id, visaOptions]);
 
   const cols = useMemo(
     () => [
@@ -502,6 +506,20 @@ export default function DeploymentManagementPage() {
     }
 
     if (activeStage === "Travel Booked") {
+      const requiredTicketFields = [
+        visaForm.ticket_number,
+        visaForm.journey_from,
+        visaForm.journey_destination,
+        visaForm.booked_date,
+        visaForm.travel_date,
+        visaForm.ticket_file_path,
+      ];
+      if (requiredTicketFields.some((value) => !String(value ?? "").trim())) {
+        throw new Error("PNR number, From, Destination, Booked Date, Travel Date and Ticket File are required.");
+      }
+      if (dayjs(visaForm.travel_date).isBefore(dayjs(visaForm.booked_date), "day")) {
+        throw new Error("Travel Date cannot be before Booked Date.");
+      }
       await deploymentApi.visaDetails.upsert(activeRow.deployment_id, {
         ticket_number: visaForm.ticket_number ?? null,
         booked_date: visaForm.booked_date ?? null,
@@ -756,6 +774,7 @@ export default function DeploymentManagementPage() {
                       label="Visa Type"
                       options={visaOptions}
                       value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
+                      required
                       variant="standard"
                       onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
                     />

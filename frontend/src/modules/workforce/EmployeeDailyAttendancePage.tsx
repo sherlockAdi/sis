@@ -193,6 +193,10 @@ export default function EmployeeDailyAttendancePage() {
   };
 
   const submitPunch = async () => {
+    if (!canPunchToday) {
+      setToast({ open: true, message: "Attendance can only be marked for today.", severity: "warning" });
+      return;
+    }
     if (!photo) {
       setToast({ open: true, message: "Please capture a selfie first.", severity: "warning" });
       return;
@@ -252,6 +256,7 @@ export default function EmployeeDailyAttendancePage() {
               label="Select Date"
               value={selectedDate}
               onChange={setSelectedDate}
+              maxDate={dayjs()}
               format="DD/MM/YYYY"
               slotProps={{ textField: { size: "small" } }}
             />
@@ -262,7 +267,7 @@ export default function EmployeeDailyAttendancePage() {
           <AdButton
             startIcon={<CameraAltIcon fontSize="small" />}
             onClick={() => openPunchModal(nextPunchMode)}
-            disabled={punchButtonDisabled}
+            disabled={punchButtonDisabled || !canPunchToday}
           >
             {punchButtonLabel}
           </AdButton>
@@ -378,7 +383,7 @@ export default function EmployeeDailyAttendancePage() {
           ) : null}
           {!canPunchToday ? (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-              You can still open the modal for backdated review, but punch entry is intended for the selected day.
+              Attendance can only be marked for today.
             </Typography>
           ) : null}
         </Stack>

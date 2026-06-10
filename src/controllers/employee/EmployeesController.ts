@@ -74,6 +74,21 @@ function employeeDisplayName(employee: Partial<EmployeeRow & EmployeeDetailRow>)
     || 'Employee';
 }
 
+async function assertEmployeeDirectoryAccess(req: any): Promise<void> {
+  const user = (req as any).user as { user_id?: number; role_id?: number } | undefined;
+  if (!user?.user_id || !user.role_id) throw httpError(401, 'Unauthorized');
+  const [roleRows] = await pool.query<(RowDataPacket & { role_code: string | null })[]>(
+    `SELECT role_code
+     FROM AUTH_U01_roles
+     WHERE role_id = :role_id
+     LIMIT 1`,
+    { role_id: user.role_id }
+  );
+  if (String(roleRows[0]?.role_code ?? '').trim().toUpperCase() === 'EMPLOYEE') {
+    throw httpError(403, 'Access denied');
+  }
+}
+
 @Route('employees')
 @Tags('Employees')
 export class EmployeesController extends Controller {
@@ -139,7 +154,8 @@ export class EmployeesController extends Controller {
 
   @Get()
   @Security('jwt')
-  public async list(): Promise<EmployeeRow[]> {
+  public async list(@Request() req: any): Promise<EmployeeRow[]> {
+    await assertEmployeeDirectoryAccess(req);
     logEmployeeApi('list:start');
     const rows = await callProc<RowDataPacket & EmployeeRow>(
       `CALL sp_emp_employees('LIST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`
@@ -150,7 +166,8 @@ export class EmployeesController extends Controller {
 
   @Get('{employeeId}')
   @Security('jwt')
-  public async get(@Path() employeeId: number): Promise<EmployeeDetailRow | null> {
+  public async get(@Path() employeeId: number, @Request() req: any): Promise<EmployeeDetailRow | null> {
+    await assertEmployeeDirectoryAccess(req);
     logEmployeeApi('get:start', { employee_id: employeeId });
     const rows = await callProc<RowDataPacket & EmployeeDetailRow>(
       `CALL sp_emp_employees('GET', :employee_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,

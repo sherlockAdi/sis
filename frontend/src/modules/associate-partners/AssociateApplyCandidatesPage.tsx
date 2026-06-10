@@ -15,7 +15,14 @@ function fileExt(name: string): string {
 }
 
 function docKey(doc: AssociateApplicationDocRow | AssociateJobDocRow): number {
-  return Number(doc.job_specific_document_id ?? doc.document_type_id ?? 0);
+  if ("job_specific_document_id" in doc && doc.job_specific_document_id) {
+    return Number(doc.job_specific_document_id);
+  }
+  return "document_type_id" in doc ? Number(doc.document_type_id ?? 0) : 0;
+}
+
+function isRequiredDocument(doc: AssociateApplicationDocRow | AssociateJobDocRow): boolean {
+  return Number("job_is_required" in doc ? doc.job_is_required : doc.is_required) === 1;
 }
 
 function latestDocs(rows: Array<AssociateApplicationDocRow | AssociateJobDocRow>): Array<AssociateApplicationDocRow | AssociateJobDocRow> {
@@ -42,20 +49,6 @@ function latestDocs(rows: Array<AssociateApplicationDocRow | AssociateJobDocRow>
   return Array.from(byType.values());
 }
 
-function hasCandidateProfileDocument(candidate: AssociateCandidateRow | null, documentName: string): boolean {
-  if (!candidate) return false;
-  const name = String(documentName ?? "").toLowerCase();
-  const rules: Array<{ keys: string[]; value: unknown }> = [
-    { keys: ["resume", "cv"], value: candidate.resume_file_path },
-    { keys: ["passport"], value: candidate.passport_file_path },
-    { keys: ["aadhar", "aadhaar"], value: candidate.aadhar_file_path },
-    { keys: ["pan"], value: candidate.pan_file_path },
-    { keys: ["voter"], value: candidate.voter_id_file_path },
-    { keys: ["photo", "profile image", "profile photo"], value: candidate.profile_photo_file_path },
-  ];
-  return rules.some((rule) => rule.keys.some((key) => name.includes(key)) && Boolean(String(rule.value ?? "").trim()));
-}
-
 function getMissingProfileFields(candidate: AssociateCandidateRow | null): string[] {
   if (!candidate) return ["Candidate"];
   const required: Array<[keyof AssociateCandidateRow, string]> = [
@@ -68,6 +61,7 @@ function getMissingProfileFields(candidate: AssociateCandidateRow | null): strin
     ["state_id", "State"],
     ["city_id", "City"],
     ["father_name", "Father's Name"],
+    ["address1", "Address 1"],
     ["pincode", "Pincode"],
     ["dob", "Date of Birth"],
     ["gender", "Gender"],
@@ -192,7 +186,7 @@ export default function AssociateApplyCandidatesPage() {
   const missingDocNames = useMemo(
     () =>
       resolvedDocs
-        .filter((d) => Number(d.job_is_required) === 1 && !String(d.file_path ?? "").trim())
+        .filter((d) => isRequiredDocument(d) && !String(d.file_path ?? "").trim())
         .map((d) => d.document_name),
     [resolvedDocs],
   );
@@ -261,21 +255,21 @@ export default function AssociateApplyCandidatesPage() {
       const now = Date.now();
       const ext = fileExt(file.name);
       const key = docKey(doc);
-      const folder = doc.job_specific_document_id ? "job-docs" : "candidate-docs";
+      const folder = "job_specific_document_id" in doc && doc.job_specific_document_id ? "job-docs" : "candidate-docs";
       const objectKey = `applications/${applicationId}/${folder}/${key}/${now}${ext}`;
 
       const presign = await recruitmentApi.files.presignUpload(objectKey);
       const put = await fetch(presign.url, { method: "PUT", body: file });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
 
-      if (doc.job_specific_document_id) {
+      if ("job_specific_document_id" in doc && doc.job_specific_document_id) {
         await associatePortalApi.candidates.upsertApplicationJobDocument(
           Number(candidateId),
           applicationId,
           doc.job_specific_document_id,
           objectKey,
         );
-      } else if (doc.document_type_id) {
+      } else if ("document_type_id" in doc && doc.document_type_id) {
         await associatePortalApi.candidates.upsertApplicationDocument(
           Number(candidateId),
           applicationId,
@@ -330,7 +324,7 @@ export default function AssociateApplyCandidatesPage() {
     return null;
   }, [applicationId, applicationStatus, candidateMissingFields, candidateProfileReady, docsLoading, jobLoading, missingDocNames, selectedCandidate, selectedJob]);
 
-  const allDocs = useMemo(() => latestDocs([...applicationDocs, ...jobDocs]), [applicationDocs, jobDocs]);
+  const allDocs = resolvedDocs;
 
   return (
     <Stack spacing={2.5} sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>
@@ -469,12 +463,14 @@ export default function AssociateApplyCandidatesPage() {
                 <Box sx={{ minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                     <Typography fontWeight={900}>{d.document_name}</Typography>
-                    {Number(d.job_is_required) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
+                    {isRequiredDocument(d) ? <Chip size="small" label="Required" color="primary" /> : <Chip size="small" label="Optional" />}
                     {d.file_path ? <Chip size="small" label="Uploaded" color="success" /> : <Chip size="small" label="Pending" />}
                   </Stack>
-                  <Typography variant="caption" color="text.secondary">
-                    {d.uploaded_at ? `Uploaded at: ${d.uploaded_at}` : "Not uploaded yet"}
-                  </Typography>
+                  {d.file_path && d.uploaded_at ? (
+                    <Typography variant="caption" color="text.secondary">
+                      Uploaded at: {d.uploaded_at}
+                    </Typography>
+                  ) : null}
                 </Box>
 
                 <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>

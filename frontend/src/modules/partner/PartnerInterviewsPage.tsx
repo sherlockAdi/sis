@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chip, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Chip, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import HistoryIcon from "@mui/icons-material/History";
@@ -228,27 +228,37 @@ export default function PartnerInterviewsPage() {
           const r = p.row as PartnerInterviewDisplayRow;
           return (
             <Stack direction="row" spacing={0.75}>
-              <AdButton
-                variant="text"
-                startIcon={<OpenInNewIcon fontSize="small" />}
-                onClick={() => navigate(`/portal/partner/applicants/${r.candidate_id}`)}
-              >
-                Profile
-              </AdButton>
-              <IconButton aria-label="Schedule interview" onClick={() => openScheduleForApplication(r.application_id)} size="small">
-                <EventAvailableIcon fontSize="small" />
-              </IconButton>
-              <IconButton aria-label="View interview record" onClick={() => openInterviewRecord(r.application_id)} size="small">
-                <HistoryIcon fontSize="small" />
-              </IconButton>
-              {r.interview_id ? (
-                <IconButton aria-label="Mark ready for deployment" onClick={() => markReadyForDeployment(r.application_id)} size="small">
-                  <RocketLaunchIcon fontSize="small" />
+              <Tooltip title="Open candidate profile">
+                <AdButton
+                  variant="text"
+                  startIcon={<OpenInNewIcon fontSize="small" />}
+                  onClick={() => navigate(`/portal/partner/applicants/${r.candidate_id}`)}
+                >
+                  Profile
+                </AdButton>
+              </Tooltip>
+              <Tooltip title="Schedule interview">
+                <IconButton aria-label="Schedule interview" onClick={() => openScheduleForApplication(r.application_id)} size="small">
+                  <EventAvailableIcon fontSize="small" />
                 </IconButton>
+              </Tooltip>
+              <Tooltip title="View interview record">
+                <IconButton aria-label="View interview record" onClick={() => openInterviewRecord(r.application_id)} size="small">
+                  <HistoryIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {r.interview_id ? (
+                <Tooltip title="Mark ready for deployment">
+                  <IconButton aria-label="Mark ready for deployment" onClick={() => markReadyForDeployment(r.application_id)} size="small">
+                    <RocketLaunchIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               ) : null}
-              <IconButton aria-label="Reject application" onClick={() => markRejected(r.application_id)} size="small">
-                <CancelIcon fontSize="small" />
-              </IconButton>
+              <Tooltip title="Reject application">
+                <IconButton aria-label="Reject application" onClick={() => markRejected(r.application_id)} size="small">
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Stack>
           );
         },

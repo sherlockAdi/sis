@@ -1142,6 +1142,9 @@ export class WorkforceController extends Controller {
     const employee = await resolveEmployee(user.user_id);
     if (!employee?.employee_id || !employee.partner_id) throw httpError(404, 'Employee profile not found');
     const attendanceDate = asDate(body.attendance_date ?? null) ?? todayIndia();
+    if (attendanceDate !== todayIndia()) {
+      throw httpError(400, 'Attendance can only be marked for today');
+    }
     const lat = toNumber(body.latitude);
     const lon = toNumber(body.longitude);
     const faceCapture = String(body.face_capture ?? '').trim();
@@ -1220,6 +1223,9 @@ export class WorkforceController extends Controller {
     const employee = await resolveEmployee(user.user_id);
     if (!employee?.employee_id || !employee.partner_id) throw httpError(404, 'Employee profile not found');
     const attendanceDate = asDate(body.attendance_date ?? null) ?? todayIndia();
+    if (attendanceDate !== todayIndia()) {
+      throw httpError(400, 'Attendance can only be marked for today');
+    }
     const lat = toNumber(body.latitude);
     const lon = toNumber(body.longitude);
     const faceCapture = String(body.face_capture ?? '').trim();

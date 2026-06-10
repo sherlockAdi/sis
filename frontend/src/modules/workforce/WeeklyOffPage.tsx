@@ -43,6 +43,14 @@ function ymd(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+function formatDateCompact(value?: string | null): string {
+  if (!value) return "-";
+  const raw = String(value).slice(0, 10);
+  const [year, month, day] = raw.split("-");
+  if (!year || !month || !day) return String(value);
+  return `${day}${month}${year.slice(-2)}`;
+}
+
 export default function WeeklyOffPage() {
   const { me } = useAuth();
   const role = String(me?.role_code ?? "").toUpperCase();
@@ -183,8 +191,8 @@ export default function WeeklyOffPage() {
     () => [
       { field: "rule_name", headerName: "Rule", flex: 1, minWidth: 180 },
       { field: "off_days_json", headerName: "Off Days", flex: 1, minWidth: 160, valueGetter: (p: any) => p.value },
-      { field: "effective_from", headerName: "From", width: 120 },
-      { field: "effective_to", headerName: "To", width: 120 },
+      { field: "effective_from", headerName: "From", width: 120, valueFormatter: (value: any) => formatDateCompact(value?.value ?? value) },
+      { field: "effective_to", headerName: "To", width: 120, valueFormatter: (value: any) => formatDateCompact(value?.value ?? value) },
       { field: "status", headerName: "Status", width: 90, renderCell: (p: any) => <Chip size="small" label={p.value ? "Active" : "Off"} color={p.value ? "success" : "default"} /> },
       {
         field: "__actions",

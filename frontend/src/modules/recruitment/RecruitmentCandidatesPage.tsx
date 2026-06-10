@@ -101,7 +101,6 @@ const REQUIRED_FIELDS: Array<{ key: keyof CandidateRow; label: string }> = [
   { key: "city_id", label: "City" },
   { key: "father_name", label: "Father's Name" },
   { key: "address1", label: "Address 1" },
-  { key: "address2", label: "Address 2" },
   { key: "pincode", label: "Pincode" },
   { key: "dob", label: "DOB" },
   { key: "gender", label: "Gender" },

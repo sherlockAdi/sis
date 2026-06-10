@@ -20,7 +20,9 @@ function normalizeStatus(value: string | null | undefined): string {
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
-  return value.slice(0, 10);
+  const [year, month, day] = value.slice(0, 10).split("-");
+  if (!year || !month || !day) return value;
+  return `${day}${month}${year.slice(-2)}`;
 }
 
 function fieldValue(value: unknown) {
@@ -113,7 +115,17 @@ export default function CandidateOnboardingTicketsPage() {
   };
 
   const ticketStatus = selectedDeployment ? normalizeStatus(selectedDeployment.current_status) : "";
-  const ticketVisible = !!selectedDeployment && ["ticket confirmed", "travel booked", "visa approved", "deployed"].includes(ticketStatus);
+  const ticketComplete = Boolean(
+    details?.ticket_number
+      && details?.journey_from
+      && details?.journey_destination
+      && details?.booked_date
+      && details?.travel_date
+      && details?.ticket_file_path,
+  );
+  const ticketVisible = !!selectedDeployment
+    && ticketComplete
+    && ["ticket confirmed", "travel booked", "deployed"].includes(ticketStatus);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>

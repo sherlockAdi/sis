@@ -463,21 +463,22 @@ export default function CandidateProfileSettingsPage() {
               <Divider />
 
               <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, alignItems: "start" }}>
-                <AdTextBox variant="standard" size="small" label="First Name" value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
-                <AdTextBox variant="standard" size="small" label="Last Name" value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
-                <AdPhoneField value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-                <AdTextBox variant="standard" size="small" label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-                <AdTextBox variant="standard" size="small" label="Passport Number" value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
-                <AdSearchableDropDown variant="standard" label="Country" options={countryOptions} value={form.country_id} onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))} />
-                <AdSearchableDropDown variant="standard" label="State" options={stateOptions} disabled={!form.country_id} value={form.state_id} onChange={(v) => setForm((f) => ({ ...f, state_id: String(v), city_id: "" }))} />
-                <AdSearchableDropDown variant="standard" label="City" options={cityOptions} disabled={!form.state_id} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))} />
-                <AdTextBox variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
+                <AdTextBox required variant="standard" size="small" label="First Name" value={form.first_name} onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
+                <AdTextBox required variant="standard" size="small" label="Last Name" value={form.last_name} onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
+                <AdPhoneField required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+                <AdTextBox required variant="standard" size="small" label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
+                <AdTextBox required variant="standard" size="small" label="Passport Number" value={form.passport_number} onChange={(v) => setForm((f) => ({ ...f, passport_number: v }))} />
+                <AdSearchableDropDown required variant="standard" label="Country" options={countryOptions} value={form.country_id} onChange={(v) => setForm((f) => ({ ...f, country_id: String(v), state_id: "", city_id: "" }))} />
+                <AdSearchableDropDown required variant="standard" label="State" options={stateOptions} disabled={!form.country_id} value={form.state_id} onChange={(v) => setForm((f) => ({ ...f, state_id: String(v), city_id: "" }))} />
+                <AdSearchableDropDown required variant="standard" label="City" options={cityOptions} disabled={!form.state_id} value={form.city_id} onChange={(v) => setForm((f) => ({ ...f, city_id: String(v) }))} />
+                <AdTextBox required variant="standard" size="small" label="Address 1" value={form.address1} onChange={(v) => setForm((f) => ({ ...f, address1: v }))} />
                 <AdTextBox variant="standard" size="small" label="Address 2" value={form.address2} onChange={(v) => setForm((f) => ({ ...f, address2: v }))} />
-                <AdTextBox variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
+                <AdTextBox required variant="standard" size="small" label="Father's Name" value={form.father_name} onChange={(v) => setForm((f) => ({ ...f, father_name: v }))} />
                 <AdTextBox
                   variant="standard"
                   size="small"
                   label="Pincode"
+                  required
                   value={form.pincode}
                   onChange={(v) => setForm((f) => ({ ...f, pincode: v }))}
                   onBlur={() => {
@@ -504,6 +505,7 @@ export default function CandidateProfileSettingsPage() {
                 <Typography fontWeight={950}>Personal Details</Typography>
                 <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
                   <AdSearchableDropDown
+                    required
                     variant="standard"
                     label="Education"
                     options={educationOptions}
@@ -511,6 +513,7 @@ export default function CandidateProfileSettingsPage() {
                     onChange={(v) => setForm((f) => ({ ...f, education: String(v) }))}
                   />
                   <AdSearchableDropDown
+                    required
                     variant="standard"
                     label="Job Category"
                     options={jobCategoryOptions}
@@ -521,6 +524,7 @@ export default function CandidateProfileSettingsPage() {
                     variant="standard"
                     size="small"
                     label="DOB"
+                    required
                     type="date"
                     value={form.dob}
                     onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
@@ -530,8 +534,8 @@ export default function CandidateProfileSettingsPage() {
                   <AdDropDown
                     variant="standard"
                     label="Gender"
+                    required
                     options={[
-                      { label: "Select", value: "" },
                       { label: "Male", value: "Male" },
                       { label: "Female", value: "Female" },
                       { label: "Other", value: "Other" },
@@ -541,6 +545,7 @@ export default function CandidateProfileSettingsPage() {
                   />
                   <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                     <AdSearchableDropDownMulti
+                      required
                       variant="standard"
                       label="Skills"
                       options={skillOptions}
@@ -550,6 +555,7 @@ export default function CandidateProfileSettingsPage() {
                   </Box>
                   <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
                     <AdSearchableDropDownMulti
+                      required
                       variant="standard"
                       label="Languages Known"
                       options={languageOptions}
@@ -561,6 +567,7 @@ export default function CandidateProfileSettingsPage() {
                     variant="standard"
                     size="small"
                     label="Passport Expiry Date"
+                    required
                     type="date"
                     value={form.passport_expiry_date}
                     onChange={(e) => setForm((f) => ({ ...f, passport_expiry_date: e.target.value }))}

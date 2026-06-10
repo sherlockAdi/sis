@@ -299,6 +299,39 @@ export class DeploymentController extends Controller {
       }
     }
 
+    if (status === 'Ticket Confirmed') {
+      const ticketRows = await callProc<RowDataPacket & VisaDetailRow>(
+        `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+        { deployment_id: deploymentId }
+      );
+      const ticket = ticketRows[0];
+      const [journeyRows] = await pool.query<(RowDataPacket & {
+        journey_from: string | null;
+        journey_destination: string | null;
+      })[]>(
+        `SELECT journey_from, journey_destination
+         FROM DEP_T05_ticket_bookings
+         WHERE deployment_id = :deployment_id
+         LIMIT 1`,
+        { deployment_id: deploymentId }
+      );
+      const journey = journeyRows[0];
+      const requiredTicketValues = [
+        ticket?.ticket_number,
+        ticket?.booked_date,
+        ticket?.travel_date,
+        ticket?.ticket_file_path,
+        journey?.journey_from,
+        journey?.journey_destination,
+      ];
+      if (requiredTicketValues.some((value) => !String(value ?? '').trim())) {
+        throw httpError(400, 'PNR number, journey, booked date, travel date and ticket file are required');
+      }
+      if (String(ticket.booked_date).slice(0, 10) > String(ticket.travel_date).slice(0, 10)) {
+        throw httpError(400, 'Travel date cannot be before booked date');
+      }
+    }
+
     await callProc(
       `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, :visa_type_id, :remarks, :user_id)`,
       {
@@ -461,6 +494,19 @@ export class DeploymentController extends Controller {
     const user = (req as any).user as { user_id?: number } | undefined;
     if (!user?.user_id) throw httpError(401, 'Unauthorized');
 
+    if (body.visa_type_id != null) {
+      const [visaTypeRows] = await pool.query<(RowDataPacket & { visa_type_name: string })[]>(
+        `SELECT visa_type_name
+         FROM REC_M02_visa_types
+         WHERE visa_type_id = :visa_type_id AND status = TRUE
+         LIMIT 1`,
+        { visa_type_id: body.visa_type_id }
+      );
+      if (String(visaTypeRows[0]?.visa_type_name ?? '').trim().toLowerCase() !== 'work visa') {
+        throw httpError(400, 'Only Work Visa is allowed');
+      }
+    }
+
     const supportDocumentFilePath = body.support_document_file_path ?? body.passport_file_path ?? null;
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
       `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
@@ -526,24 +572,37 @@ export class DeploymentController extends Controller {
       );
     }
 
-    // Auto-move to Visa Processing when visa details are saved
-    const beforeRows = await callProc<RowDataPacket & DeploymentRow>(
-      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
-      { deployment_id: deploymentId }
-    );
-    const before = beforeRows[0];
-    await callProc(
-      `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, NULL, NULL, :user_id)`,
-      { deployment_id: deploymentId, status: 'Visa Processing', user_id: user.user_id }
-    );
+    const hasVisaProcessingData = [
+      body.visa_type_id,
+      body.visa_number,
+      body.issue_date,
+      body.expiry_date,
+      body.visa_file_path,
+      body.support_document_file_path,
+      body.passport_file_path,
+    ].some((value) => value !== undefined && value !== null && String(value).trim() !== '');
 
-    const afterRows = await callProc<RowDataPacket & DeploymentRow>(
-      `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
-      { deployment_id: deploymentId }
-    );
-    const after = afterRows[0];
-    if (after && String(before?.current_status ?? '').trim() !== String(after.current_status ?? '').trim()) {
-      await this.notifyDeploymentChange(deploymentId, before?.current_status, after.current_status, body.remarks ?? null);
+    if (hasVisaProcessingData) {
+      const beforeRows = await callProc<RowDataPacket & DeploymentRow>(
+        `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+        { deployment_id: deploymentId }
+      );
+      const before = beforeRows[0];
+      if (String(before?.current_status ?? '').trim().toLowerCase() === 'offered') {
+        await callProc(
+          `CALL sp_dep_deployments('SET_STATUS', :deployment_id, NULL, :status, NULL, NULL, :user_id)`,
+          { deployment_id: deploymentId, status: 'Visa Processing', user_id: user.user_id }
+        );
+
+        const afterRows = await callProc<RowDataPacket & DeploymentRow>(
+          `CALL sp_dep_deployments('GET', :deployment_id, NULL, NULL, NULL, NULL, NULL)`,
+          { deployment_id: deploymentId }
+        );
+        const after = afterRows[0];
+        if (after && String(before.current_status ?? '').trim() !== String(after.current_status ?? '').trim()) {
+          await this.notifyDeploymentChange(deploymentId, before.current_status, after.current_status, body.remarks ?? null);
+        }
+      }
     }
 
     return { visa_detail_id };

@@ -17,6 +17,7 @@ import autoTable from "jspdf-autotable";
 import { AdAlertBox, AdButton, AdCard, AdGrid, AdModal, AdNotification } from "../../common/ad";
 import type { ApiError } from "../../common/services/apiFetch";
 import { jobsApi, type JobDetail, type JobListRow } from "../../common/services/jobsApi";
+import { parseJsonList } from "../../common/utils/jsonList";
 
 function normalizeStatus(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
@@ -26,6 +27,11 @@ function fieldValue(value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
   if (Array.isArray(value)) return value.length ? value.map((v) => String(v)).join(", ") : "-";
   return String(value);
+}
+
+function listText(value: string | null | undefined): string {
+  const items = parseJsonList(value);
+  return items.length ? items.map((item) => `- ${item}`).join("\n") : "-";
 }
 
 function shortDate(value?: string | null) {
@@ -128,8 +134,8 @@ export default function AssociateTotalJobListPage() {
           ["Employment Type", fieldValue(d.job.employment_type_name)],
           ["Work Mode", fieldValue(d.job.work_mode_name)],
           ["Currency", fieldValue(d.job.currency_code ?? d.job.currency_name)],
-          ["Min Education", fieldValue(d.job.min_education)],
-          ["Skills", fieldValue(d.job.skills)],
+          ["Min Education", listText(d.job.min_education)],
+          ["Skills", listText(d.job.skills)],
           ["Experience", fieldValue(d.job.min_experience)],
           ["Age Range", [d.job.min_age, d.job.max_age].filter(Boolean).join(" - ") || "-"],
           ["Gender", fieldValue(d.job.gender_requirement)],
@@ -335,8 +341,8 @@ export default function AssociateTotalJobListPage() {
                   ["Currency", fieldValue(detail.job.currency_code ?? detail.job.currency_name)],
                   ["Salary Min", fieldValue(detail.job.salary_min)],
                   ["Salary Max", fieldValue(detail.job.salary_max)],
-                  ["Min Education", fieldValue(detail.job.min_education)],
-                  ["Skills", fieldValue(detail.job.skills)],
+                  ["Min Education", <BulletList value={detail.job.min_education} />],
+                  ["Skills", <BulletList value={detail.job.skills} />],
                   ["Min Experience", fieldValue(detail.job.min_experience)],
                   ["Age Range", [detail.job.min_age, detail.job.max_age].filter(Boolean).join(" - ") || "-"],
                   ["Gender", fieldValue(detail.job.gender_requirement)],
@@ -400,7 +406,21 @@ function PreviewSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-function GridFields({ items }: { items: Array<[string, string]> }) {
+function BulletList({ value }: { value?: string | null }) {
+  const items = parseJsonList(value);
+  if (!items.length) return <Typography fontWeight={800}>-</Typography>;
+  return (
+    <Box component="ul" sx={{ m: 0, pl: 2.25 }}>
+      {items.map((item) => (
+        <Typography component="li" key={item} fontWeight={800}>
+          {item}
+        </Typography>
+      ))}
+    </Box>
+  );
+}
+
+function GridFields({ items }: { items: Array<[string, React.ReactNode]> }) {
   return (
     <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
       {items.map(([label, value]) => (
@@ -408,9 +428,11 @@ function GridFields({ items }: { items: Array<[string, string]> }) {
           <Typography variant="caption" color="text.secondary">
             {label}
           </Typography>
-          <Typography fontWeight={800} sx={{ mt: 0.2 }}>
-            {value}
-          </Typography>
+          {typeof value === "string" ? (
+            <Typography fontWeight={800} sx={{ mt: 0.2 }}>
+              {value}
+            </Typography>
+          ) : value}
         </Box>
       ))}
     </Box>
