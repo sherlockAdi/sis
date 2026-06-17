@@ -87,9 +87,9 @@ export default function DeploymentManagementPage() {
     date_of_confirmation: dayjs().format("YYYY-MM-DD"),
     shift_timing: "",
   });
-  const [uploading, setUploading] = useState<{ offer: boolean; passport: boolean; visa: boolean; ticket: boolean }>({
+  const [uploading, setUploading] = useState<{ offer: boolean; supportDocument: boolean; visa: boolean; ticket: boolean }>({
     offer: false,
-    passport: false,
+    supportDocument: false,
     visa: false,
     ticket: false,
   });
@@ -281,7 +281,7 @@ export default function DeploymentManagementPage() {
                   <IconButton
                     aria-label="Upload visa details"
                     size="small"
-                    disabled={uploading.passport || uploading.visa}
+                    disabled={uploading.supportDocument || uploading.visa}
                     onClick={async () => {
                       setVisaLoading(true);
                       try {
@@ -313,7 +313,7 @@ export default function DeploymentManagementPage() {
         },
       },
     ],
-    [uploading.offer, uploading.passport, uploading.visa, uploading.ticket, activeStage],
+    [uploading.offer, uploading.supportDocument, uploading.visa, uploading.ticket, activeStage],
   );
 
   const visibility = useMemo(
@@ -327,7 +327,7 @@ export default function DeploymentManagementPage() {
   const uploadFile = async (file: File, type: "supportDocument" | "visa") => {
     if (!activeRow) return;
     try {
-      const uploadKey = type === "supportDocument" ? "passport" : "visa";
+      const uploadKey = type === "supportDocument" ? "supportDocument" : "visa";
       setUploading((u) => ({ ...u, [uploadKey]: true }));
       const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
       const objectKey = `deployments/${activeRow.deployment_id}/${type}_${Date.now()}${ext}`;
@@ -338,14 +338,13 @@ export default function DeploymentManagementPage() {
       setVisaForm((v) => ({
         ...v,
         support_document_file_path: type === "supportDocument" ? objectKey : v.support_document_file_path,
-        passport_file_path: type === "supportDocument" ? objectKey : v.passport_file_path,
         visa_file_path: type === "visa" ? objectKey : v.visa_file_path,
       }));
       setToast({ open: true, message: `${type === "supportDocument" ? "Support document" : "Visa"} file uploaded`, severity: "success" });
     } catch (e: any) {
       setToast({ open: true, message: (e as ApiError)?.message ?? e?.message ?? `${type === "supportDocument" ? "Support document" : "Visa"} upload failed`, severity: "error" });
     } finally {
-      const uploadKey = type === "supportDocument" ? "passport" : "visa";
+      const uploadKey = type === "supportDocument" ? "supportDocument" : "visa";
       setUploading((u) => ({ ...u, [uploadKey]: false }));
     }
   };
@@ -467,6 +466,8 @@ export default function DeploymentManagementPage() {
         passport_number: visaForm.passport_number ?? null,
         passport_issue_date: visaForm.passport_issue_date ?? null,
         passport_expiry_date: visaForm.passport_expiry_date ?? null,
+        visa_interview_date: visaForm.visa_interview_date ?? null,
+        visa_interview_venue: visaForm.visa_interview_venue ?? null,
         sponsor_id: visaForm.sponsor_id ?? null,
         sponsor_contact: visaForm.sponsor_contact ?? null,
         support_document_file_path: visaForm.support_document_file_path ?? visaForm.passport_file_path ?? null,
@@ -658,6 +659,8 @@ export default function DeploymentManagementPage() {
         title={
           activeStage === "Ready"
             ? "Offer Details"
+            : activeStage === "Visa Processing"
+              ? "Visa Process Schedule"
             : activeStage === "Travel Booked"
               ? "Ticket Details"
               : activeStage === "Deployed"
@@ -766,203 +769,233 @@ export default function DeploymentManagementPage() {
               ) : (
                 <Box sx={{ p: 2, border: "1px solid rgba(226,232,240,0.8)", borderRadius: 3, bgcolor: "rgba(255,255,255,0.72)" }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.25 }} spacing={1}>
-                    <Typography fontWeight={900}>Visa Processing</Typography>
-                    <Chip size="small" label={checklistComplete ? "Checklist complete" : `${checklistSelectedCount}/${visaChecklistMaster.length || 0} checked`} color={checklistComplete ? "success" : "default"} />
+                    <Typography fontWeight={900}>Visa Process Schedule</Typography>
+                    <Chip
+                      size="small"
+                      label={checklistComplete ? "Support checklist complete" : `${checklistSelectedCount}/${visaChecklistMaster.length || 0} checked`}
+                      color={checklistComplete ? "success" : "default"}
+                    />
                   </Stack>
-                  <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-                    <AdDropDown
-                      label="Visa Type"
-                      options={visaOptions}
-                      value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
-                      required
-                      variant="standard"
-                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
-                    />
-                    <AdDropDown
-                      label="Payment Received"
-                      variant="standard"
-                      options={[
-                        { label: "No", value: "0" },
-                        { label: "Yes", value: "1" },
-                      ]}
-                      value={String(visaForm.visa_payment_received ?? 0)}
-                      onChange={(v) => setVisaForm((f) => ({ ...f, visa_payment_received: Number(v) }))}
-                    />
-                    <AdDatePicker
-                      label="Visa Issue Date"
-                      variant="standard"
-                      format={VISA_DATE_DISPLAY_FORMAT}
-                      value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
-                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                    />
-                    <AdDatePicker
-                      label="Visa Expiry Date"
-                      variant="standard"
-                      format={VISA_DATE_DISPLAY_FORMAT}
-                      value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
-                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                    />
-                    <AdTextBox
-                      label="Passport Number"
-                      variant="standard"
-                      value={visaForm.passport_number ?? ""}
-                      onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))}
-                    />
-                    <AdTextBox
-                      label="Sponsor ID"
-                      variant="standard"
-                      value={visaForm.sponsor_id ?? ""}
-                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))}
-                    />
-                    <AdTextBox
-                      label="Sponsor Contact"
-                      variant="standard"
-                      value={visaForm.sponsor_contact ?? ""}
-                      onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))}
-                    />
-                    <AdDatePicker
-                      label="Passport Issue Date"
-                      variant="standard"
-                      value={visaForm.passport_issue_date ? dayjs(visaForm.passport_issue_date) : null}
-                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_issue_date: v ? v.format("YYYY-MM-DD") : null }))}
-                    />
-                    <AdDatePicker
-                      label="Passport Expiry Date"
-                      variant="standard"
-                      format={VISA_DATE_DISPLAY_FORMAT}
-                      value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
-                      onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
-                    />
-                  </Box>
-                  <Box sx={{ mt: 1 }}>
-                    <AdTextArea label="Visa Remarks" minRows={2} value={visaForm.visa_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, visa_remarks: v }))} />
-                  </Box>
-                  <Box sx={{ mt: 1 }}>
-                    <FormControl fullWidth size="small" variant="standard">
-                      <InputLabel>Visa Acknowledgement Checklist</InputLabel>
-                      <Select<string[]>
-                        multiple
-                        open={checklistOpen && visaChecklistMaster.length > 0}
-                        onOpen={() => setChecklistOpen(true)}
-                        onClose={() => setChecklistOpen(false)}
-                        value={checklistSelectedValues}
-                        label="Visa Acknowledgement Checklist"
-                        renderValue={() => `Checklist (${checklistSelectedCount}/${visaChecklistMaster.length || 0})`}
-                        onChange={(event) => {
-                          const nextSelected = event.target.value as string[];
-                          const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
-                            acc[item.checklist_item_id] = nextSelected.includes(String(item.checklist_item_id));
-                            return acc;
-                          }, {});
-                          setVisaChecklist(next);
-                        }}
-                        MenuProps={{
-                          PaperProps: {
-                            sx: { maxHeight: 340, minWidth: 420 },
-                          },
-                        }}
-                      >
-                        <ListSubheader
-                          sx={{
-                            position: "sticky",
-                            top: 0,
-                            zIndex: 1,
-                            bgcolor: "background.paper",
-                            py: 1,
-                            borderBottom: "1px solid rgba(226,232,240,0.9)",
-                          }}
-                        >
-                          <Stack spacing={0.75}>
-                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-                              <Stack spacing={0.15}>
-                                <Typography variant="subtitle2" fontWeight={900}>
-                                  Visa Acknowledgement Checklist
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  Mark each document as verified before approving the visa.
-                                </Typography>
+                  <Stack spacing={1.5}>
+                    <Box sx={{ p: 1.5, borderRadius: 3, border: "1px solid rgba(226,232,240,0.9)", bgcolor: "rgba(255,255,255,0.9)" }}>
+                      <Typography fontWeight={800} sx={{ mb: 1 }}>
+                        Schedule Details
+                      </Typography>
+                      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                        <AdDropDown
+                          label="Visa Type"
+                          options={visaOptions}
+                          value={visaForm.visa_type_id ? String(visaForm.visa_type_id) : ""}
+                          required
+                          variant="standard"
+                          onChange={(v) => setVisaForm((f) => ({ ...f, visa_type_id: Number(v) || null }))}
+                        />
+                        <AdDropDown
+                          label="Payment Received"
+                          variant="standard"
+                          options={[
+                            { label: "No", value: "0" },
+                            { label: "Yes", value: "1" },
+                          ]}
+                          value={String(visaForm.visa_payment_received ?? 0)}
+                          onChange={(v) => setVisaForm((f) => ({ ...f, visa_payment_received: Number(v) }))}
+                        />
+                        <AdTextBox
+                          label="Passport Number"
+                          variant="standard"
+                          value={visaForm.passport_number ?? ""}
+                          onChange={(v) => setVisaForm((f) => ({ ...f, passport_number: v }))}
+                        />
+                        <AdDatePicker
+                          label="Passport Expiry Date"
+                          variant="standard"
+                          format={VISA_DATE_DISPLAY_FORMAT}
+                          value={visaForm.passport_expiry_date ? dayjs(visaForm.passport_expiry_date) : null}
+                          onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, passport_expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                        />
+                        <AdDatePicker
+                          label="Visa Interview Date"
+                          variant="standard"
+                          format={VISA_DATE_DISPLAY_FORMAT}
+                          value={visaForm.visa_interview_date ? dayjs(visaForm.visa_interview_date) : null}
+                          onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, visa_interview_date: v ? v.format("YYYY-MM-DD") : null }))}
+                        />
+                        <AdTextBox
+                          label="Visa Interview Venue"
+                          variant="standard"
+                          value={visaForm.visa_interview_venue ?? ""}
+                          onChange={(v) => setVisaForm((f) => ({ ...f, visa_interview_venue: v }))}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ p: 1.5, borderRadius: 3, border: "1px solid rgba(226,232,240,0.9)", bgcolor: "rgba(255,255,255,0.9)" }}>
+                      <Typography fontWeight={800} sx={{ mb: 1 }}>
+                        Support Documents
+                      </Typography>
+                      <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                        <FormControl fullWidth size="small" variant="standard">
+                          <InputLabel>Support Document Checklist</InputLabel>
+                          <Select<string[]>
+                            multiple
+                            open={checklistOpen && visaChecklistMaster.length > 0}
+                            onOpen={() => setChecklistOpen(true)}
+                            onClose={() => setChecklistOpen(false)}
+                            value={checklistSelectedValues}
+                            label="Support Document Checklist"
+                            renderValue={() => `Checklist (${checklistSelectedCount}/${visaChecklistMaster.length || 0})`}
+                            onChange={(event) => {
+                              const nextSelected = event.target.value as string[];
+                              const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
+                                acc[item.checklist_item_id] = nextSelected.includes(String(item.checklist_item_id));
+                                return acc;
+                              }, {});
+                              setVisaChecklist(next);
+                            }}
+                            MenuProps={{
+                              PaperProps: {
+                                sx: { maxHeight: 340, minWidth: 420 },
+                              },
+                            }}
+                          >
+                            <ListSubheader
+                              sx={{
+                                position: "sticky",
+                                top: 0,
+                                zIndex: 1,
+                                bgcolor: "background.paper",
+                                py: 1,
+                                borderBottom: "1px solid rgba(226,232,240,0.9)",
+                              }}
+                            >
+                              <Stack spacing={0.75}>
+                                <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                                  <Stack spacing={0.15}>
+                                    <Typography variant="subtitle2" fontWeight={900}>
+                                      Support Document Checklist
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      Mark each support document as verified before approving the visa.
+                                    </Typography>
+                                  </Stack>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setChecklistOpen(false);
+                                    }}
+                                    aria-label="Close checklist"
+                                  >
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                  <Checkbox
+                                    size="small"
+                                    checked={checklistAllChecked}
+                                    indeterminate={!checklistAllChecked && checklistSelectedCount > 0}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
+                                        acc[item.checklist_item_id] = checked;
+                                        return acc;
+                                      }, {});
+                                      setVisaChecklist(next);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <Typography variant="body2" fontWeight={700}>
+                                    All checklist items ({checklistSelectedCount}/{visaChecklistMaster.length || 0})
+                                  </Typography>
+                                </Box>
                               </Stack>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setChecklistOpen(false);
-                                }}
-                                aria-label="Close checklist"
-                              >
-                                <CloseIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              <Checkbox
-                                size="small"
-                                checked={checklistAllChecked}
-                                indeterminate={!checklistAllChecked && checklistSelectedCount > 0}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  const next = visaChecklistMaster.reduce<Record<number, boolean>>((acc, item) => {
-                                    acc[item.checklist_item_id] = checked;
-                                    return acc;
-                                  }, {});
-                                  setVisaChecklist(next);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <Typography variant="body2" fontWeight={700}>
-                                All checklist items ({checklistSelectedCount}/{visaChecklistMaster.length || 0})
-                              </Typography>
-                            </Box>
+                            </ListSubheader>
+                            {visaChecklistMaster.map((item) => (
+                              <MenuItem key={item.checklist_item_id} value={String(item.checklist_item_id)}>
+                                <Checkbox size="small" checked={Boolean(visaChecklist[item.checklist_item_id])} />
+                                <ListItemText primary={item.checklist_item_name} />
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, justifyContent: "center" }}>
+                          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                            <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.supportDocument || !activeRow}>
+                              Upload Support Document
+                              <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "supportDocument")} />
+                            </AdButton>
+                            <AdButton
+                              variant="text"
+                              startIcon={<OpenInNewIcon fontSize="small" />}
+                              disabled={!(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
+                              onClick={() => openFile(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
+                            >
+                              View Support Document
+                            </AdButton>
                           </Stack>
-                        </ListSubheader>
-                        {visaChecklistMaster.map((item) => (
-                          <MenuItem key={item.checklist_item_id} value={String(item.checklist_item_id)}>
-                            <Checkbox size="small" checked={Boolean(visaChecklist[item.checklist_item_id])} />
-                            <ListItemText primary={item.checklist_item_name} />
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                  <Box sx={{ mt: 1.25, display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-                    <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Quick note
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        Keep the checklist checked before approval. This is the final verification gate.
-                      </Typography>
+                          <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Status
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600}>
+                              {checklistComplete ? "Ready to approve" : "Awaiting checklist completion"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
                     </Box>
-                    <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: "rgba(248,250,252,0.95)", border: "1px solid rgba(226,232,240,0.9)" }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Status
+
+                    <Box sx={{ p: 1.5, borderRadius: 3, border: "1px solid rgba(226,232,240,0.9)", bgcolor: "rgba(255,255,255,0.9)" }}>
+                      <Typography fontWeight={800} sx={{ mb: 1 }}>
+                        Remarks
                       </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {checklistComplete ? "Ready to approve" : "Awaiting checklist completion"}
-                      </Typography>
+                      <AdTextArea label="Remarks" minRows={2} value={visaForm.visa_remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, visa_remarks: v }))} />
                     </Box>
-                  </Box>
-                  <Box sx={{ mt: 1.25, display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.passport || !activeRow}>
-                      Upload Support Document
-                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "supportDocument")} />
-                    </AdButton>
-                    <AdButton
-                      variant="text"
-                      startIcon={<OpenInNewIcon fontSize="small" />}
-                      disabled={!(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
-                      onClick={() => openFile(visaForm.support_document_file_path ?? visaForm.passport_file_path)}
-                    >
-                      View Support Document
-                    </AdButton>
-                    <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
-                      Upload Visa
-                      <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
-                    </AdButton>
-                    <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
-                      View Visa
-                    </AdButton>
-                  </Box>
+
+                    <Box sx={{ p: 1.5, borderRadius: 3, border: "1px solid rgba(226,232,240,0.9)", bgcolor: "rgba(255,255,255,0.9)" }}>
+                      <Typography fontWeight={800} sx={{ mb: 1 }}>
+                        Visa Detail After Interview
+                      </Typography>
+                      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                        <AdTextBox
+                          label="Sponsor ID"
+                          variant="standard"
+                          value={visaForm.sponsor_id ?? ""}
+                          onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_id: v }))}
+                        />
+                        <AdTextBox
+                          label="Sponsor Contact"
+                          variant="standard"
+                          value={visaForm.sponsor_contact ?? ""}
+                          onChange={(v) => setVisaForm((f) => ({ ...f, sponsor_contact: v }))}
+                        />
+                        <AdDatePicker
+                          label="Visa Issue Date"
+                          variant="standard"
+                          format={VISA_DATE_DISPLAY_FORMAT}
+                          value={visaForm.issue_date ? dayjs(visaForm.issue_date) : null}
+                          onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, issue_date: v ? v.format("YYYY-MM-DD") : null }))}
+                        />
+                        <AdDatePicker
+                          label="Visa Expiry Date"
+                          variant="standard"
+                          format={VISA_DATE_DISPLAY_FORMAT}
+                          value={visaForm.expiry_date ? dayjs(visaForm.expiry_date) : null}
+                          onChange={(v: Dayjs | null) => setVisaForm((f) => ({ ...f, expiry_date: v ? v.format("YYYY-MM-DD") : null }))}
+                        />
+                      </Box>
+                      <Box sx={{ mt: 1.25, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        <AdButton component="label" variant="contained" startIcon={<UploadFileIcon fontSize="small" />} disabled={uploading.visa || !activeRow}>
+                          Upload Visa
+                          <input hidden type="file" accept="image/*,.pdf" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "visa")} />
+                        </AdButton>
+                        <AdButton variant="text" startIcon={<OpenInNewIcon fontSize="small" />} disabled={!visaForm.visa_file_path} onClick={() => openFile(visaForm.visa_file_path)}>
+                          View Visa
+                        </AdButton>
+                      </Box>
+                    </Box>
+                  </Stack>
                 </Box>
               )}
 
@@ -970,9 +1003,9 @@ export default function DeploymentManagementPage() {
 
               <Box>
                 <Typography fontWeight={800} sx={{ mb: 0.5 }}>
-                  Remarks
+                  Deployment Remarks
                 </Typography>
-                <AdTextArea label="Remarks" minRows={2} value={visaForm.remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))} />
+                <AdTextArea label="Deployment Remarks" minRows={2} value={visaForm.remarks ?? ""} onChange={(v) => setVisaForm((f) => ({ ...f, remarks: v }))} />
               </Box>
             </Stack>
           )}

@@ -44,6 +44,8 @@ export type VisaDetailRow = {
   passport_number: string | null;
   passport_issue_date: string | null;
   passport_expiry_date: string | null;
+  visa_interview_date: string | null;
+  visa_interview_venue: string | null;
   sponsor_id: string | null;
   sponsor_contact: string | null;
   passport_file_path: string | null;

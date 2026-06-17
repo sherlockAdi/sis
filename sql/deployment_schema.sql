@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS DEP_T04_visa_processing_details (
     passport_number VARCHAR(100) DEFAULT NULL,
     passport_issue_date DATE DEFAULT NULL,
     passport_expiry_date DATE DEFAULT NULL,
+    visa_interview_date DATE DEFAULT NULL,
+    visa_interview_venue VARCHAR(255) DEFAULT NULL,
 
     sponsor_id VARCHAR(100) DEFAULT NULL,
     sponsor_contact VARCHAR(100) DEFAULT NULL,
@@ -543,9 +545,12 @@ CREATE PROCEDURE sp_dep_visa_details(
   IN p_passport_number VARCHAR(100),
   IN p_passport_issue_date DATE,
   IN p_passport_expiry_date DATE,
+  IN p_visa_interview_date DATE,
+  IN p_visa_interview_venue VARCHAR(255),
   IN p_sponsor_id VARCHAR(100),
   IN p_sponsor_contact VARCHAR(100),
   IN p_passport_file_path TEXT,
+  IN p_support_document_file_path TEXT,
   IN p_visa_file_path TEXT,
   IN p_visa_payment_received TINYINT(1),
   IN p_visa_remarks VARCHAR(255),
@@ -576,9 +581,12 @@ BEGIN
       v.passport_number,
       v.passport_issue_date,
       v.passport_expiry_date,
+      v.visa_interview_date,
+      v.visa_interview_venue,
       v.sponsor_id,
       v.sponsor_contact,
       v.passport_file_path,
+      v.support_document_file_path,
       v.visa_file_path,
       v.payment_received AS visa_payment_received,
       v.remarks AS visa_remarks,
@@ -652,19 +660,21 @@ BEGIN
       WHERE deployment_id = p_deployment_id
       LIMIT 1;
 
-      IF p_visa_type_id IS NOT NULL OR p_visa_number IS NOT NULL OR p_issue_date IS NOT NULL OR p_expiry_date IS NOT NULL OR p_passport_number IS NOT NULL OR p_passport_issue_date IS NOT NULL OR p_passport_expiry_date IS NOT NULL OR p_sponsor_id IS NOT NULL OR p_sponsor_contact IS NOT NULL OR p_passport_file_path IS NOT NULL OR p_visa_file_path IS NOT NULL OR p_visa_payment_received IS NOT NULL OR p_visa_remarks IS NOT NULL OR v_visa_id IS NOT NULL THEN
+      IF p_visa_type_id IS NOT NULL OR p_visa_number IS NOT NULL OR p_issue_date IS NOT NULL OR p_expiry_date IS NOT NULL OR p_passport_number IS NOT NULL OR p_passport_issue_date IS NOT NULL OR p_passport_expiry_date IS NOT NULL OR p_visa_interview_date IS NOT NULL OR p_visa_interview_venue IS NOT NULL OR p_sponsor_id IS NOT NULL OR p_sponsor_contact IS NOT NULL OR p_passport_file_path IS NOT NULL OR p_support_document_file_path IS NOT NULL OR p_visa_file_path IS NOT NULL OR p_visa_payment_received IS NOT NULL OR p_visa_remarks IS NOT NULL OR v_visa_id IS NOT NULL THEN
         IF v_visa_id IS NULL THEN
           INSERT INTO DEP_T04_visa_processing_details (
             deployment_id, visa_type_id, visa_number, issue_date, expiry_date,
             passport_number, passport_issue_date, passport_expiry_date,
+            visa_interview_date, visa_interview_venue,
             sponsor_id, sponsor_contact,
-            passport_file_path, visa_file_path, payment_received, remarks,
+            passport_file_path, support_document_file_path, visa_file_path, payment_received, remarks,
             created_by, updated_by
           ) VALUES (
             p_deployment_id, p_visa_type_id, p_visa_number, p_issue_date, p_expiry_date,
             p_passport_number, p_passport_issue_date, p_passport_expiry_date,
+            p_visa_interview_date, p_visa_interview_venue,
             p_sponsor_id, p_sponsor_contact,
-            p_passport_file_path, p_visa_file_path, COALESCE(p_visa_payment_received, 0), p_visa_remarks,
+            p_passport_file_path, p_support_document_file_path, p_visa_file_path, COALESCE(p_visa_payment_received, 0), p_visa_remarks,
             p_user_id, p_user_id
           );
           SET v_visa_id = LAST_INSERT_ID();
@@ -678,9 +688,12 @@ BEGIN
             passport_number = COALESCE(p_passport_number, passport_number),
             passport_issue_date = COALESCE(p_passport_issue_date, passport_issue_date),
             passport_expiry_date = COALESCE(p_passport_expiry_date, passport_expiry_date),
+            visa_interview_date = COALESCE(p_visa_interview_date, visa_interview_date),
+            visa_interview_venue = COALESCE(NULLIF(p_visa_interview_venue, ''), visa_interview_venue),
             sponsor_id = COALESCE(p_sponsor_id, sponsor_id),
             sponsor_contact = COALESCE(p_sponsor_contact, sponsor_contact),
             passport_file_path = COALESCE(NULLIF(p_passport_file_path, ''), passport_file_path),
+            support_document_file_path = COALESCE(NULLIF(p_support_document_file_path, ''), support_document_file_path),
             visa_file_path = COALESCE(NULLIF(p_visa_file_path, ''), visa_file_path),
             payment_received = COALESCE(p_visa_payment_received, payment_received),
             remarks = COALESCE(p_visa_remarks, remarks),

@@ -62,9 +62,12 @@ export class CandidateDeploymentController extends Controller {
       passport_number?: string | null;
       passport_issue_date?: string | null;
       passport_expiry_date?: string | null;
+      visa_interview_date?: string | null;
+      visa_interview_venue?: string | null;
       sponsor_id?: string | null;
       sponsor_contact?: string | null;
       passport_file_path?: string | null;
+      support_document_file_path?: string | null;
       visa_file_path?: string | null;
       visa_payment_received?: number | null;
       visa_remarks?: string | null;
@@ -98,7 +101,7 @@ export class CandidateDeploymentController extends Controller {
     if (!allowed) throw httpError(403, 'Access denied');
 
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
-      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :visa_interview_date, :visa_interview_venue, :sponsor_id, :sponsor_contact, :passport_file_path, :support_document_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
         deployment_id,
         offer_date: body.offer_date ?? null,
@@ -113,9 +116,12 @@ export class CandidateDeploymentController extends Controller {
         passport_number: body.passport_number ?? null,
         passport_issue_date: body.passport_issue_date ?? null,
         passport_expiry_date: body.passport_expiry_date ?? null,
+        visa_interview_date: body.visa_interview_date ?? null,
+        visa_interview_venue: body.visa_interview_venue ?? null,
         sponsor_id: body.sponsor_id ?? null,
         sponsor_contact: body.sponsor_contact ?? null,
         passport_file_path: body.passport_file_path ?? null,
+        support_document_file_path: body.support_document_file_path ?? null,
         visa_file_path: body.visa_file_path ?? null,
         visa_payment_received: body.visa_payment_received ?? null,
         visa_remarks: body.visa_remarks ?? null,

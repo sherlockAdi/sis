@@ -49,6 +49,8 @@ type VisaDetailRow = {
   passport_number: string | null;
   passport_issue_date: string | null;
   passport_expiry_date: string | null;
+  visa_interview_date: string | null;
+  visa_interview_venue: string | null;
   sponsor_id: string | null;
   sponsor_contact: string | null;
   passport_file_path: string | null;
@@ -118,6 +120,8 @@ function createEmptyVisaDetailRow(
     passport_number: candidatePassport?.passport_number ?? null,
     passport_issue_date: null,
     passport_expiry_date: candidatePassport?.passport_expiry_date ?? null,
+    visa_interview_date: null,
+    visa_interview_venue: null,
     sponsor_id: null,
     sponsor_contact: null,
     passport_file_path: null,
@@ -301,7 +305,7 @@ export class DeploymentController extends Controller {
 
     if (status === 'Ticket Confirmed') {
       const ticketRows = await callProc<RowDataPacket & VisaDetailRow>(
-        `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+        `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
         { deployment_id: deploymentId }
       );
       const ticket = ticketRows[0];
@@ -367,16 +371,20 @@ export class DeploymentController extends Controller {
   @Security('jwt')
   public async visaDetails(@Path() deploymentId: number): Promise<VisaDetailRow | null> {
     const rows = await callProc<RowDataPacket & VisaDetailRow>(
-      `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+      `CALL sp_dep_visa_details('GET_BY_DEPLOYMENT', NULL, :deployment_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
       { deployment_id: deploymentId }
     );
     const [extraRows] = await pool.query<(RowDataPacket & {
       support_document_file_path: string | null;
+      visa_interview_date: string | null;
+      visa_interview_venue: string | null;
       journey_from: string | null;
       journey_destination: string | null;
     })[]>(
       `SELECT
          v.support_document_file_path,
+         v.visa_interview_date,
+         v.visa_interview_venue,
          t.journey_from,
          t.journey_destination
        FROM (SELECT :deployment_id AS deployment_id) dep
@@ -406,6 +414,8 @@ export class DeploymentController extends Controller {
       passport_number: details.passport_number ?? candidatePassport?.passport_number ?? null,
       passport_expiry_date: details.passport_expiry_date ?? candidatePassport?.passport_expiry_date ?? null,
       support_document_file_path: extra?.support_document_file_path ?? details.passport_file_path ?? null,
+      visa_interview_date: extra?.visa_interview_date ?? null,
+      visa_interview_venue: extra?.visa_interview_venue ?? null,
       journey_from: extra?.journey_from ?? null,
       journey_destination: extra?.journey_destination ?? null,
     };
@@ -469,6 +479,8 @@ export class DeploymentController extends Controller {
       passport_number?: string | null;
       passport_issue_date?: string | null;
       passport_expiry_date?: string | null;
+      visa_interview_date?: string | null;
+      visa_interview_venue?: string | null;
       sponsor_id?: string | null;
       sponsor_contact?: string | null;
       offer_date?: string | null;
@@ -509,7 +521,7 @@ export class DeploymentController extends Controller {
 
     const supportDocumentFilePath = body.support_document_file_path ?? body.passport_file_path ?? null;
     const rows = await callProc<RowDataPacket & { visa_detail_id: number }>(
-      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :sponsor_id, :sponsor_contact, :passport_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
+      `CALL sp_dep_visa_details('UPSERT', NULL, :deployment_id, :offer_date, :offer_letter_file_path, :isaccepted, :offer_payment_received, :offer_remarks, :visa_type_id, :visa_number, :issue_date, :expiry_date, :passport_number, :passport_issue_date, :passport_expiry_date, :visa_interview_date, :visa_interview_venue, :sponsor_id, :sponsor_contact, :passport_file_path, :support_document_file_path, :visa_file_path, :visa_payment_received, :visa_remarks, :ticket_number, :booked_date, :travel_date, :ticket_file_path, :ticket_remarks, :remarks, :user_id)`,
       {
         deployment_id: deploymentId,
         offer_date: body.offer_date ?? null,
@@ -524,9 +536,12 @@ export class DeploymentController extends Controller {
         passport_number: body.passport_number ?? null,
         passport_issue_date: body.passport_issue_date ?? null,
         passport_expiry_date: body.passport_expiry_date ?? null,
+        visa_interview_date: body.visa_interview_date ?? null,
+        visa_interview_venue: body.visa_interview_venue ?? null,
         sponsor_id: body.sponsor_id ?? null,
         sponsor_contact: body.sponsor_contact ?? null,
-        passport_file_path: supportDocumentFilePath,
+        passport_file_path: body.passport_file_path ?? null,
+        support_document_file_path: supportDocumentFilePath,
         visa_file_path: body.visa_file_path ?? null,
         visa_payment_received: body.visa_payment_received ?? null,
         visa_remarks: body.visa_remarks ?? null,
@@ -543,12 +558,19 @@ export class DeploymentController extends Controller {
     const visa_detail_id = rows[0]?.visa_detail_id;
     if (!visa_detail_id) throw httpError(500, 'Failed to save visa details');
 
-    if (body.support_document_file_path !== undefined || body.passport_file_path !== undefined) {
+    if (body.support_document_file_path !== undefined || body.passport_file_path !== undefined || body.visa_interview_date !== undefined || body.visa_interview_venue !== undefined) {
       await pool.query(
         `UPDATE DEP_T04_visa_processing_details
-         SET support_document_file_path = COALESCE(NULLIF(:support_document_file_path, ''), support_document_file_path)
+         SET support_document_file_path = COALESCE(NULLIF(:support_document_file_path, ''), support_document_file_path),
+             visa_interview_date = COALESCE(:visa_interview_date, visa_interview_date),
+             visa_interview_venue = COALESCE(NULLIF(:visa_interview_venue, ''), visa_interview_venue)
          WHERE deployment_id = :deployment_id`,
-        { deployment_id: deploymentId, support_document_file_path: supportDocumentFilePath }
+        {
+          deployment_id: deploymentId,
+          support_document_file_path: supportDocumentFilePath,
+          visa_interview_date: body.visa_interview_date ?? null,
+          visa_interview_venue: body.visa_interview_venue ?? null,
+        }
       );
     }
 
@@ -580,6 +602,8 @@ export class DeploymentController extends Controller {
       body.visa_file_path,
       body.support_document_file_path,
       body.passport_file_path,
+      body.visa_interview_date,
+      body.visa_interview_venue,
     ].some((value) => value !== undefined && value !== null && String(value).trim() !== '');
 
     if (hasVisaProcessingData) {
